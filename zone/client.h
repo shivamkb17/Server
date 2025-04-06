@@ -2042,6 +2042,7 @@ public:
 	std::string GetAccountBucketExpires(std::string bucket_name);
 	std::string GetAccountBucketRemaining(std::string bucket_name);
 
+	std::map<int, int> loaded_kill_counters;
 	std::map<int, int> kill_counters;
 
 	std::string GetBandolierName(uint8 bandolier_slot);

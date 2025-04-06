@@ -545,6 +545,7 @@ void Client::CompleteConnect()
 	for (auto kinfo : kdb) {
 		kill_counters[kinfo.race_id] = kinfo.count;
 	}
+	loaded_kill_counters = kill_counters;
 
 	UpdateWho();
 	client_state = CLIENT_CONNECTED;

@@ -1061,11 +1061,15 @@ bool Client::Save(uint8 iCommitNow) {
 	/* Save Account Kill Counts */
 	std::vector<AccountKillCountsRepository::AccountKillCounts> entries;
     for (const auto& [race_id, count] : kill_counters) {
-        entries.push_back(AccountKillCountsRepository::AccountKillCounts{
-            .account_id = account_id,
-            .race_id = race_id,
-            .count = count
-        });
+		if (loaded_kill_counters[race_id] != count) {
+			entries.push_back(
+				AccountKillCountsRepository::AccountKillCounts{
+					.account_id = account_id,
+					.race_id = race_id,
+					.count = count
+				}
+			);
+		}
     }
 	if (!entries.empty()) {
 		AccountKillCountsRepository::ReplaceMany(database, entries);

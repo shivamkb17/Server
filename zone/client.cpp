@@ -2063,6 +2063,10 @@ void Client::QueuePacket(const EQApplicationPacket* app, bool ack_req, CLIENT_CO
         return;
     }
 
+	if (m_is_afk && IsFilteredAFKPacket(app)) {
+		return;
+	}
+
     const EQApplicationPacket* packet_to_send = app;
     std::unique_ptr<EQApplicationPacket> copy;
 

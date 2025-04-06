@@ -1073,6 +1073,7 @@ bool Client::Save(uint8 iCommitNow) {
     }
 	if (!entries.empty()) {
 		AccountKillCountsRepository::ReplaceMany(database, entries);
+		loaded_kill_counters = kill_counters;
 	}
 
 	/* Save Character Currency */

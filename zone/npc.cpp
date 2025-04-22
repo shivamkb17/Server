@@ -2564,7 +2564,7 @@ void NPC::DoPetCommandHealthReport() {
     Client* owner = DoPetCommandChecks(PET_HEALTHREPORT);
     if (!owner) { return; }
 
-    owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'I have {} percent of my hot points left, Master. Here is what I have equipped...", GetCleanName(), GetHPRatio()).c_str());
+    owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'I have {} percent of my hit points left, Master. Here is what I have equipped...", GetCleanName(), GetHPRatio()).c_str());
 
     for (int i = EQ::invslot::EQUIPMENT_BEGIN; i <= EQ::invslot::EQUIPMENT_END; i++) {
         const EQ::ItemInstance *inst_main = nullptr;

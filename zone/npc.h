@@ -311,6 +311,7 @@ public:
 	void    DoPetCommandGetLost();
 	void    DoPetCommandGuardMe();
 	void    DoPetCommandRegroup(bool enabled);
+	void 	DoPetCommandAssist(bool enabled);
 
 	void	SignalNPC(int _signal_id);
 	void	SendPayload(int payload_id, std::string payload_value = std::string());

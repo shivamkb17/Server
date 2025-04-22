@@ -6,7 +6,7 @@ void command_petcmd(Client *c, const Seperator *sep) {
         return;
     }
 
-    const std::string usage = "Usage: #petcmd [attack, qattack, follow, guard, sit, stop, taunt (on\\off), hold (on\\off), ghold (on\\off), spellhold (on\\off), focus (on\\off), back, regroup (on\\off), health, leader, feign, leave] [all, mag, bst, nec, enc, shm, dru, brd, shd]. Verbs do not need to be applied in any specific order.";
+    const std::string usage = "Usage: #petcmd [attack, qattack, follow, guard, sit, stop, taunt (on\\off), hold (on\\off), ghold (on\\off), spellhold (on\\off), focus (on\\off), back, regroup (on\\off), assist (on\\off), health, leader, feign, leave] [all, mag, bst, nec, enc, shm, dru, brd, shd]. Verbs do not need to be applied in any specific order.";
 
     // Safely build a vector of args
     std::vector<std::string> args;
@@ -77,7 +77,9 @@ void command_petcmd(Client *c, const Seperator *sep) {
         {"spellhold", {PET_SPELLHOLD, PET_SPELLHOLD_ON, PET_SPELLHOLD_OFF}},
         {"nocast", {PET_SPELLHOLD, PET_SPELLHOLD_ON, PET_SPELLHOLD_OFF}},
         {"focus", {PET_FOCUS, PET_FOCUS_ON, PET_FOCUS_OFF}},
-        {"regroup", {PET_REGROUP, PET_REGROUP_ON, PET_REGROUP_OFF}}
+        {"regroup", {PET_REGROUP, PET_REGROUP_ON, PET_REGROUP_OFF}},
+        {"assist", {CUSTOM_PET_ASSIST, CUSTOM_PET_ASSIST_ON, CUSTOM_PET_ASSIST_OFF}},
+        {"assistme", {CUSTOM_PET_ASSIST, CUSTOM_PET_ASSIST_ON, CUSTOM_PET_ASSIST_OFF}}
     };
 
     // Process each argument

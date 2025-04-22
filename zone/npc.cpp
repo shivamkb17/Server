@@ -2445,6 +2445,15 @@ void NPC::DoPetCommand(int pet_command_id, Mob* target) {
 		case PET_REGROUP_OFF:
 			DoPetCommandRegroup(false);
 			break;
+		case CUSTOM_PET_ASSIST:
+			DoPetCommandAssist(!IsPetAssisting());
+			break;
+		case CUSTOM_PET_ASSIST_ON:
+			DoPetCommandAssist(true);
+			break;
+		case CUSTOM_PET_ASSIST_OFF:
+			DoPetCommandAssist(false);
+			break;
 	}
 	if (GetOwner()) {
 		GetOwner()->CastToClient()->SendBulkStatsUpdate();
@@ -2460,17 +2469,25 @@ Client* NPC::DoPetCommandChecks(int pet_command_id) {
 		return nullptr;
 	}
 
-	/*
-	if (GetPetType() == petAnimation && !aabonuses.PetCommands[pet_command_id]) {
-		return nullptr;
-	}
-	*/
-
 	if (GetPetType() == petFamiliar) {
 		return nullptr;
 	}
 
 	return GetOwner()->CastToClient();
+}
+
+void NPC::DoPetCommandAssist(bool enabled) {
+	Client* owner = DoPetCommandChecks(0);
+
+	if (!owner) { return; }
+
+	if (enabled) {
+		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'As you command, Master. I will assist you in battle.", GetCleanName()).c_str());
+	} else {
+		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'As you command, Master. I will no longer assist you in battle.", GetCleanName()).c_str());
+	}
+
+	SetPetAssisting(enabled);
 }
 
 void NPC::DoPetCommandAttack(Mob* target, bool force) {

@@ -545,41 +545,58 @@ NPC::~NPC()
 }
 
 void NPC::SetTarget(Mob* mob) {
-	if(mob == GetTarget())		//dont bother if they are allready our target
-		return;
+    // Check if the target is already set - return early
+    if (mob == GetTarget())
+        return;
 
-	if (GetPetTargetLockID()) {
-		TryDepopTargetLockedPets(mob);
-	}
+    // Set attack timers based on whether we have a target
+    if (mob) {
+        SetAttackTimer();
+    } else {
+        ranged_timer.Disable();
+        attack_timer.Disable();
+        attack_dw_timer.Disable();
+    }
 
-	if (mob) {
-		SetAttackTimer();
-	} else {
-		ranged_timer.Disable();
-		attack_timer.Disable();
-		attack_dw_timer.Disable();
-	}
+    // Handle pet target locking if needed
+    if (GetPetTargetLockID()) {
+        TryDepopTargetLockedPets(mob);
+    }
 
-	// either normal pet and owner is client or charmed pet and owner is client
-	Mob *owner = nullptr;
-	if (IsPet() && IsPetOwnerClient()) {
-		owner = GetOwner();
-	} else if (IsCharmed()) {
-		owner = GetOwner();
-		if (owner && !owner->IsClient())
-			owner = nullptr;
-	}
+    // Identify owner if applicable
+    Mob *owner = nullptr;
+    if (IsPet() && IsPetOwnerClient()) {
+        owner = GetOwner();
+    } else if (IsCharmed()) {
+        owner = GetOwner();
+        if (owner && !owner->IsClient())
+            owner = nullptr;
+    }
 
-	if (owner && owner->focused_pet_id == GetID()) {
-		auto client = owner->CastToClient();
-		if (client->ClientVersionBit() & EQ::versions::maskUFAndLater) {
-			auto app = new EQApplicationPacket(OP_PetHoTT, sizeof(ClientTarget_Struct));
-			auto ct = (ClientTarget_Struct *)app->pBuffer;
-			ct->new_target = mob ? mob->GetID() : 0;
-			client->FastQueuePacket(&app);
-		}
-	}
-	Mob::SetTarget(mob);
+    // Handle taunting and pet assistance
+    if (owner && IsTaunting()) {
+        for (auto pet : owner->GetAllPets()) {
+            LogDebug("1 Attempting to assist pet %s", pet->GetName());
+            if (pet == this) { continue; }
+            LogDebug("2 Attempting to assist pet %s", pet->GetName());
+            if (pet && pet->IsNPC() && pet->IsPetAssisting()) {
+                pet->CastToNPC()->DoPetCommandAssistOnTarget(mob);
+            }
+        }
+    }
+
+    // Handle client focused pet updates
+    if (owner && owner->focused_pet_id == GetID()) {
+        auto client = owner->CastToClient();
+        if (client->ClientVersionBit() & EQ::versions::maskUFAndLater) {
+            auto app = new EQApplicationPacket(OP_PetHoTT, sizeof(ClientTarget_Struct));
+            auto ct = (ClientTarget_Struct *)app->pBuffer;
+            ct->new_target = mob ? mob->GetID() : 0;
+            client->FastQueuePacket(&app);
+        }
+    }
+
+    Mob::SetTarget(mob);
 }
 
 bool NPC::Process()
@@ -2543,6 +2560,68 @@ void NPC::DoPetCommandAttack(Mob* target, bool force) {
 
 	AddToHateList(target, hate, hate, true, false, false, SPELL_UNKNOWN, true);
 	owner->MessageString(Chat::PetResponse, PET_ATTACKING, GetCleanName(), target->GetCleanName());
+	SetTarget(target);
+
+	return;
+}
+
+void NPC::DoPetCommandAssistOnTarget(Mob* target) {
+	if (!target) { return; }
+
+	Client* owner = DoPetCommandChecks(PET_ATTACK);
+
+	if (!owner) { return; }
+
+	if (GetTarget() && target->GetID() == GetTarget()->GetID()) {
+		return;
+	}
+
+	if (RuleB(Pets, PetsRequireLoS) && !DoLosChecks(target)) {
+		//owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'I beg forgiveness, Master. That is not a legal target.", GetCleanName()).c_str());
+		return;
+	}
+
+	if (!IsAttackAllowed(target)) {
+		//owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'I beg forgiveness, Master. That is not a legal target.", GetCleanName()).c_str());
+		return;
+	}
+
+	if (DistanceSquared(GetPosition(), target->GetPosition()) >= RuleR(Aggro, PetAttackRange)) {
+		//owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'I beg forgiveness, Master. That target is too far away.", GetCleanName()).c_str());
+		return;
+	}
+
+	if (target->IsMezzed()) {
+		owner->MessageString(Chat::PetResponse, CANNOT_WAKE, GetCleanName(), target->GetCleanName());
+		return;
+	}
+
+	SetFeigned(false);
+	SetPetStop(false);
+	SetPetRegroup(false);
+
+	if (owner->focused_pet_id == GetID()) {
+		owner->SetPetCommandState(PET_BUTTON_SIT, 0);
+	}
+
+	if (GetPetOrder() == SPO_Sit || GetPetOrder() == SPO_FeignDeath) {
+		SetPetOrder(GetPreviousPetOrder());
+		SetAppearance(eaStanding);
+	}
+
+	zone->AddAggroMob();
+	int hate = 1;
+
+	if (IsEngaged()) {
+		auto top = GetHateMost();
+		if (top && top != target) {
+			hate += GetHateAmount(top) - GetHateAmount(target) + 1000;
+		}
+	}
+
+	AddToHateList(target, hate, hate, true, false, false, SPELL_UNKNOWN, true);
+	//owner->MessageString(Chat::PetResponse, PET_ATTACKING, GetCleanName(), target->GetCleanName());
+	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Assisting you with {}, Master.", GetCleanName(), target->GetCleanName()).c_str());
 	SetTarget(target);
 
 	return;

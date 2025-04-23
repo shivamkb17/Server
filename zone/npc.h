@@ -312,6 +312,7 @@ public:
 	void    DoPetCommandGuardMe();
 	void    DoPetCommandRegroup(bool enabled);
 	void 	DoPetCommandAssist(bool enabled);
+	void    DoPetCommandAssistOnTarget(Mob* target);
 
 	void    SendPetStatsWindow(Client* c);
 

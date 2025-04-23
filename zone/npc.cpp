@@ -65,6 +65,7 @@
 #include <pthread.h>
 
 #endif
+#include "dialogue_window.h"
 
 extern Zone* zone;
 extern QueryServ* QServ;
@@ -2566,6 +2567,8 @@ void NPC::DoPetCommandHealthReport() {
 
     owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'I have {} percent of my hit points left, Master. Here is what I have equipped...", GetCleanName(), GetHPRatio()).c_str());
 
+	SendPetStatsWindow(owner);
+
     for (int i = EQ::invslot::EQUIPMENT_BEGIN; i <= EQ::invslot::EQUIPMENT_END; i++) {
         const EQ::ItemInstance *inst_main = nullptr;
         const EQ::ItemData     *item_data = nullptr;
@@ -2597,6 +2600,392 @@ void NPC::DoPetCommandHealthReport() {
             );
         }
     }
+}
+
+void NPC::SendPetStatsWindow(Client* c)
+{
+    if (!c || !GetOwner() || !c->IsClient()) {
+        return;
+    }
+
+    // Check if c is the pet's owner
+    if (c->GetID() != GetOwnerID()) {
+        return;
+    }
+
+    const std::string& color_red    = "red_1";
+    const std::string& bright_green = "green";
+    const std::string& bright_red   = "red";
+    const std::string& yellow       = "green_yellow";
+    const std::string& header_color = "royal_blue";
+    const std::string& standard_text = "white";  // Add standard white color for non-highlighted text
+
+    std::string final_string;
+
+    // Basic Info Table
+    std::string basic_info_rows = DialogueWindow::TableRow(
+        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text,
+            fmt::format("Level: {} (Pet Power: {})", std::to_string(GetLevel()), m_pet_power)))
+    );
+    final_string += DialogueWindow::Table(basic_info_rows);
+
+    // Health Table
+    int current_hp = GetHP();
+    int max_hp = GetMaxHP();
+    std::string cur_field = Strings::Commify(current_hp);
+    std::string total_field = Strings::Commify(max_hp);
+
+    // Calculate health percentage and determine appropriate color
+    float hp_percent = (max_hp > 0) ? (static_cast<float>(current_hp) / static_cast<float>(max_hp) * 100.0f) : 0.0f;
+    std::string hp_color;
+
+    if (hp_percent >= 75.0f) {
+        hp_color = bright_green;  // 75%+ = green
+    } else if (hp_percent >= 25.0f) {
+        hp_color = yellow;        // 25-75% = yellow
+    } else {
+        hp_color = bright_red;    // <25% = red
+    }
+
+    std::string health_row = DialogueWindow::TableRow(
+        fmt::format(
+            "{}{}",
+            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "Health ")),
+            DialogueWindow::TableCell(
+                fmt::format(
+                    "{} / {}",
+                    DialogueWindow::ColorMessage(hp_color, cur_field),
+                    DialogueWindow::ColorMessage(standard_text, total_field)
+                )
+            )
+        )
+    );
+
+    final_string += DialogueWindow::Table(health_row);
+
+    // Combat Stats Table
+    std::string combat_stats_rows;
+
+    // Calculate base damage
+    int min_damage_base = GetMinDamage();
+    int max_damage_base = GetBaseDamage();
+
+    // Track weapon modifiers
+    int primary_weapon_mod = 0;
+    int secondary_weapon_mod = 0;
+
+    // Get haste modifiers for delay calculation
+    int current_haste = GetHaste();
+    float haste_factor = static_cast<float>(current_haste) / 100.0f;
+    int hhe = itembonuses.HundredHands + spellbonuses.HundredHands;
+
+    // Default delay for weapons
+    int default_delay = 3500;
+    bool has_two_hander = false;
+
+    // Process primary weapon
+    const EQ::ItemInstance *weapon_instance_main = GetInv().GetItem(EQ::invslot::slotPrimary);
+    if (weapon_instance_main && weapon_instance_main->GetItem()) {
+        primary_weapon_mod = weapon_instance_main->GetItemWeaponDamage(true);
+
+        // Check if two-handed
+        int item_type = weapon_instance_main->GetItem()->ItemType;
+        has_two_hander = (item_type == EQ::item::ItemType2HSlash ||
+                         item_type == EQ::item::ItemType2HBlunt ||
+                         item_type == EQ::item::ItemType2HPiercing);
+
+        // Normalization for damage calculations
+        float attack_delay = static_cast<float>(GetAttackDelay());
+        if (weapon_instance_main->GetItem()->Delay > 0) {
+            float normalization_factor = (static_cast<float>(weapon_instance_main->GetItem()->Delay) / (attack_delay/100.0f));
+            primary_weapon_mod = static_cast<int>(primary_weapon_mod * normalization_factor);
+        }
+    }
+
+    // Process offhand weapon
+    const EQ::ItemInstance *weapon_instance_off = GetInv().GetItem(EQ::invslot::slotSecondary);
+    if (weapon_instance_off && weapon_instance_off->GetItem() && !has_two_hander) {
+        // Only process if pet can dual wield
+        bool can_dual_wield = true;  // Simplified check for this example
+
+        if (can_dual_wield) {
+            secondary_weapon_mod = weapon_instance_off->GetItemWeaponDamage(true);
+
+            // Normalization for damage calculations
+            float attack_delay = static_cast<float>(GetAttackDelay());
+            if (weapon_instance_off->GetItem()->Delay > 0) {
+                float normalization_factor = (static_cast<float>(weapon_instance_off->GetItem()->Delay) / (attack_delay/100.0f));
+                secondary_weapon_mod = static_cast<int>(secondary_weapon_mod * normalization_factor);
+            }
+        }
+    }
+
+    // Primary weapon details
+    int pri_delay = default_delay;
+    std::string pri_damage = "+0";
+
+    if (weapon_instance_main && weapon_instance_main->GetItem()) {
+        pri_damage = fmt::format("+{}", Strings::Commify(primary_weapon_mod));
+        pri_delay = weapon_instance_main->GetItem()->Delay * 100;
+    }
+
+    // Calculate primary delay with haste
+    int modified_pri_delay = 0;
+    if (current_haste <= 0) {
+        modified_pri_delay = pri_delay * (1.0f - haste_factor);
+    } else if (current_haste < 100) {
+        modified_pri_delay = pri_delay * (2.0f - haste_factor);
+    } else {
+        modified_pri_delay = pri_delay * (1.0f / (haste_factor));
+    }
+
+    // Add primary weapon row
+    combat_stats_rows += DialogueWindow::TableRow(
+        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "Main Hand:")) +
+        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, fmt::format("DMG {}, Delay {}",
+            pri_damage,
+            Strings::Commify(modified_pri_delay / 100)))) // Convert to two-digit representation
+    );
+
+    // Secondary weapon details (only show if not using two-hander)
+    if (!has_two_hander) {
+        int sec_delay = default_delay;
+        std::string sec_damage = "+0";
+
+        if (weapon_instance_off && weapon_instance_off->GetItem()) {
+            sec_damage = fmt::format("+{}", Strings::Commify(secondary_weapon_mod));
+            sec_delay = weapon_instance_off->GetItem()->Delay * 100;
+        }
+
+        // Calculate secondary delay with haste
+        int modified_sec_delay = 0;
+        if (current_haste <= 0) {
+            modified_sec_delay = sec_delay * (1.0f - haste_factor);
+        } else if (current_haste < 100) {
+            modified_sec_delay = sec_delay * (2.0f - haste_factor);
+        } else {
+            modified_sec_delay = sec_delay * (1.0f / (haste_factor));
+        }
+
+        // Add secondary weapon row
+        combat_stats_rows += DialogueWindow::TableRow(
+            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "Off Hand:")) +
+            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, fmt::format("DMG {}, Delay {}",
+                sec_damage,
+                Strings::Commify(modified_sec_delay / 100)))) // Convert to two-digit representation
+        );
+    }
+
+    // Format base damage info
+    std::string base_damage_text = fmt::format("{}-{}",
+        Strings::Commify(min_damage_base),
+        Strings::Commify(min_damage_base + max_damage_base));
+
+    // Add base damage row
+    combat_stats_rows += DialogueWindow::TableRow(
+        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "DMG")) +
+        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, base_damage_text))
+    );
+
+    // Other combat stats
+    combat_stats_rows += DialogueWindow::TableRow(
+        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "ATK")) +
+        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, Strings::Commify(GetATK())))
+    );
+
+    combat_stats_rows += DialogueWindow::TableRow(
+        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "MIT")) +
+        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, Strings::Commify(GetMitigationAC())))
+    );
+
+    combat_stats_rows += DialogueWindow::TableRow(
+        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "EVA")) +
+        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, Strings::Commify(GetTotalDefense())))
+    );
+
+    final_string += DialogueWindow::Table(combat_stats_rows);
+
+    // Get owner pointer for use in later sections
+    auto owner = GetOwner();
+
+    // NEW SECTION: Owner Abilities (Inherited)
+    // Only create this section if we have an owner
+    if (owner) {
+        final_string += DialogueWindow::ColorMessage(header_color, "Owner Abilities");
+
+        std::string owner_abilities_table;
+
+        // Define pairs for owner-granted abilities
+        struct OwnerAbilityPair {
+            std::string left_name;
+            std::string left_value;
+            std::string right_name;
+            std::string right_value;
+        };
+
+        std::vector<OwnerAbilityPair> owner_pairs;
+
+        // Flurry and Critical Hit (logical pairing - both melee-related offensive abilities)
+        int flurry_chance = owner->GetSpellBonuses().PetFlurry + owner->GetAABonuses().PetFlurry + spellbonuses.FlurryChance;
+        int critical_chance = owner->GetSpellBonuses().PetCriticalHit + owner->GetAABonuses().PetCriticalHit;
+
+        owner_pairs.push_back({
+            "Flurry Rate", flurry_chance > 0 ? fmt::format("{}/{}%", Strings::Commify(flurry_chance), RuleI(Custom, PetFlurryAACap)) : "0/0%",
+            "Crit Rate", critical_chance > 0 ? fmt::format("{}/{}%", Strings::Commify(critical_chance), RuleI(Custom, PetCriticalAACap)) : "0/0%"
+        });
+
+        // Extra Mitigation and Extra Avoidance (logical pairing - both defensive abilities)
+        int mitigation_chance = owner->GetSpellBonuses().PetMeleeMitigation + owner->GetAABonuses().PetMeleeMitigation;
+        int avoidance_chance = owner->GetSpellBonuses().PetAvoidance + owner->GetAABonuses().PetAvoidance;
+
+        owner_pairs.push_back({
+            "Extra Mitigation", mitigation_chance > 0 ? fmt::format("{}%", Strings::Commify(mitigation_chance)) : "0%",
+            "Extra Avoidance", avoidance_chance > 0 ? fmt::format("{}%", Strings::Commify(avoidance_chance)) : "0%"
+        });
+
+        // Generate the table rows from pairs
+        for (const auto& pair : owner_pairs) {
+            owner_abilities_table += DialogueWindow::TableRow(
+                DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, pair.left_name)) +
+                DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, pair.left_value)) +
+                DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, pair.right_name)) +
+                DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, pair.right_value))
+            );
+        }
+
+        final_string += DialogueWindow::Table(owner_abilities_table);
+    }
+
+    // Special Abilities Section (Revised with better pairing)
+    final_string += DialogueWindow::ColorMessage(header_color, "Special Abilities");
+
+    // Create paired display for special abilities
+    std::string special_abilities_table;
+
+    // Define pairs of abilities to display side by side
+    struct SpecialAbilityPair {
+        std::string left_name;
+        std::string left_value;
+        std::string right_name;
+        std::string right_value;
+    };
+
+    std::vector<SpecialAbilityPair> ability_pairs;
+
+    // Haste and Combat Effects (both affect combat speed/frequency)
+	int hp_regen = GetHPRegen();
+    ability_pairs.push_back({
+        "Haste", fmt::format("{}%", Strings::Commify(GetHaste() - 100)),
+        "HP Regen", hp_regen > 0 ? fmt::format("{}/tick", Strings::Commify(hp_regen)) : "0/tick"
+    });
+
+    // Spell Damage and Heal Amount (both spell output related)
+    int spell_damage = GetSharedSpellDamage();
+    int heal_amount = GetSharedHealAmount();
+    ability_pairs.push_back({
+        "Spell Damage", spell_damage > 0 ? Strings::Commify(spell_damage) : "0",
+        "Heal Amount", heal_amount > 0 ? Strings::Commify(heal_amount) : "0"
+    });
+
+    // Spell Shield and DoT Shield (both magical defense)
+    int spell_shield = spellbonuses.SpellShield + itembonuses.SpellShield;
+    int dot_shield = spellbonuses.DoTShielding + itembonuses.DoTShielding;
+    ability_pairs.push_back({
+        "Spell Shield", spell_shield > 0 ? fmt::format("{}%", Strings::Commify(spell_shield)) : "0%",
+        "DoT Shield", dot_shield > 0 ? fmt::format("{}%", Strings::Commify(dot_shield)) : "0%"
+    });
+
+    // Shielding and DS Mitigation (both physical defense)
+    int shielding = spellbonuses.MeleeMitigation + itembonuses.MeleeMitigation;
+    int ds_mitigation = spellbonuses.DSMitigation + itembonuses.DSMitigation;
+    ability_pairs.push_back({
+        "Shielding", shielding > 0 ? fmt::format("{}/{}%", Strings::Commify(shielding), RuleI(Character, ItemShieldingCap)) : "0/0%",
+        "DS Mitigation", ds_mitigation > 0 ? fmt::format("{}%", Strings::Commify(ds_mitigation)) : "0%"
+    });
+
+    // Critical Spell Chance and Critical Spell Damage (related spell crit stats)
+    int crit_spell_chance = GetSharedCriticalSpellChance();
+    int crit_spell_dmg = GetSharedSpellCritDmgIncrease() + GetSharedSpellCritDmgIncNoStack();
+    ability_pairs.push_back({
+        "Critical Spell Chance", crit_spell_chance > 0 ? fmt::format("{}%", Strings::Commify(crit_spell_chance)) : "0%",
+        "Critical Spell Damage", crit_spell_dmg > 0 ? fmt::format("{}%", Strings::Commify(crit_spell_dmg)) : "0%"
+    });
+
+    // Critical DoT Chance and Critical DoT Damage (related DoT crit stats)
+    int crit_dot_chance = GetSharedCriticalDoTChance();
+    int crit_dot_dmg = GetSharedDotCritDmgIncrease();
+    ability_pairs.push_back({
+        "Critical DoT Chance", crit_dot_chance > 0 ? fmt::format("{}%", Strings::Commify(crit_dot_chance)) : "0%",
+        "Critical DoT Damage", crit_dot_dmg > 0 ? fmt::format("{}%", Strings::Commify(crit_dot_dmg)) : "0%"
+    });
+
+    // Critical Heal Chance and Critical HoT (related healing crit stats)
+    int crit_heal_chance = GetSharedCriticalHealChance();
+    int crit_hot = GetSharedCriticalHealOverTime();
+    ability_pairs.push_back({
+        "Critical Heal Chance", crit_heal_chance > 0 ? fmt::format("{}%", Strings::Commify(crit_heal_chance)) : "0%",
+        "Critical HoT Chance", crit_hot > 0 ? fmt::format("{}%", Strings::Commify(crit_hot)) : "0%"
+    });
+
+    // Generate the table rows from pairs
+    for (const auto& pair : ability_pairs) {
+        special_abilities_table += DialogueWindow::TableRow(
+            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, pair.left_name)) +
+            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, pair.left_value)) +
+            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, pair.right_name)) +
+            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, pair.right_value))
+        );
+    }
+
+    final_string += DialogueWindow::Table(special_abilities_table);
+
+    // Stats and Resists Section
+    final_string += DialogueWindow::ColorMessage(header_color, "Statistics and Resistances");
+
+    std::string stats_table;
+
+    // Stat-resist pairs
+    struct StatResistPair {
+        std::string stat_name;
+        std::string resist_name;
+        std::string stat_value;
+        std::string resist_value;
+    };
+
+    std::vector<StatResistPair> pairs = {
+        {"Agility", "Cold", Strings::Commify(GetAGI()), Strings::Commify(GetCR())},
+        {"Dexterity", "Disease", Strings::Commify(GetDEX()), Strings::Commify(GetDR())},
+        {"Intelligence", "Fire", Strings::Commify(GetINT()), Strings::Commify(GetFR())},
+        {"Stamina", "Magic", Strings::Commify(GetSTA()), Strings::Commify(GetMR())},
+        {"Strength", "Poison", Strings::Commify(GetSTR()), Strings::Commify(GetPR())},
+        {"Wisdom", "", Strings::Commify(GetWIS()), ""},
+        {"Charisma", "", Strings::Commify(GetCHA()), ""}
+    };
+
+    for (const auto& pair : pairs) {
+        stats_table += DialogueWindow::TableRow(
+            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, pair.stat_name)) +
+            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, pair.stat_value)) +
+            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, pair.resist_name)) +
+            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, pair.resist_value))
+        );
+    }
+
+    final_string += DialogueWindow::Table(stats_table);
+
+    // Send window to client with no buttons
+    c->SendWindow(
+        0,
+        POPUPID_PET_STATS_WINDOW,
+        0,          // No buttons
+        "",         // Empty for no button text
+        "",         // Empty for no button text
+        0,
+        1,
+        this,
+        fmt::format("Pet Stats: {}", GetCleanName()).c_str(),
+        final_string.c_str()
+    );
 }
 
 void NPC::DoPetCommandGetLost() {

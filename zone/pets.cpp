@@ -300,6 +300,8 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 		LogDebug("Size was overwritten to: [{}]", in_size);
 	}
 
+	npc->m_pet_power = record.petpower;
+
 	npc->SetOwnerID(GetID());
 	entity_list.AddNPC(npc, true, true);
 	AddPet(npc);

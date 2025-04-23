@@ -313,6 +313,8 @@ public:
 	void    DoPetCommandRegroup(bool enabled);
 	void 	DoPetCommandAssist(bool enabled);
 
+	void    SendPetStatsWindow(Client* c);
+
 	void	SignalNPC(int _signal_id);
 	void	SendPayload(int payload_id, std::string payload_value = std::string());
 
@@ -847,6 +849,8 @@ protected:
 	Handin m_hand_in = {};
 public:
 	const Handin GetHandin() { return m_hand_in; }
+
+	int m_pet_power;
 
 private:
 	uint32              m_loottable_id;

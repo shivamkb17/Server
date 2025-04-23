@@ -2743,134 +2743,127 @@ void NPC::SendPetStatsWindow(Client* c)
     final_string += DialogueWindow::Table(health_row);
 
     // Combat Stats Table
-    std::string combat_stats_rows;
+	std::string combat_stats_rows;
 
-    // Calculate base damage
-    int min_damage_base = GetMinDamage();
-    int max_damage_base = GetBaseDamage();
+	// Calculate base damage
+	int min_damage_base = GetMinDamage();
+	int max_damage_base = GetBaseDamage();
 
-    // Track weapon modifiers
-    int primary_weapon_mod = 0;
-    int secondary_weapon_mod = 0;
+	// Track weapon modifiers
+	int primary_weapon_mod = 0;
+	int secondary_weapon_mod = 0;
 
-    // Get haste modifiers for delay calculation
-    int current_haste = GetHaste();
-    float haste_factor = static_cast<float>(current_haste) / 100.0f;
-    int hhe = itembonuses.HundredHands + spellbonuses.HundredHands;
+	// Get haste modifiers for delay calculation
+	int current_haste = GetHaste();
+	float haste_factor = static_cast<float>(current_haste) / 100.0f;
+	int hhe = itembonuses.HundredHands + spellbonuses.HundredHands;
 
-    // Default delay for weapons
-    int default_delay = 3500;
-    bool has_two_hander = false;
+	// Default delay for weapons
+	int default_delay = 3500;
+	bool has_two_hander = false;
 
-    // Process primary weapon
-    const EQ::ItemInstance *weapon_instance_main = GetInv().GetItem(EQ::invslot::slotPrimary);
-    if (weapon_instance_main && weapon_instance_main->GetItem()) {
-        primary_weapon_mod = weapon_instance_main->GetItemWeaponDamage(true);
+	// Process primary weapon
+	const EQ::ItemInstance *weapon_instance_main = GetInv().GetItem(EQ::invslot::slotPrimary);
+	if (weapon_instance_main && weapon_instance_main->GetItem()) {
+		primary_weapon_mod = weapon_instance_main->GetItemWeaponDamage(true);
 
-        // Check if two-handed
-        int item_type = weapon_instance_main->GetItem()->ItemType;
-        has_two_hander = (item_type == EQ::item::ItemType2HSlash ||
-                         item_type == EQ::item::ItemType2HBlunt ||
-                         item_type == EQ::item::ItemType2HPiercing);
+		// Check if two-handed
+		int item_type = weapon_instance_main->GetItem()->ItemType;
+		has_two_hander = (item_type == EQ::item::ItemType2HSlash ||
+						item_type == EQ::item::ItemType2HBlunt ||
+						item_type == EQ::item::ItemType2HPiercing);
 
-        // Normalization for damage calculations
-        float attack_delay = static_cast<float>(GetAttackDelay());
-        if (weapon_instance_main->GetItem()->Delay > 0) {
-            float normalization_factor = (static_cast<float>(weapon_instance_main->GetItem()->Delay) / (attack_delay/100.0f));
-            primary_weapon_mod = static_cast<int>(primary_weapon_mod * normalization_factor);
-        }
-    }
+		// Normalization for damage calculations
+		float attack_delay = static_cast<float>(GetAttackDelay());
+		if (weapon_instance_main->GetItem()->Delay > 0) {
+			float normalization_factor = (static_cast<float>(weapon_instance_main->GetItem()->Delay) / (attack_delay/100.0f));
+			primary_weapon_mod = static_cast<int>(primary_weapon_mod * normalization_factor);
+		}
+	}
 
-    // Process offhand weapon
-    const EQ::ItemInstance *weapon_instance_off = GetInv().GetItem(EQ::invslot::slotSecondary);
-    if (weapon_instance_off && weapon_instance_off->GetItem() && !has_two_hander) {
-        // Only process if pet can dual wield
-        bool can_dual_wield = true;  // Simplified check for this example
+	// Process offhand weapon
+	const EQ::ItemInstance *weapon_instance_off = GetInv().GetItem(EQ::invslot::slotSecondary);
+	if (weapon_instance_off && weapon_instance_off->GetItem() && !has_two_hander) {
+		// Only process if pet can dual wield
+		bool can_dual_wield = true;  // Simplified check for this example
 
-        if (can_dual_wield) {
-            secondary_weapon_mod = weapon_instance_off->GetItemWeaponDamage(true);
+		if (can_dual_wield) {
+			secondary_weapon_mod = weapon_instance_off->GetItemWeaponDamage(true);
 
-            // Normalization for damage calculations
-            float attack_delay = static_cast<float>(GetAttackDelay());
-            if (weapon_instance_off->GetItem()->Delay > 0) {
-                float normalization_factor = (static_cast<float>(weapon_instance_off->GetItem()->Delay) / (attack_delay/100.0f));
-                secondary_weapon_mod = static_cast<int>(secondary_weapon_mod * normalization_factor);
-            }
-        }
-    }
+			// Normalization for damage calculations
+			float attack_delay = static_cast<float>(GetAttackDelay());
+			if (weapon_instance_off->GetItem()->Delay > 0) {
+				float normalization_factor = (static_cast<float>(weapon_instance_off->GetItem()->Delay) / (attack_delay/100.0f));
+				secondary_weapon_mod = static_cast<int>(secondary_weapon_mod * normalization_factor);
+			}
+		}
+	}
 
-    // Primary weapon details
-    int pri_delay = default_delay;
-    std::string pri_damage = "+0";
+	// Primary weapon details
+	int pri_delay = default_delay;
+	int total_pri_damage = min_damage_base + max_damage_base + primary_weapon_mod;
 
-    if (weapon_instance_main && weapon_instance_main->GetItem()) {
-        pri_damage = fmt::format("+{}", Strings::Commify(primary_weapon_mod));
-        pri_delay = weapon_instance_main->GetItem()->Delay * 100;
-    }
+	if (weapon_instance_main && weapon_instance_main->GetItem()) {
+		pri_delay = weapon_instance_main->GetItem()->Delay * 100;
+	}
 
-    // Calculate primary delay with haste
-    int modified_pri_delay = 0;
-    if (current_haste <= 0) {
-        modified_pri_delay = pri_delay * (1.0f - haste_factor);
-    } else if (current_haste < 100) {
-        modified_pri_delay = pri_delay * (2.0f - haste_factor);
-    } else {
-        modified_pri_delay = pri_delay * (1.0f / (haste_factor));
-    }
+	// Calculate primary delay with haste
+	int modified_pri_delay = 0;
+	if (current_haste <= 0) {
+		modified_pri_delay = pri_delay * (1.0f - haste_factor);
+	} else if (current_haste < 100) {
+		modified_pri_delay = pri_delay * (2.0f - haste_factor);
+	} else {
+		modified_pri_delay = pri_delay * (1.0f / (haste_factor));
+	}
 
-    // Add primary weapon row
-    combat_stats_rows += DialogueWindow::TableRow(
-        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "Main Hand:")) +
-        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, fmt::format("DMG {}, Delay {}",
-            pri_damage,
-            Strings::Commify(modified_pri_delay / 100)))) // Convert to two-digit representation
-    );
+	// Format main hand damage range
+	std::string main_damage_text = fmt::format("{}-{}",
+		Strings::Commify(min_damage_base),
+		Strings::Commify(total_pri_damage));
 
-    // Secondary weapon details (only show if not using two-hander)
-    if (!has_two_hander) {
-        int sec_delay = default_delay;
-        std::string sec_damage = "+0";
+	// Add primary weapon row
+	combat_stats_rows += DialogueWindow::TableRow(
+		DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "Main Hand:")) +
+		DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, fmt::format("DMG {}, Delay {}",
+			main_damage_text,
+			Strings::Commify(modified_pri_delay / 100)))) // Convert to two-digit representation
+	);
 
-        if (weapon_instance_off && weapon_instance_off->GetItem()) {
-            sec_damage = fmt::format("+{}", Strings::Commify(secondary_weapon_mod));
-            sec_delay = weapon_instance_off->GetItem()->Delay * 100;
-        }
+	// Secondary weapon details (only show if not using two-hander)
+	if (!has_two_hander && weapon_instance_off && weapon_instance_off->GetItem()) {
+		int sec_delay = weapon_instance_off->GetItem()->Delay * 100;
+		int total_sec_damage = min_damage_base + secondary_weapon_mod;
 
-        // Calculate secondary delay with haste
-        int modified_sec_delay = 0;
-        if (current_haste <= 0) {
-            modified_sec_delay = sec_delay * (1.0f - haste_factor);
-        } else if (current_haste < 100) {
-            modified_sec_delay = sec_delay * (2.0f - haste_factor);
-        } else {
-            modified_sec_delay = sec_delay * (1.0f / (haste_factor));
-        }
+		// Calculate secondary delay with haste
+		int modified_sec_delay = 0;
+		if (current_haste <= 0) {
+			modified_sec_delay = sec_delay * (1.0f - haste_factor);
+		} else if (current_haste < 100) {
+			modified_sec_delay = sec_delay * (2.0f - haste_factor);
+		} else {
+			modified_sec_delay = sec_delay * (1.0f / (haste_factor));
+		}
 
-        // Add secondary weapon row
-        combat_stats_rows += DialogueWindow::TableRow(
-            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "Off Hand:")) +
-            DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, fmt::format("DMG {}, Delay {}",
-                sec_damage,
-                Strings::Commify(modified_sec_delay / 100)))) // Convert to two-digit representation
-        );
-    }
+		// Format offhand damage range
+		std::string off_damage_text = fmt::format("{}-{}",
+			Strings::Commify(static_cast<int>(min_damage_base * 0.62)), // Apply offhand penalty
+			Strings::Commify(static_cast<int>((min_damage_base + secondary_weapon_mod) * 0.62))); // Apply offhand penalty
 
-    // Format base damage info
-    std::string base_damage_text = fmt::format("{}-{}",
-        Strings::Commify(min_damage_base),
-        Strings::Commify(min_damage_base + max_damage_base));
+		// Add secondary weapon row
+		combat_stats_rows += DialogueWindow::TableRow(
+			DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "Off Hand:")) +
+			DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, fmt::format("DMG {}, Delay {}",
+				off_damage_text,
+				Strings::Commify(modified_sec_delay / 100)))) // Convert to two-digit representation
+		);
+	}
 
-    // Add base damage row
-    combat_stats_rows += DialogueWindow::TableRow(
-        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "DMG")) +
-        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, base_damage_text))
-    );
-
-    // Other combat stats
-    combat_stats_rows += DialogueWindow::TableRow(
-        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "ATK")) +
-        DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, Strings::Commify(GetATK())))
-    );
+	// Other combat stats (remove the separate base damage row)
+	combat_stats_rows += DialogueWindow::TableRow(
+		DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "ATK")) +
+		DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, Strings::Commify(GetATK())))
+	);
 
     combat_stats_rows += DialogueWindow::TableRow(
         DialogueWindow::TableCell(DialogueWindow::ColorMessage(standard_text, "MIT")) +

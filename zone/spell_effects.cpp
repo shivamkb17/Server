@@ -2992,6 +2992,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 					}
 
 					if(IsDetrimentalSpell(spell_id)) {
+						dmg = caster->GetActSpellDamage(spell_id, dmg, this);
 						dmg = -dmg;
 						Damage(caster, dmg, spell_id, spell.skill, false, buffslot, false);
 					} else {

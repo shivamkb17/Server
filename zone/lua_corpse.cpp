@@ -202,11 +202,6 @@ void Lua_Corpse::RemoveItemByID(uint32 item_id, int quantity) {
 	self->RemoveItemByID(item_id, quantity);
 }
 
-void Lua_Corpse::RemoveItemByPercent(float percent) {
-    Lua_Safe_Call_Void();
-    self->RemoveItemByPercent(percent);
-}
-
 Lua_Corpse_Loot_List Lua_Corpse::GetLootList(lua_State* L) {
 	Lua_Safe_Call_Class(Lua_Corpse_Loot_List);
 	Lua_Corpse_Loot_List ret;
@@ -256,7 +251,6 @@ luabind::scope lua_register_corpse() {
 	.def("RemoveItem", (void(Lua_Corpse::*)(uint16))&Lua_Corpse::RemoveItem)
 	.def("RemoveItemByID", (void(Lua_Corpse::*)(uint32))&Lua_Corpse::RemoveItemByID)
 	.def("RemoveItemByID", (void(Lua_Corpse::*)(uint32,int))&Lua_Corpse::RemoveItemByID)
-        .def("RemoveItemByPercent", &Lua_Corpse::RemoveItemByPercent)
 	.def("ResetDecayTimer", &Lua_Corpse::ResetDecayTimer)
 	.def("ResetLooter", (void(Lua_Corpse::*)(void))&Lua_Corpse::ResetLooter)
 	.def("Save", (bool(Lua_Corpse::*)(void))&Lua_Corpse::Save)

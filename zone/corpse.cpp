@@ -32,9 +32,6 @@
 #include "../common/repositories/character_corpse_items_repository.h"
 #include <iostream>
 #include "queryserv.h"
-#include <algorithm>
-#include <random>
-
 
 
 extern EntityList           entity_list;
@@ -2275,48 +2272,6 @@ void Corpse::CheckIsOwnerOnline()
 	else {
 		SetOwnerOnline(true);
 	}
-}
-
-
-void Corpse::RemoveItemByPercent(float percent) {
-    // clamp to [0,1]
-    percent = std::max(0.0f, std::min(1.0f, percent));
-    std::vector<LootItem*> items;
-
-    items.reserve(m_item_list.size());
-    for (auto ptr : m_item_list) {
-        if (ptr)
-            items.push_back(ptr);
-    }
-
-
-    if (items.empty() || percent <= 0.0f) {
-        return;
-    }
-
-    // shuffle for randomness
-    static std::mt19937 rng{std::random_device{}()};
-    std::shuffle(items.begin(), items.end(), rng);
-
-    // floor percentage, but ensure at least 1
-    size_t remove_count = static_cast<size_t>(std::floor(items.size() * percent));
-    if (remove_count < 1)
-        remove_count = 1;
-    remove_count = std::min(remove_count, items.size());
-
-//    LogCorpses("Remove loot [{}]", remove_count);
-
-    for (size_t i = 0; i < remove_count; ++i) {
-//         LogCorpses("  item id  [%u]", items[i]->item_id);
-	 RemoveItem(items[i]);
-    }
-
-    m_is_corpse_changed = true;
-    Save();
-
-    if (Client* looter = entity_list.GetClientByID(m_being_looted_by_entity_id)) {
-        QueryLoot(looter);
-    }
 }
 
 void Corpse::CastRezz(uint16 spell_id, Mob *caster)

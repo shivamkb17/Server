@@ -48,6 +48,7 @@ public:
 	void RemoveItem(uint16 lootslot);
 	void RemoveItemByID(uint32 item_id);
 	void RemoveItemByID(uint32 item_id, int quantity);
+	void RemoveItemByPercent(float percent);
 	void SetCash(uint32 copper, uint32 silver, uint32 gold, uint32 platinum);
 	void RemoveLootCash();
 	bool IsEmpty();

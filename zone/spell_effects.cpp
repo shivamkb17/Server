@@ -2975,11 +2975,14 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 
 			case SE_ManaBurn:
 			{
+                                int32 base_value = spell.base_value[i];
 				int32 max_mana = spell.base_value[i];
 				int ratio = spell.limit_value[i];
 				int64 dmg = 0;
 
-				if (caster){
+                                if (caster){
+                                       double percent_mana = static_cast<double>(base_value) / 10000.0;
+                                       int32_t max_mana = static_cast<int32_t>(caster->GetMana() * percent_mana + 0.5);
 					if (caster->GetMana() <= max_mana){
 							dmg = ratio*caster->GetMana()/10;
 							caster->SetMana(0);

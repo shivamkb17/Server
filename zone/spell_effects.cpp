@@ -2975,11 +2975,14 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 
 			case SE_ManaBurn:
 			{
+                                int32 base_value = spell.base_value[i];
 				int32 max_mana = spell.base_value[i];
 				int ratio = spell.limit_value[i];
 				int64 dmg = 0;
 
-				if (caster){
+                                if (caster){
+                                       double percent_mana = static_cast<double>(base_value) / 10000.0;
+                                       int32_t max_mana = static_cast<int32_t>(caster->GetMana() * percent_mana + 0.5);
 					if (caster->GetMana() <= max_mana){
 							dmg = ratio*caster->GetMana()/10;
 							caster->SetMana(0);
@@ -2992,6 +2995,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 					}
 
 					if(IsDetrimentalSpell(spell_id)) {
+						dmg = caster->GetActSpellDamage(spell_id, dmg, this);
 						dmg = -dmg;
 						Damage(caster, dmg, spell_id, spell.skill, false, buffslot, false);
 					} else {
@@ -6682,11 +6686,11 @@ void Mob::TryTriggerOnCastFocusEffect(focusType type, uint16 spell_id, bool chec
 	}
 
 	auto is_allowed = [check_whitelist, white_list](std::string type, uint32 spell_id) -> bool {
-		if(!check_whitelist) {
+		if (!check_whitelist) {
 			return true;
 		}
 
-		for(int i = 0; i < white_list.size(); i++) {
+		for (int i = 0; i < white_list.size(); i++) {
 			if(white_list[i].first == type && white_list[i].second == spell_id) {
 				return true;
 			}
@@ -6708,15 +6712,14 @@ void Mob::TryTriggerOnCastFocusEffect(focusType type, uint16 spell_id, bool chec
 			temp_item = ins->GetItem();
 			if (temp_item && temp_item->Focus.Effect > 0 && IsValidSpell(temp_item->Focus.Effect)) {
 				focus_spell_id = temp_item->Focus.Effect;
-				if (!IsEffectInSpell(focus_spell_id, SE_TriggerOnCast)) {
-					continue;
+				if (IsEffectInSpell(focus_spell_id, SE_TriggerOnCast)) {
+					proc_spellid = CalcFocusEffect(type, focus_spell_id, spell_id);
 				}
 
-				if(!is_allowed("spell", focus_spell_id)) {
-					continue;
+				if (!is_allowed("spell", focus_spell_id)) {
+					proc_spellid = 0;
 				}
 
-				proc_spellid = CalcFocusEffect(type, focus_spell_id, spell_id);
 				if (proc_spellid) {
 					TryTriggerOnCastProc(focus_spell_id, spell_id, proc_spellid);
 				}
@@ -6728,16 +6731,14 @@ void Mob::TryTriggerOnCastFocusEffect(focusType type, uint16 spell_id, bool chec
 					const EQ::ItemData *temp_item_aug = aug->GetItem();
 					if (temp_item_aug && temp_item_aug->Focus.Effect > 0 && IsValidSpell(temp_item_aug->Focus.Effect)) {
 						focus_spell_id = temp_item_aug->Focus.Effect;
-
-						if (!IsEffectInSpell(focus_spell_id, SE_TriggerOnCast)) {
-							continue;
+						if (IsEffectInSpell(focus_spell_id, SE_TriggerOnCast)) {
+							proc_spellid = CalcFocusEffect(type, focus_spell_id, spell_id);
 						}
 
-						if(!is_allowed("spell", focus_spell_id)) {
-							continue;
+						if (!is_allowed("spell", focus_spell_id)) {
+							proc_spellid = 0;
 						}
 
-						proc_spellid = CalcFocusEffect(type, focus_spell_id, spell_id);
 						if (proc_spellid) {
 							TryTriggerOnCastProc(focus_spell_id, spell_id, proc_spellid);
 						}

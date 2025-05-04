@@ -127,6 +127,79 @@ std::vector<TitlesRepository::Titles> TitleManager::GetEligibleTitles(Client* c)
 	std::set<std::string> used_prefixes;
 	std::set<std::string> used_suffixes;
 
+	// Add special titles for play modes - handle all combinations
+	if (c->IsHardcore() && c->IsSelfFound() && c->IsSolo()) {
+		// Triple combination - most prestigious
+		BaseTitlesRepository::Titles triple_title;
+		triple_title.prefix = "Legendary Survivor";
+		triple_title.suffix = "the Indomitable";
+		triple_title.id = UINT32_MAX - 7;
+		eligible_titles.emplace_back(triple_title);
+
+		used_prefixes.insert("Legendary Survivor");
+		used_suffixes.insert("the Indomitable");
+	} else if (c->IsHardcore() && c->IsSelfFound()) {
+		// Self-found + Hardcore
+		BaseTitlesRepository::Titles sf_hc_title;
+		sf_hc_title.prefix = "Dauntless Survivor";
+		sf_hc_title.suffix = "the Unyielding Scrapper";
+		sf_hc_title.id = UINT32_MAX - 6;
+		eligible_titles.emplace_back(sf_hc_title);
+
+		used_prefixes.insert("Dauntless Survivor");
+		used_suffixes.insert("the Unyielding Scrapper");
+	} else if (c->IsHardcore() && c->IsSolo()) {
+		// Solo + Hardcore
+		BaseTitlesRepository::Titles solo_hc_title;
+		solo_hc_title.prefix = "Fearless Wanderer";
+		solo_hc_title.suffix = "the Undying Loner";
+		solo_hc_title.id = UINT32_MAX - 5;
+		eligible_titles.emplace_back(solo_hc_title);
+
+		used_prefixes.insert("Fearless Wanderer");
+		used_suffixes.insert("the Undying Loner");
+	} else if (c->IsSelfFound() && c->IsSolo()) {
+		// Solo + Self-found
+		BaseTitlesRepository::Titles solo_sf_title;
+		solo_sf_title.prefix = "Solitary Scrounger";
+		solo_sf_title.suffix = "the Resourceful Wanderer";
+		solo_sf_title.id = UINT32_MAX - 4;
+		eligible_titles.emplace_back(solo_sf_title);
+
+		used_prefixes.insert("Solitary Scrounger");
+		used_suffixes.insert("the Resourceful Wanderer");
+	} else if (c->IsHardcore()) {
+		// Hardcore only
+		BaseTitlesRepository::Titles hardcore_title;
+		hardcore_title.prefix = "Ironman";
+		hardcore_title.suffix = "the Hardcore";
+		hardcore_title.id = UINT32_MAX - 1;
+		eligible_titles.emplace_back(hardcore_title);
+
+		used_prefixes.insert("Ironman");
+		used_suffixes.insert("the Hardcore");
+	} else if (c->IsSelfFound()) {
+		// Self-found only
+		BaseTitlesRepository::Titles self_found_title;
+		self_found_title.prefix = "Scavenger";
+		self_found_title.suffix = "the Self-Reliant";
+		self_found_title.id = UINT32_MAX - 2;
+		eligible_titles.emplace_back(self_found_title);
+
+		used_prefixes.insert("Scavenger");
+		used_suffixes.insert("the Self-Reliant");
+	} else if (c->IsSolo()) {
+		// Solo only
+		BaseTitlesRepository::Titles solo_title;
+		solo_title.prefix = "Lone Wolf";
+		solo_title.suffix = "the Adventurer";
+		solo_title.id = UINT32_MAX - 3;
+		eligible_titles.emplace_back(solo_title);
+
+		used_prefixes.insert("Lone Wolf");
+		used_suffixes.insert("the Adventurer");
+	}
+
 	for (auto t : titles) {
 		if (t.char_id >= 0 && c->CharacterID() != static_cast<uint32>(t.char_id)) {
 			continue;

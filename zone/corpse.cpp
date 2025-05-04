@@ -985,7 +985,7 @@ bool Corpse::Process()
 	}
 
 	if (m_corpse_delay_timer.Check()) {
-		if (!m_seasonal && !m_hardcore) {
+		if (!m_seasonal) {
 			for (int &allowed_looter: m_allowed_looters) {
 				allowed_looter = 0;
 			}
@@ -2308,7 +2308,7 @@ void Corpse::RemoveItemByPercent(float percent, int min_delete, int max_delete) 
     }
 
     for (size_t removed = 0; removed < target; ++removed) {
-        RemoveItem(items[removed]);    
+        RemoveItem(items[removed]);
     }
 
     m_is_corpse_changed = true;

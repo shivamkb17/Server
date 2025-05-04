@@ -3355,6 +3355,18 @@ int Perl_Client_IsSeasonal(Client* self) {
 	return self->IsSeasonal() ? 1 : 0;
 }
 
+bool Perl_Client_IsHardcore(Client* self) {
+	return self->IsHardcore();
+}
+
+bool Perl_Client_IsSelfFound(Client* self) {
+	return self->IsSelfFound();
+}
+
+bool Perl_Client_IsSolo(Client* self) {
+	return self->IsSolo();
+}
+
 void Perl_Client_ResetLeadershipAA(Client* self)
 {
 	self->ResetLeadershipAA();
@@ -4177,6 +4189,9 @@ void perl_register_client()
 	package.add("EnableWaypointGroupFeature", (void(*)(Client*))&Perl_Client_EnableWaypointGroupFeature);
 	package.add("WorldKick", &Perl_Client_WorldKick);
 	package.add("IsSeasonal", (int(*)(Client*))&Perl_Client_IsSeasonal);
+	package.add("IsHardcore", (bool(*)(Client*))&Perl_Client_IsHardcore);
+	package.add("IsSelfFound", (bool(*)(Client*))&Perl_Client_IsSelfFound);
+	package.add("IsSolo", (bool(*)(Client*))&Perl_Client_IsSolo);
 }
 
 #endif //EMBPERL_XS_CLASSES

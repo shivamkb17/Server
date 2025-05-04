@@ -2269,6 +2269,12 @@ bool Client::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::Skil
 		parse->EventPlayer(EVENT_DEATH_COMPLETE, this, export_string, 0, &args);
 	}
 
+	if (IsHardcore()) {
+		SetHardcore(false);
+		SetTitleSuffix("");
+		SetAATitle("");
+	}
+
 	return true;
 }
 

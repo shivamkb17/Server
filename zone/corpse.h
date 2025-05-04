@@ -237,10 +237,8 @@ public:
 
 	virtual void UpdateEquipmentLight();
 
-	/* Custom Seasonal\Hardcore */
-	bool IsHardcore() { return m_hardcore; }
+	/* Custom Seasonal*/
 	bool IsSeasonal() { return m_seasonal; }
-	void SetHardcore(bool val) { m_hardcore = val; }
 	void SetSeasonal(bool val) { m_seasonal = val; }
 
 	void CheckIsOwnerOnline();
@@ -294,7 +292,6 @@ private:
 	LootRequestType          m_loot_request_type;
 	uint32                   m_account_id;
 	bool					 m_seasonal;
-	bool					 m_hardcore;	
 };
 
 #endif

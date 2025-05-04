@@ -1247,9 +1247,6 @@ public:
 		}
 	}
 
-	// Hardcore Helper Methods
-	bool IsHardcore() { return Strings::ToBool(GetBucket("DiscordantCharacter")); }
-
 	// Item methods
 	void UseAugmentContainer(int container_slot);
 	void ValidateAugments(EQ::ItemInstance* item);

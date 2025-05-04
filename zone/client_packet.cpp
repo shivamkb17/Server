@@ -348,6 +348,7 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_PlayerStateRemove] = &Client::Handle_OP_PlayerStateRemove;
 	ConnectedOpcodes[OP_PickPocket] = &Client::Handle_OP_PickPocket;
 	ConnectedOpcodes[OP_PickZone] = &Client::Handle_OP_PickZone;
+	ConnectedOpcodes[OP_PlayModeInit] = &Client::Handle_OP_PlayModeInit;
 	ConnectedOpcodes[OP_PopupResponse] = &Client::Handle_OP_PopupResponse;
 	ConnectedOpcodes[OP_PotionBelt] = &Client::Handle_OP_PotionBelt;
 	ConnectedOpcodes[OP_PurchaseLeadershipAA] = &Client::Handle_OP_PurchaseLeadershipAA;
@@ -643,6 +644,12 @@ void Client::CompleteConnect()
 	if (RuleB(Custom, MulticlassingEnabled)) {
 		m_pp.classes = Strings::ToInt(GetBucket("GestaltClasses"), GetPlayerClassBit(m_pp.class_));
 	}
+
+	m_hardcore = Strings::ToBool(GetBucket("PlayMode.Hardcore"));
+	m_self_found = Strings::ToBool(GetBucket("PlayMode.SelfFound"));
+	m_solo = Strings::ToBool(GetBucket("PlayMode.Solo"));
+
+	LogDebug("Hardcore: [{}], Self Found: [{}], Solo: [{}]", m_hardcore, m_self_found, m_solo);
 
 	// Load Kill Counters
 	auto kdb = AccountKillCountsRepository::GetWhere(database, fmt::format("account_id = {}", account_id));
@@ -11681,6 +11688,25 @@ void Client::Handle_OP_PickZone(const EQApplicationPacket *app)
 	}
 
 	// handle
+}
+
+void Client::Handle_OP_PlayModeInit(const EQApplicationPacket *app)
+{
+	if (app->size != sizeof(PlayModeInit_Struct)) {
+		LogDebug("Size mismatch in OP_PlayModeInit expected [{}] got [{}]", sizeof(PlayModeInit_Struct), app->size);
+		DumpPacket(app);
+		return;
+	}
+
+	PlayModeInit_Struct *pm = (PlayModeInit_Struct *)app->pBuffer;
+
+	if (GetLevel() == 1) {
+		SetHardcore(pm->hardcore);
+		SetSelfFound(pm->self_found);
+		SetSolo(pm->solo);
+
+		LogDebug("Setting Hardcore [{}], Self Found [{}], Solo [{}]", pm->hardcore, pm->self_found, pm->solo);
+	}
 }
 
 void Client::Handle_OP_PopupResponse(const EQApplicationPacket *app)

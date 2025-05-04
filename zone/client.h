@@ -1247,6 +1247,18 @@ public:
 		}
 	}
 
+	// Play Modes
+	bool m_hardcore;
+	bool m_self_found;
+	bool m_solo;
+
+	bool IsHardcore() const { return m_hardcore; }
+	void SetHardcore(bool in_hardcore) { m_hardcore = in_hardcore; SetBucket("PlayMode.Hardcore", in_hardcore ? "true" : "false"); }
+	bool IsSelfFound() const { return m_self_found; }
+	void SetSelfFound(bool in_self_found) { m_self_found = in_self_found; SetBucket("PlayMode.SelfFound", in_self_found ? "true" : "false"); }
+	bool IsSolo() const { return m_solo; }
+	void SetSolo(bool in_solo) { m_solo = in_solo; SetBucket("PlayMode.Solo", in_solo ? "true" : "false"); }
+
 	// Item methods
 	void UseAugmentContainer(int container_slot);
 	void ValidateAugments(EQ::ItemInstance* item);

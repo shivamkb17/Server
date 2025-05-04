@@ -6763,6 +6763,12 @@ struct PickZone_Struct {
 	int32 selection_id;
 };
 
+struct PlayModeInit_Struct {
+	bool solo;
+	bool hardcore;
+	bool self_found;
+};
+
 struct EvolveItemToggle {
 	uint32 action;
 	uint32 unknown_004;

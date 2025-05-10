@@ -9690,6 +9690,10 @@ FACTION_VALUE Client::_GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 pla
 			tmpFactionValue += GetFactionBonus(pFaction);
 			tmpFactionValue += GetItemFactionBonus(pFaction);
 			//Return the faction to the client
+
+			// Remove negative DEITY modifiers
+			fmods.deity_mod = EQ::ClampLower(fmods.deity_mod, RuleI(Custom, MinimumDeityFactionMod));
+
 			fac = CalculateFaction(&fmods, tmpFactionValue);
 		}
 	}

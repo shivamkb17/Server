@@ -1301,6 +1301,9 @@ RULE_INT(Custom,	SuppressDispelsTime,					6, "Number of tics that dispelled buff
 RULE_INT(Custom,	SuppressDebuffSpellID,					21840, "Spell ID to send to client when a spell is supprssed.  21840 = 'Suppression Field'")
 RULE_INT(Custom,    PetAssistRateLimit,                     1000, "Minimum time in milliseconds between pet assist commands")
 
+// Play Modes
+RULE_INT(Custom,  	MinimumDeityFactionMod, 				-100, "The lowest faction mod a deity can have. Allows for multiclass character selection to guarantee non-KoS characters regardless of deity.")
+
 // Seasonal
 RULE_INT(Custom,  	EnableSeasonalCharacters, 				0, "Set to Seasonal ID to track for current Seasonal characters, 0 to disable.")
 

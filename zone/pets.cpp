@@ -80,6 +80,120 @@ void Mob::GetRandPetName(char *name)
 	strn0cpy(name, temp.c_str(), 64);
 }
 
+NPC* Mob::GetFamiliar(uint16 spell_id) {
+    if (!IsClient()) {
+        return nullptr; // Only supported clients for this
+    }
+
+    int act_power = 0;
+    PetRecord record;
+
+    if (!content_db.GetPoweredPetEntry(spells[spell_id].teleport_zone, act_power, &record)) {
+        LogError("Unknown familiar pet spell id: {}, check pets table", spell_id);
+        return nullptr;
+    }
+
+    auto npc_type = content_db.LoadNPCTypesData(record.npc_type);
+    if (npc_type == nullptr) {
+        LogError("Unknown npc type for familiar pet spell id: [{}]", spell_id);
+        return nullptr;
+    }
+
+    // Find the familiar of this type
+    for (auto npc : entity_list.GetNPCList()) {
+        if (npc.second->npctype_id != npc_type->npc_id) {
+            continue;
+        }
+
+        if (!npc.second->GetSwarmInfo() || npc.second->GetSwarmInfo()->owner_id != GetID()) {
+            continue;
+        }
+
+        // Found the familiar
+        return npc.second;
+    }
+
+    return nullptr;
+}
+
+bool Mob::CheckFamiliarConflict(uint16 spell_id) {
+    return (GetFamiliar(spell_id) != nullptr);
+}
+
+void Mob::DismissFamiliar(uint16 spell_id) {
+    NPC* familiar = GetFamiliar(spell_id);
+    if (familiar) {
+        familiar->Depop();
+    }
+}
+
+void Mob::MakeFamiliar(uint16 spell_id, std::string petname) {
+    if (!IsClient()) {
+        return; // Only supported clients for this
+    }
+
+    // Check if familiar already exists
+    if (CheckFamiliarConflict(spell_id)) {
+        return; // Don't create another one
+    }
+
+    int act_power = 0;
+    PetRecord record;
+
+    if (!content_db.GetPoweredPetEntry(spells[spell_id].teleport_zone, act_power, &record)) {
+        LogError("Unknown familiar pet spell id: {}, check pets table", spell_id);
+        Message(Chat::Red, "Unable to find data for pet %s", spells[spell_id].teleport_zone);
+        return;
+    }
+
+    // Ripped from swarm pets, keeping the location array so we can support multi later if we want
+    static const glm::vec2 locations[MAX_SWARM_PETS] = {
+        glm::vec2(5, 5), glm::vec2(-5, 5), glm::vec2(5, -5), glm::vec2(-5, -5),
+        glm::vec2(10, 10), glm::vec2(-10, 10), glm::vec2(10, -10), glm::vec2(-10, -10),
+        glm::vec2(8, 8), glm::vec2(-8, 8), glm::vec2(8, -8), glm::vec2(-8, -8)
+    };
+
+    auto npc_type = content_db.LoadNPCTypesData(record.npc_type);
+    if (npc_type == nullptr) {
+        LogError("Unknown npc type for familiar pet spell id: [{}]", spell_id);
+        Message(0, "Unable to find pet!");
+        return;
+    }
+
+    NPC* familiar_npc = new NPC(
+        npc_type,
+        0,
+        GetPosition() + glm::vec4(locations[0], 0.0f, 0.0f),
+        GravityBehavior::Ground
+    );
+
+    strn0cpy(familiar_npc->name, petname.c_str(), sizeof(familiar_npc->name));
+
+    familiar_npc->SetFollowID(GetID());
+
+    if (!familiar_npc->GetSwarmInfo()) {
+        auto nSI = new SwarmPet;
+        familiar_npc->SetSwarmInfo(nSI);
+        familiar_npc->GetSwarmInfo()->duration = new Timer(INT32_MAX);
+    }
+    else {
+        familiar_npc->GetSwarmInfo()->duration->Start(INT32_MAX);
+    }
+
+    familiar_npc->StartSwarmTimer(INT32_MAX);
+    familiar_npc->GetSwarmInfo()->familiar = true;
+    familiar_npc->SetPetSpellID(spell_id);
+
+    //removing this prevents the pet from attacking
+    familiar_npc->GetSwarmInfo()->owner_id = GetUltimateOwner()->GetID();
+
+    familiar_npc->SetSpecialAbility(SpecialAbility::AggroImmunity, 1);
+    familiar_npc->SetSpecialAbility(SpecialAbility::BeingAggroImmunity, 1);
+    familiar_npc->SetSpecialAbility(SpecialAbility::NPCAggroImmunity, 1);
+
+    entity_list.AddNPC(familiar_npc, true, true);
+}
+
 void Mob::MakePet(uint16 spell_id, const char* pettype, const char *petname) {
 	// petpower of -1 is used to get the petpower based on whichever focus is currently
 	// equipped. This should replicate the old functionality for the most part.

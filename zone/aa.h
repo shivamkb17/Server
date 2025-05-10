@@ -1549,6 +1549,7 @@ public:
 	Timer *duration;
 	uint32 target; //the target ID
 	uint32 owner_id;
+	bool familiar;
 };
 
 enum AATimers

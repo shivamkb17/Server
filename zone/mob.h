@@ -903,6 +903,11 @@ public:
 
 	virtual int GetKillExpMod() const { return 100; }
 
+    NPC* GetFamiliar(uint16 spell_id);
+    bool CheckFamiliarConflict(uint16 spell_id);
+    void DismissFamiliar(uint16 spell_id);
+    void MakeFamiliar(uint16 spell_id, std::string petname);
+
 	// aura functions
 	void MakeAura(uint16 spell_id);
 	inline int GetAuraSlots() { return 1 + aabonuses.aura_slots + itembonuses.aura_slots + spellbonuses.aura_slots; }

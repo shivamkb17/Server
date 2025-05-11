@@ -953,6 +953,14 @@ public:
 	uint32 GetMoney(uint8 type, uint8 subtype);
 	int GetAccountAge();
 
+	std::vector<WaypointListEntry_Struct> GetAllWaypoints();
+	bool IsWaypointUnlocked(int32_t waypoint_id, bool check_account = true);
+	bool UnlockWaypoint(const std::string& shortname, bool unlock_account = true);
+	bool UnlockWaypointByShortname(const std::string& shortname, bool add_to_account = true);
+	bool UnlockWaypointById(int32_t waypoint_id, bool add_to_account = true);
+	void SendWaypointList();
+	bool GroupWaypointsEnabled();
+
 	void SendPath(Mob* target);
 
 	bool IsDiscovered(uint32 itemid);

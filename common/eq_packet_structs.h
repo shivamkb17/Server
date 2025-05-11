@@ -1491,11 +1491,13 @@ struct SimpleChecksum_Struct {
 	uint64_t checksum;
 	uint8_t  data[3];
 };
+
 struct Stat_Struct
 {
 	uint32_t count;
 	StatEntry_Struct entries[0];
 };
+
 struct SkillTimers_Struct {
 	unsigned int backstab;
 	unsigned int bash;
@@ -1507,6 +1509,27 @@ struct SkillTimers_Struct {
 struct CustomDiscTimers_Struct {
 	unsigned int timer_id;
 	unsigned int timer_value;
+};
+
+struct WaypointListEntry_Struct {
+    int32_t category_id;
+	int32_t waypoint_id;
+    uint8_t enabled;
+    char name[64];
+};
+
+struct WaypointList_Struct {
+	bool group_enabled;
+	bool expedition_enabled;
+    uint32_t entry_count;
+    WaypointListEntry_Struct entries[];
+};
+
+struct WaypointRequest_Struct
+{
+    int32_t waypoint_id; // 0 if expedition
+    bool    expedition_selected; // true if expedition
+    bool    group_selected;
 };
 
 /*

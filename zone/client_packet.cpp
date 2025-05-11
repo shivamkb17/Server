@@ -434,6 +434,7 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_ZoneChange] = &Client::Handle_OP_ZoneChange;
 	ConnectedOpcodes[OP_ResetAA] = &Client::Handle_OP_ResetAA;
 	ConnectedOpcodes[OP_UnderWorld] = &Client::Handle_OP_UnderWorld;
+	ConnectedOpcodes[OP_WaypointRequest] = &Client::Handle_OP_WaypointRequest;
 
 	// shared tasks
 	ConnectedOpcodes[OP_SharedTaskRemovePlayer]   = &Client::Handle_OP_SharedTaskRemovePlayer;
@@ -17017,6 +17018,22 @@ void Client::Handle_OP_EvolveItem(const EQApplicationPacket *app)
 		default: {
 		}
 	}
+}
+
+void Client::Handle_OP_WaypointRequest(const EQApplicationPacket *app)
+{
+	if (app->size != sizeof(WaypointRequest_Struct)) {
+		LogError(
+			"Received OP_WaypointRequest packet. Expected size {}, received size {}.",
+			sizeof(WaypointRequest_Struct),
+			app->size
+		);
+		return;
+	}
+
+	WaypointRequest_Struct* waypoint_request = (WaypointRequest_Struct*) app->pBuffer;
+
+
 }
 
 bool Client::IsFilteredAFKPacket(const EQApplicationPacket *p)

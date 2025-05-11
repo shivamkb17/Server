@@ -1598,6 +1598,13 @@ uint32 Perl_Client_GetAlternateCurrencyValue(Client* self, uint32_t currency_id)
 	return self->GetAlternateCurrencyValue(currency_id);
 }
 
+void Perl_Client_SendWaypointList(Client* self)
+{
+	if (self) {
+		self->SendWaypointList();
+	}
+}
+
 void Perl_Client_SendWebLink(Client* self, const char* url) // @categories Script Utility
 {
 	self->SendWebLink(url);
@@ -3956,6 +3963,7 @@ void perl_register_client()
 	package.add("SendToGuildHall", &Perl_Client_SendToGuildHall);
 	package.add("SendToInstance", &Perl_Client_SendToInstance);
 	package.add("SendWebLink", &Perl_Client_SendWebLink);
+	package.add("SendWaypointList", &Perl_Client_SendWaypointList);
 	package.add("SendZoneFlagInfo", &Perl_Client_SendZoneFlagInfo);
 	package.add("SetAAEXPModifier", (void(*)(Client*, float))&Perl_Client_SetAAEXPModifier);
 	package.add("SetAAEXPModifier", (void(*)(Client*, uint32, float))&Perl_Client_SetAAEXPModifier);

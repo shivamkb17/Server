@@ -17,6 +17,10 @@ std::vector<ThjWaypointsRepository::ThjWaypoints>& Zone::GetAllWaypoints(bool fo
     return m_all_waypoints;
 }
 
+bool Zone::WaypointShouldSpawn(std::string zone_shortname) {
+
+}
+
 std::vector<ThjWaypointsRepository::ThjWaypoints>& Client::GetUnlockedWaypoints(bool force_reload) {
     if (force_reload || m_unlocked_waypoints.empty()) {
         LogDebug("Querying Database for waypoints");
@@ -46,7 +50,7 @@ std::vector<ThjWaypointsRepository::ThjWaypoints>& Client::GetUnlockedWaypoints(
     return m_unlocked_waypoints;
 }
 
-bool Client::IsWaypointUnlocked(int32 waypoint_id) {
+bool Client::WaypointCheck(int32 waypoint_id) {
     auto& waypoints = GetUnlockedWaypoints();
 
     for (const auto& wp : waypoints) {
@@ -58,7 +62,32 @@ bool Client::IsWaypointUnlocked(int32 waypoint_id) {
     return false;
 }
 
-bool Client::UnlockWaypoint(int32 waypoint_id) {
+bool Client::WaypointCheck(std::string waypoint_shortname) {
+    auto& waypoints = GetUnlockedWaypoints();
+
+    for (const auto& wp : waypoints) {
+        if (wp.shortname == waypoint_shortname) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Client::WaypointUnlock(std::string waypoint_shortname)
+{
+    auto all_waypoints = zone->GetAllWaypoints();
+
+    for (const auto& waypoint : all_waypoints) {
+        if (waypoint.shortname == waypoint_shortname) {
+            return WaypointUnlock(waypoint.id);
+        }
+    }
+
+    return false;
+}
+
+bool Client::WaypointUnlock(int32 waypoint_id) {
     bool added = false;
 
     if (AllowAccountWaypoints()) {
@@ -74,7 +103,7 @@ bool Client::UnlockWaypoint(int32 waypoint_id) {
     return added;
 }
 
-void Client::SendWaypointList() {
+void Client::WaypointListSend() {
     auto& all_waypoints = zone->GetAllWaypoints();
     auto& unlocked_waypoints = GetUnlockedWaypoints();
 
@@ -93,8 +122,8 @@ void Client::SendWaypointList() {
 
     WaypointList_Struct* wp_list = reinterpret_cast<WaypointList_Struct*>(outapp->pBuffer);
 
-    wp_list->group_enabled = AllowExpandedWaypoints();
-    wp_list->expedition_enabled = (AllowExpandedWaypoints() && GetExpedition());
+    wp_list->group_enabled = WaypointCheckGroupFeature();
+    wp_list->expedition_enabled = (WaypointCheckGroupFeature() && GetExpedition());
     wp_list->group_selected = false;
     wp_list->entry_count = entry_count;
 
@@ -140,7 +169,7 @@ bool Client::AllowAccountWaypoints() {
     return true;
 }
 
-bool Client::AllowExpandedWaypoints() {
+bool Client::WaypointCheckGroupFeature() {
     if (GetGM()) {
         return true;
     }
@@ -158,9 +187,9 @@ bool Client::AllowExpandedWaypoints() {
     return (1 == m_expanded_waypoints);
 }
 
-void Client::EnableExpandedWaypoints() {
+void Client::WaypointEnableGroupFeature() {
     m_expanded_waypoints = 1;
     SetAccountBucket("expanded_waypoints", "true");
 
-	SendWaypointList();
+	WaypointListSend();
 }

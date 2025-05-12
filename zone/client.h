@@ -960,12 +960,14 @@ private:
 
 public:
 	std::vector<ThjWaypointsRepository::ThjWaypoints>& GetUnlockedWaypoints(bool force_reload = false);
-	bool IsWaypointUnlocked(int32 waypoint_id);
-	bool UnlockWaypoint(int32 waypoint_id);
-	void SendWaypointList();
+	bool WaypointCheck(int32 waypoint_id);
+	bool WaypointCheck(std::string waypoint_shortname);
+	bool WaypointUnlock(int32 waypoint_id);
+	bool WaypointUnlock(std::string waypoint_shortname);
+	void WaypointListSend();
 	bool AllowAccountWaypoints();
-	bool AllowExpandedWaypoints();
-	void EnableExpandedWaypoints();
+	bool WaypointCheckGroupFeature();
+	void WaypointEnableGroupFeature();
 
 	void SendPath(Mob* target);
 

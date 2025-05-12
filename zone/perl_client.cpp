@@ -49,6 +49,47 @@ void Perl_Client_WorldKick(Client* self) // @categories Script Utility
 	self->WorldKick();
 }
 
+void Perl_Client_WaypointListSend(Client* self)
+{
+	if (self) {
+		self->WaypointListSend();
+	}
+}
+
+bool Perl_Client_WaypointUnlock(Client* self, std::string waypoint_shortname)
+{
+	if (self) {
+		return self->WaypointUnlock(waypoint_shortname);
+	}
+
+	return false;
+}
+
+bool Perl_Client_WaypointCheck(Client* self, std::string waypoint_shortname)
+{
+	if (self) {
+		return self->WaypointCheck(waypoint_shortname);
+	}
+
+	return false;
+}
+
+bool Perl_Client_WaypointCheckGroupFeature(Client* self)
+{
+	if (self) {
+		return self->WaypointCheckGroupFeature();
+	}
+
+	return false;
+}
+
+void Perl_Client_WaypointEnableGroupFeature(Client* self)
+{
+	if (self) {
+		self->WaypointEnableGroupFeature();
+	}
+}
+
 void Perl_Client_SendToGuildHall(Client* self) // @categories Script Utility, Guild
 {
 	self->SendToGuildHall();
@@ -1596,20 +1637,6 @@ void Perl_Client_SetAlternateCurrencyValue(Client* self, uint32 currency_id, uin
 uint32 Perl_Client_GetAlternateCurrencyValue(Client* self, uint32_t currency_id) // @categories Currency and Points
 {
 	return self->GetAlternateCurrencyValue(currency_id);
-}
-
-void Perl_Client_SendWaypointList(Client* self)
-{
-	if (self) {
-		self->SendWaypointList();
-	}
-}
-
-void Perl_Client_EnableExpandedWaypoints(Client* self)
-{
-	if (self) {
-		self->EnableExpandedWaypoints();
-	}
 }
 
 void Perl_Client_SendWebLink(Client* self, const char* url) // @categories Script Utility
@@ -3970,8 +3997,6 @@ void perl_register_client()
 	package.add("SendToGuildHall", &Perl_Client_SendToGuildHall);
 	package.add("SendToInstance", &Perl_Client_SendToInstance);
 	package.add("SendWebLink", &Perl_Client_SendWebLink);
-	package.add("SendWaypointList", &Perl_Client_SendWaypointList);
-	package.add("EnableExpandedWaypoints", &Perl_Client_EnableExpandedWaypoints);
 	package.add("SendZoneFlagInfo", &Perl_Client_SendZoneFlagInfo);
 	package.add("SetAAEXPModifier", (void(*)(Client*, float))&Perl_Client_SetAAEXPModifier);
 	package.add("SetAAEXPModifier", (void(*)(Client*, uint32, float))&Perl_Client_SetAAEXPModifier);
@@ -4149,6 +4174,11 @@ void perl_register_client()
 	package.add("UpdateWho", (void(*)(Client*, uint8))&Perl_Client_UpdateWho);
 	package.add("UseDiscipline", &Perl_Client_UseDiscipline);
 	package.add("UseAugmentContainer", &Perl_Client_UseAugmentContainer);
+	package.add("WaypointListSend", (void(*)(Client*))&Perl_Client_WaypointListSend);
+	package.add("WaypointUnlock", (bool(*)(Client*, std::string))&Perl_Client_WaypointUnlock);
+	package.add("WaypointCheck", (bool(*)(Client*, std::string))&Perl_Client_WaypointCheck);
+	package.add("WaypointCheckGroupFeature", (bool(*)(Client*))&Perl_Client_WaypointCheckGroupFeature);
+	package.add("WaypointEnableGroupFeature", (void(*)(Client*))&Perl_Client_WaypointEnableGroupFeature);
 	package.add("WorldKick", &Perl_Client_WorldKick);
 	package.add("IsSeasonal", (int(*)(Client*))&Perl_Client_IsSeasonal);
 	package.add("IsHardcore", (int(*)(Client*))&Perl_Client_IsHardcore);

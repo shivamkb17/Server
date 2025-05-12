@@ -962,6 +962,7 @@ public:
 	std::vector<ThjWaypointsRepository::ThjWaypoints>& GetUnlockedWaypoints(bool force_reload = false);
 	bool WaypointCheck(int32 waypoint_id);
 	bool WaypointCheck(std::string waypoint_shortname);
+	const ThjWaypointsRepository::ThjWaypoints* GetWaypoint(int waypoint_id);
 	bool WaypointUnlock(int32 waypoint_id);
 	bool WaypointUnlock(std::string waypoint_shortname);
 	void WaypointListSend();

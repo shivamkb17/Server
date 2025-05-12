@@ -102,6 +102,18 @@ bool Client::WaypointCheck(std::string waypoint_shortname) {
     return false;
 }
 
+const ThjWaypointsRepository::ThjWaypoints* Client::GetWaypoint(int waypoint_id) {
+	auto& waypoints = GetUnlockedWaypoints();
+
+    for (const auto& wp : waypoints) {
+        if (wp.id == waypoint_id) {
+            return &wp;
+        }
+    }
+
+    return nullptr;
+}
+
 bool Client::WaypointUnlock(std::string waypoint_shortname)
 {
     auto all_waypoints = zone->GetAllWaypoints();

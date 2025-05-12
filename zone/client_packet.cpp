@@ -17033,7 +17033,46 @@ void Client::Handle_OP_WaypointRequest(const EQApplicationPacket *app)
 
 	WaypointRequest_Struct* waypoint_request = (WaypointRequest_Struct*) app->pBuffer;
 
+	// coordinates
+	auto x         = 0.0f;
+	auto y         = 0.0f;
+	auto z         = 0.0f;
+	auto h		   = 0.0f;
+	auto zone_mode = ZoneToSafeCoords;
 
+	auto zone_id = Zones::BAZAAR;
+
+	if (auto waypoint = GetWaypoint(waypoint_request->waypoint_id)) {
+		x = waypoint->x;
+		y = waypoint->y;
+		z = waypoint->z;
+		h = waypoint->heading;
+
+		zone_mode = ZoneSolicited;
+		zone_id = zone_store.GetZoneID(waypoint->shortname);
+	}
+
+	if (waypoint_request->expedition_selected && GetExpedition() && WaypointCheckGroupFeature()) {
+		LogDebug("Wtf -> [{}]", GetExpedition()->GetZoneID());
+		MovePC(
+			GetExpedition()->GetZoneID(),
+			GetExpedition()->GetInstanceID(),
+			0,0,0,0,ZoneSolicited
+		);
+		return;
+	}
+
+	LogDebug("Zoning to ID: [{}]", zone_id);
+
+	MovePC(
+		zone_id,
+		x,
+		y,
+		z,
+		h,
+		0,
+		zone_mode
+	);
 }
 
 bool Client::IsFilteredAFKPacket(const EQApplicationPacket *p)

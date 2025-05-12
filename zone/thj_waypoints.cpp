@@ -6,6 +6,7 @@
 
 #include "client.h"
 #include "zone.h"
+#include "dynamic_zone.h"
 
 #include "thj_waypoints.h"
 
@@ -143,7 +144,7 @@ bool Client::WaypointUnlock(int32 waypoint_id) {
     return added;
 }
 
-void Client::WaypointListSend() {
+void Client::WaypointListSend(bool force) {
     auto& all_waypoints = zone->GetAllWaypoints();
     auto& unlocked_waypoints = GetUnlockedWaypoints();
 
@@ -164,8 +165,9 @@ void Client::WaypointListSend() {
 
     wp_list->group_enabled = WaypointCheckGroupFeature();
     wp_list->expedition_enabled = (WaypointCheckGroupFeature() && GetExpedition());
-    wp_list->group_selected = false;
+    wp_list->group_selected = GetWaypointGroupFeatureState();
     wp_list->entry_count = entry_count;
+	wp_list->force_show = force;
 
     // Add counters for enabled/disabled waypoints
     size_t enabled_count = 0;
@@ -204,6 +206,68 @@ void Client::WaypointListSend() {
              wp_list->expedition_enabled ? "Enabled" : "Disabled");
 }
 
+void Client::TransportToWaypoint(uint32 waypoint_id)
+{
+    uint32 zone_id = Zones::BAZAAR;  // Default to bazaar
+    uint32 instance_id = 0;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+    float h = 0.0f;
+    uint8 zone_mode = ZoneToSafeCoords;
+
+    if (waypoint_id == 0) {
+        if (GetExpedition()) {
+            zone_id = GetExpedition()->GetZoneID();
+            instance_id = GetExpedition()->GetInstanceID();
+            zone_mode = ZoneSolicited;
+            LogDebug("Expedition teleport -> Zone: [{}], Instance: [{}]", zone_id, instance_id);
+        }
+    }
+    else if (auto waypoint = GetWaypoint(waypoint_id)) {
+        x = waypoint->x;
+        y = waypoint->y;
+        z = waypoint->z;
+        h = waypoint->heading;
+
+        zone_mode = ZoneSolicited;
+        zone_id = zone_store.GetZoneID(waypoint->shortname);
+        LogDebug("Waypoint teleport -> Zone: [{}], Waypoint ID: [{}]", zone_id, waypoint_id);
+    }
+    else {
+        LogError("Waypoint not found");
+		return;
+    }
+
+    MovePC(zone_id, instance_id, x, y, z, h, zone_mode);
+}
+
+bool Client::GetWaypointGroupFeatureState()
+{
+	if (!WaypointCheckGroupFeature())
+	{
+		return false;
+	}
+
+    if (m_group_feature_state == -1) {
+        std::string bucket_val = GetAccountBucket("group_feature_state");
+        m_group_feature_state = !bucket_val.empty() ? 1 : 0;
+    }
+
+    return (m_group_feature_state == 1);
+}
+
+void Client::SetWaypointGroupFeatureState(bool val)
+{
+    m_group_feature_state = val ? 1 : 0;
+
+    if (val) {
+        SetBucket("group_feature_state", "enabled");
+    } else {
+        DeleteBucket("group_feature_state");
+    }
+}
+
 bool Client::AllowAccountWaypoints() {
     // Can adjust this for Self-Found, Hardcore, etc.
     return true;
@@ -231,5 +295,5 @@ void Client::WaypointEnableGroupFeature() {
     m_expanded_waypoints = 1;
     SetAccountBucket("expanded_waypoints", "true");
 
-	WaypointListSend();
+	WaypointListSend(false);
 }

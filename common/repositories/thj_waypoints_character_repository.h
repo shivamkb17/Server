@@ -1,21 +1,48 @@
-// character_waypoints_repository.h
-#ifndef EQEMU_CHARACTER_WAYPOINTS_REPOSITORY_H
-#define EQEMU_CHARACTER_WAYPOINTS_REPOSITORY_H
+#ifndef EQEMU_THJ_WAYPOINTS_CHARACTER_REPOSITORY_H
+#define EQEMU_THJ_WAYPOINTS_CHARACTER_REPOSITORY_H
+
+#pragma once
 
 #include "../database.h"
 #include "../strings.h"
-#include "base/base_waypoints_repository.h"
-#include "base/base_race_waypoints_repository.h"
-#include "base/base_waypoint_categories_repository.h"
-#include "base/base_character_waypoints_repository.h"
-#include "base/base_account_waypoints_repository.h"
+#include "base/base_thj_waypoints_categories_repository.h"
+#include "base/base_thj_waypoints_repository.h"
+#include "base/base_thj_waypoints_default_repository.h"
+#include "base/base_thj_waypoints_account_repository.h"
+#include "base/base_thj_waypoints_character_repository.h"
 
-class CharacterWaypointsRepository: public BaseCharacterWaypointsRepository {
+#include "thj_waypoints_repository.h"
+#include "thj_waypoints_categories_repository.h"
+#include "thj_waypoints_default_repository.h"
+#include "thj_waypoints_account_repository.h"
+
+class ThjWaypointsCharacterRepository: public BaseThjWaypointsCharacterRepository {
 public:
-    // Custom extended repository methods here
+    /**
+     * This file was auto generated and can be modified and extended upon
+     *
+     * Base repository methods are automatically
+     * generated in the "base" version of this repository. The base repository
+     * is immutable and to be left untouched, while methods in this class
+     * are used as extension methods for more specific persistence-layer
+     * accessors or mutators.
+     *
+     * Base Methods (Subject to be expanded upon in time)
+     *
+     * Note: Not all tables are designed appropriately to fit functionality with all base methods
+     *
+     * InsertOne
+     * UpdateOne
+     * DeleteOne
+     * FindOne
+     * GetWhere(std::string where_filter)
+     * DeleteWhere(std::string where_filter)
+     * InsertMany
+     * All
+     */
 
     // Get all waypoints for a specific character
-    static std::vector<CharacterWaypoints> GetByCharacterId(Database& db, uint64_t character_id) {
+    static std::vector<ThjWaypointsCharacter> GetByCharacterId(Database& db, uint64 character_id) {
         return GetWhere(
             db,
             fmt::format("character_id = {}", character_id)
@@ -23,7 +50,7 @@ public:
     }
 
     // Check if a character has a specific waypoint
-    static bool HasWaypoint(Database& db, uint64_t character_id, int32_t waypoint_id) {
+    static bool HasWaypoint(Database& db, uint64 character_id, int32 waypoint_id) {
         auto count = Count(
             db,
             fmt::format(
@@ -37,12 +64,12 @@ public:
     }
 
     // Add a waypoint for a character (with duplicate check)
-    static bool AddWaypoint(Database& db, uint64_t character_id, int32_t waypoint_id) {
+    static bool AddWaypoint(Database& db, uint64 character_id, int32 waypoint_id) {
         if (HasWaypoint(db, character_id, waypoint_id)) {
             return true; // Already has it
         }
 
-        CharacterWaypoints entry = NewEntity();
+        ThjWaypointsCharacter entry = NewEntity();
         entry.character_id = character_id;
         entry.waypoint_id = waypoint_id;
         entry.unlock_time = std::time(nullptr);
@@ -52,8 +79,8 @@ public:
     }
 
     // Get all waypoint IDs for a character
-    static std::vector<int32_t> GetWaypointIds(Database& db, uint64_t character_id) {
-        std::vector<int32_t> waypoint_ids;
+    static std::vector<int32> GetWaypointIds(Database& db, uint64 character_id) {
+        std::vector<int32> waypoint_ids;
 
         auto results = db.QueryDatabase(
             fmt::format(
@@ -73,7 +100,7 @@ public:
     }
 
     // Remove a specific waypoint from a character
-    static bool RemoveWaypoint(Database& db, uint64_t character_id, int32_t waypoint_id) {
+    static bool RemoveWaypoint(Database& db, uint64 character_id, int32 waypoint_id) {
         return DeleteWhere(
             db,
             fmt::format(
@@ -85,11 +112,11 @@ public:
     }
 
     // Copy waypoints from account to character
-    static bool CopyFromAccount(Database& db, uint64_t character_id, uint64_t account_id) {
+    static bool CopyFromAccount(Database& db, uint64 character_id, uint64 account_id) {
         auto results = db.QueryDatabase(
             fmt::format(
                 "INSERT IGNORE INTO {} (character_id, waypoint_id, unlock_time) "
-                "SELECT {}, waypoint_id, unlock_time FROM account_waypoints WHERE account_id = {}",
+                "SELECT {}, waypoint_id, unlock_time FROM thj_waypoints_account WHERE account_id = {}",
                 TableName(),
                 character_id,
                 account_id
@@ -100,17 +127,17 @@ public:
     }
 
     // Get waypoints that a character has but the account doesn't
-    static std::vector<int32_t> GetCharacterExclusiveWaypoints(
+    static std::vector<int32> GetCharacterExclusiveWaypoints(
         Database& db,
-        uint64_t character_id,
-        uint64_t account_id
+        uint64 character_id,
+        uint64 account_id
     ) {
-        std::vector<int32_t> exclusive_waypoints;
+        std::vector<int32> exclusive_waypoints;
 
         auto results = db.QueryDatabase(
             fmt::format(
                 "SELECT cw.waypoint_id FROM {} cw "
-                "LEFT JOIN account_waypoints aw ON cw.waypoint_id = aw.waypoint_id "
+                "LEFT JOIN thj_waypoints_account aw ON cw.waypoint_id = aw.waypoint_id "
                 "AND aw.account_id = {} "
                 "WHERE cw.character_id = {} AND aw.id IS NULL",
                 TableName(),
@@ -129,13 +156,13 @@ public:
     }
 
     // Sync character waypoints with account waypoints
-    static bool SyncWithAccount(Database& db, uint64_t character_id, uint64_t account_id) {
+    static bool SyncWithAccount(Database& db, uint64 character_id, uint64 account_id) {
         // Add account waypoints to character
         return CopyFromAccount(db, character_id, account_id);
     }
 
     // Get waypoints unlocked after a certain time
-    static std::vector<CharacterWaypoints> GetUnlockedAfter(Database& db, uint64_t character_id, time_t timestamp) {
+    static std::vector<ThjWaypointsCharacter> GetUnlockedAfter(Database& db, uint64 character_id, time_t timestamp) {
         return GetWhere(
             db,
             fmt::format(
@@ -147,7 +174,7 @@ public:
     }
 
     // Count waypoints for a character
-    static int64 CountWaypointsForCharacter(Database& db, uint64_t character_id) {
+    static int64 CountWaypointsForCharacter(Database& db, uint64 character_id) {
         return Count(
             db,
             fmt::format("character_id = {}", character_id)
@@ -155,12 +182,12 @@ public:
     }
 
     // Add multiple waypoints at once
-    static int AddManyWaypoints(Database& db, uint64_t character_id, const std::vector<int32_t>& waypoint_ids) {
-        std::vector<CharacterWaypoints> entries;
+    static int AddManyWaypoints(Database& db, uint64 character_id, const std::vector<int32>& waypoint_ids) {
+        std::vector<ThjWaypointsCharacter> entries;
 
         for (auto waypoint_id : waypoint_ids) {
             if (!HasWaypoint(db, character_id, waypoint_id)) {
-                CharacterWaypoints entry = NewEntity();
+                ThjWaypointsCharacter entry = NewEntity();
                 entry.character_id = character_id;
                 entry.waypoint_id = waypoint_id;
                 entry.unlock_time = std::time(nullptr);
@@ -172,4 +199,4 @@ public:
     }
 };
 
-#endif //EQEMU_CHARACTER_WAYPOINTS_REPOSITORY_H
+#endif //EQEMU_THJ_WAYPOINTS_CHARACTER_REPOSITORY_H

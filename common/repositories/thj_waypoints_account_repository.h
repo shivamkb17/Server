@@ -1,21 +1,48 @@
-// account_waypoints_repository.h
-#ifndef EQEMU_ACCOUNT_WAYPOINTS_REPOSITORY_H
-#define EQEMU_ACCOUNT_WAYPOINTS_REPOSITORY_H
+#ifndef EQEMU_THJ_WAYPOINTS_ACCOUNT_REPOSITORY_H
+#define EQEMU_THJ_WAYPOINTS_ACCOUNT_REPOSITORY_H
+
+#pragma once
 
 #include "../database.h"
 #include "../strings.h"
-#include "base/base_waypoints_repository.h"
-#include "base/base_race_waypoints_repository.h"
-#include "base/base_waypoint_categories_repository.h"
-#include "base/base_character_waypoints_repository.h"
-#include "base/base_account_waypoints_repository.h"
+#include "base/base_thj_waypoints_categories_repository.h"
+#include "base/base_thj_waypoints_repository.h"
+#include "base/base_thj_waypoints_default_repository.h"
+#include "base/base_thj_waypoints_account_repository.h"
+#include "base/base_thj_waypoints_character_repository.h"
 
-class AccountWaypointsRepository: public BaseAccountWaypointsRepository {
+#include "thj_waypoints_repository.h"
+#include "thj_waypoints_categories_repository.h"
+#include "thj_waypoints_default_repository.h"
+#include "thj_waypoints_character_repository.h"
+
+class ThjWaypointsAccountRepository: public BaseThjWaypointsAccountRepository {
 public:
-    // Custom extended repository methods here
+    /**
+     * This file was auto generated and can be modified and extended upon
+     *
+     * Base repository methods are automatically
+     * generated in the "base" version of this repository. The base repository
+     * is immutable and to be left untouched, while methods in this class
+     * are used as extension methods for more specific persistence-layer
+     * accessors or mutators.
+     *
+     * Base Methods (Subject to be expanded upon in time)
+     *
+     * Note: Not all tables are designed appropriately to fit functionality with all base methods
+     *
+     * InsertOne
+     * UpdateOne
+     * DeleteOne
+     * FindOne
+     * GetWhere(std::string where_filter)
+     * DeleteWhere(std::string where_filter)
+     * InsertMany
+     * All
+     */
 
     // Get all waypoints for a specific account
-    static std::vector<AccountWaypoints> GetByAccountId(Database& db, uint64_t account_id) {
+    static std::vector<ThjWaypointsAccount> GetByAccountId(Database& db, uint64 account_id) {
         return GetWhere(
             db,
             fmt::format("account_id = {}", account_id)
@@ -23,7 +50,7 @@ public:
     }
 
     // Check if an account has a specific waypoint
-    static bool HasWaypoint(Database& db, uint64_t account_id, int32_t waypoint_id) {
+    static bool HasWaypoint(Database& db, uint64 account_id, int32 waypoint_id) {
         auto count = Count(
             db,
             fmt::format(
@@ -37,12 +64,12 @@ public:
     }
 
     // Add a waypoint for an account (with duplicate check)
-    static bool AddWaypoint(Database& db, uint64_t account_id, int32_t waypoint_id) {
+    static bool AddWaypoint(Database& db, uint64 account_id, int32 waypoint_id) {
         if (HasWaypoint(db, account_id, waypoint_id)) {
             return true; // Already has it
         }
 
-        AccountWaypoints entry = NewEntity();
+        ThjWaypointsAccount entry = NewEntity();
         entry.account_id = account_id;
         entry.waypoint_id = waypoint_id;
         entry.unlock_time = std::time(nullptr);
@@ -52,8 +79,8 @@ public:
     }
 
     // Get all waypoint IDs for an account
-    static std::vector<int32_t> GetWaypointIds(Database& db, uint64_t account_id) {
-        std::vector<int32_t> waypoint_ids;
+    static std::vector<int32> GetWaypointIds(Database& db, uint64 account_id) {
+        std::vector<int32> waypoint_ids;
 
         auto results = db.QueryDatabase(
             fmt::format(
@@ -73,7 +100,7 @@ public:
     }
 
     // Remove a specific waypoint from an account
-    static bool RemoveWaypoint(Database& db, uint64_t account_id, int32_t waypoint_id) {
+    static bool RemoveWaypoint(Database& db, uint64 account_id, int32 waypoint_id) {
         return DeleteWhere(
             db,
             fmt::format(
@@ -85,8 +112,8 @@ public:
     }
 
     // Get all accounts that have a specific waypoint
-    static std::vector<uint64_t> GetAccountsWithWaypoint(Database& db, int32_t waypoint_id) {
-        std::vector<uint64_t> account_ids;
+    static std::vector<uint64> GetAccountsWithWaypoint(Database& db, int32 waypoint_id) {
+        std::vector<uint64> account_ids;
 
         auto results = db.QueryDatabase(
             fmt::format(
@@ -106,7 +133,7 @@ public:
     }
 
     // Get waypoints unlocked after a certain time
-    static std::vector<AccountWaypoints> GetUnlockedAfter(Database& db, uint64_t account_id, time_t timestamp) {
+    static std::vector<ThjWaypointsAccount> GetUnlockedAfter(Database& db, uint64 account_id, time_t timestamp) {
         return GetWhere(
             db,
             fmt::format(
@@ -118,7 +145,7 @@ public:
     }
 
     // Count waypoints for an account
-    static int64 CountWaypointsForAccount(Database& db, uint64_t account_id) {
+    static int64 CountWaypointsForAccount(Database& db, uint64 account_id) {
         return Count(
             db,
             fmt::format("account_id = {}", account_id)
@@ -126,4 +153,4 @@ public:
     }
 };
 
-#endif //EQEMU_ACCOUNT_WAYPOINTS_REPOSITORY_H
+#endif //EQEMU_THJ_WAYPOINTS_ACCOUNT_REPOSITORY_H

@@ -76,7 +76,7 @@ namespace EQ
 #include "../common/repositories/buyer_buy_lines_repository.h"
 #include "../common/repositories/character_evolving_items_repository.h"
 #include "../common/repositories/player_titlesets_repository.h"
-#include "../common/repositories/waypoints_repository.h"
+#include "../common/repositories/thj_waypoints_repository.h"
 
 #include "bot_structs.h"
 
@@ -955,11 +955,11 @@ public:
 	int GetAccountAge();
 
 private:
-	std::vector<WaypointsRepository::Waypoints> m_unlocked_waypoints = { };
+	std::vector<ThjWaypointsRepository::ThjWaypoints> m_unlocked_waypoints = { };
 	int m_expanded_waypoints = -1;
 
 public:
-	std::vector<WaypointsRepository::Waypoints>& GetUnlockedWaypoints(bool force_reload = false);
+	std::vector<ThjWaypointsRepository::ThjWaypoints>& GetUnlockedWaypoints(bool force_reload = false);
 	bool IsWaypointUnlocked(int32 waypoint_id);
 	bool UnlockWaypoint(int32 waypoint_id);
 	void SendWaypointList();

@@ -1,21 +1,44 @@
-// waypoints_repository.h
-#ifndef EQEMU_WAYPOINTS_REPOSITORY_H
-#define EQEMU_WAYPOINTS_REPOSITORY_H
+#ifndef EQEMU_THJ_WAYPOINTS_REPOSITORY_H
+#define EQEMU_THJ_WAYPOINTS_REPOSITORY_H
+
+#pragma once
 
 #include "../database.h"
 #include "../strings.h"
-#include "base/base_waypoints_repository.h"
-#include "base/base_race_waypoints_repository.h"
-#include "base/base_waypoint_categories_repository.h"
-#include "base/base_character_waypoints_repository.h"
-#include "base/base_account_waypoints_repository.h"
+#include "base/base_thj_waypoints_repository.h"
 
-class WaypointsRepository: public BaseWaypointsRepository {
+#include "thj_waypoints_categories_repository.h"
+#include "thj_waypoints_default_repository.h"
+#include "thj_waypoints_character_repository.h"
+#include "thj_waypoints_account_repository.h"
+
+class ThjWaypointsRepository: public BaseThjWaypointsRepository {
 public:
-    // Custom extended repository methods here
+    /**
+     * This file was auto generated and can be modified and extended upon
+     *
+     * Base repository methods are automatically
+     * generated in the "base" version of this repository. The base repository
+     * is immutable and to be left untouched, while methods in this class
+     * are used as extension methods for more specific persistence-layer
+     * accessors or mutators.
+     *
+     * Base Methods (Subject to be expanded upon in time)
+     *
+     * Note: Not all tables are designed appropriately to fit functionality with all base methods
+     *
+     * InsertOne
+     * UpdateOne
+     * DeleteOne
+     * FindOne
+     * GetWhere(std::string where_filter)
+     * DeleteWhere(std::string where_filter)
+     * InsertMany
+     * All
+     */
 
     // Find a waypoint by shortname
-    static Waypoints FindByShortname(Database& db, const std::string& shortname) {
+    static ThjWaypoints FindByShortname(Database& db, const std::string& shortname) {
         auto results = db.QueryDatabase(
             fmt::format(
                 "{} WHERE shortname = '{}' LIMIT 1",
@@ -26,7 +49,7 @@ public:
 
         auto row = results.begin();
         if (results.RowCount() == 1) {
-            Waypoints e{};
+            ThjWaypoints e{};
             e.id        = row[0] ? Strings::ToInt(row[0]) : 0;
             e.shortname = row[1] ? row[1] : "";
             e.long_name = row[2] ? row[2] : "";
@@ -42,7 +65,7 @@ public:
     }
 
     // Get all waypoints by category
-    static std::vector<Waypoints> GetByCategory(Database& db, int32_t category) {
+    static std::vector<ThjWaypoints> GetByCategory(Database& db, int32 category) {
         return GetWhere(
             db,
             fmt::format("category = {}", category)
@@ -50,7 +73,7 @@ public:
     }
 
     // Get waypoints in a specific zone (by shortname pattern)
-    static std::vector<Waypoints> GetByZone(Database& db, const std::string& zone_shortname) {
+    static std::vector<ThjWaypoints> GetByZone(Database& db, const std::string& zone_shortname) {
         return GetWhere(
             db,
             fmt::format("shortname LIKE '{}%'", Strings::Escape(zone_shortname))
@@ -58,7 +81,7 @@ public:
     }
 
     // Get waypoints within a radius from a position
-    static std::vector<Waypoints> GetNearPosition(Database& db, float x, float y, float z, float radius) {
+    static std::vector<ThjWaypoints> GetNearPosition(Database& db, float x, float y, float z, float radius) {
         auto results = db.QueryDatabase(
             fmt::format(
                 "SELECT {} FROM {} WHERE SQRT(POW(x - {}, 2) + POW(y - {}, 2) + POW(z - {}, 2)) <= {}",
@@ -68,11 +91,11 @@ public:
             )
         );
 
-        std::vector<Waypoints> all_entries;
+        std::vector<ThjWaypoints> all_entries;
         all_entries.reserve(results.RowCount());
 
         for (auto row = results.begin(); row != results.end(); ++row) {
-            Waypoints e{};
+            ThjWaypoints e{};
             e.id        = row[0] ? Strings::ToInt(row[0]) : 0;
             e.shortname = row[1] ? row[1] : "";
             e.long_name = row[2] ? row[2] : "";
@@ -118,4 +141,4 @@ public:
     }
 };
 
-#endif //EQEMU_WAYPOINTS_REPOSITORY_H
+#endif //EQEMU_THJ_WAYPOINTS_REPOSITORY_H

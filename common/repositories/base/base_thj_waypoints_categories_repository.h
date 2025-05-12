@@ -9,24 +9,18 @@
  * @docs https://docs.eqemu.io/developer/repositories
  */
 
-#ifndef EQEMU_BASE_WAYPOINTS_REPOSITORY_H
-#define EQEMU_BASE_WAYPOINTS_REPOSITORY_H
+#ifndef EQEMU_BASE_THJ_WAYPOINTS_CATEGORIES_REPOSITORY_H
+#define EQEMU_BASE_THJ_WAYPOINTS_CATEGORIES_REPOSITORY_H
 
 #include "../../database.h"
 #include "../../strings.h"
 #include <ctime>
 
-class BaseWaypointsRepository {
+class BaseThjWaypointsCategoriesRepository {
 public:
-	struct Waypoints {
+	struct ThjWaypointsCategories {
 		int32_t     id;
-		std::string shortname;
-		std::string long_name;
-		int32_t     category;
-		float       x;
-		float       y;
-		float       z;
-		float       heading;
+		std::string name;
 	};
 
 	static std::string PrimaryKey()
@@ -38,13 +32,7 @@ public:
 	{
 		return {
 			"id",
-			"shortname",
-			"long_name",
-			"category",
-			"x",
-			"y",
-			"z",
-			"heading",
+			"name",
 		};
 	}
 
@@ -52,13 +40,7 @@ public:
 	{
 		return {
 			"id",
-			"shortname",
-			"long_name",
-			"category",
-			"x",
-			"y",
-			"z",
-			"heading",
+			"name",
 		};
 	}
 
@@ -74,7 +56,7 @@ public:
 
 	static std::string TableName()
 	{
-		return std::string("waypoints");
+		return std::string("thj_waypoints_categories");
 	}
 
 	static std::string BaseSelect()
@@ -95,39 +77,33 @@ public:
 		);
 	}
 
-	static Waypoints NewEntity()
+	static ThjWaypointsCategories NewEntity()
 	{
-		Waypoints e{};
+		ThjWaypointsCategories e{};
 
-		e.id        = 0;
-		e.shortname = "";
-		e.long_name = "";
-		e.category  = 0;
-		e.x         = 0;
-		e.y         = 0;
-		e.z         = 0;
-		e.heading   = 0;
+		e.id   = 0;
+		e.name = "";
 
 		return e;
 	}
 
-	static Waypoints GetWaypoints(
-		const std::vector<Waypoints> &waypointss,
-		int waypoints_id
+	static ThjWaypointsCategories GetThjWaypointsCategories(
+		const std::vector<ThjWaypointsCategories> &thj_waypoints_categoriess,
+		int thj_waypoints_categories_id
 	)
 	{
-		for (auto &waypoints : waypointss) {
-			if (waypoints.id == waypoints_id) {
-				return waypoints;
+		for (auto &thj_waypoints_categories : thj_waypoints_categoriess) {
+			if (thj_waypoints_categories.id == thj_waypoints_categories_id) {
+				return thj_waypoints_categories;
 			}
 		}
 
 		return NewEntity();
 	}
 
-	static Waypoints FindOne(
+	static ThjWaypointsCategories FindOne(
 		Database& db,
-		int waypoints_id
+		int thj_waypoints_categories_id
 	)
 	{
 		auto results = db.QueryDatabase(
@@ -135,22 +111,16 @@ public:
 				"{} WHERE {} = {} LIMIT 1",
 				BaseSelect(),
 				PrimaryKey(),
-				waypoints_id
+				thj_waypoints_categories_id
 			)
 		);
 
 		auto row = results.begin();
 		if (results.RowCount() == 1) {
-			Waypoints e{};
+			ThjWaypointsCategories e{};
 
-			e.id        = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.shortname = row[1] ? row[1] : "";
-			e.long_name = row[2] ? row[2] : "";
-			e.category  = row[3] ? static_cast<int32_t>(atoi(row[3])) : 0;
-			e.x         = row[4] ? strtof(row[4], nullptr) : 0;
-			e.y         = row[5] ? strtof(row[5], nullptr) : 0;
-			e.z         = row[6] ? strtof(row[6], nullptr) : 0;
-			e.heading   = row[7] ? strtof(row[7], nullptr) : 0;
+			e.id   = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.name = row[1] ? row[1] : "";
 
 			return e;
 		}
@@ -160,7 +130,7 @@ public:
 
 	static int DeleteOne(
 		Database& db,
-		int waypoints_id
+		int thj_waypoints_categories_id
 	)
 	{
 		auto results = db.QueryDatabase(
@@ -168,7 +138,7 @@ public:
 				"DELETE FROM {} WHERE {} = {}",
 				TableName(),
 				PrimaryKey(),
-				waypoints_id
+				thj_waypoints_categories_id
 			)
 		);
 
@@ -177,20 +147,15 @@ public:
 
 	static int UpdateOne(
 		Database& db,
-		const Waypoints &e
+		const ThjWaypointsCategories &e
 	)
 	{
 		std::vector<std::string> v;
 
 		auto columns = Columns();
 
-		v.push_back(columns[1] + " = '" + Strings::Escape(e.shortname) + "'");
-		v.push_back(columns[2] + " = '" + Strings::Escape(e.long_name) + "'");
-		v.push_back(columns[3] + " = " + std::to_string(e.category));
-		v.push_back(columns[4] + " = " + std::to_string(e.x));
-		v.push_back(columns[5] + " = " + std::to_string(e.y));
-		v.push_back(columns[6] + " = " + std::to_string(e.z));
-		v.push_back(columns[7] + " = " + std::to_string(e.heading));
+		v.push_back(columns[0] + " = " + std::to_string(e.id));
+		v.push_back(columns[1] + " = '" + Strings::Escape(e.name) + "'");
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -205,21 +170,15 @@ public:
 		return (results.Success() ? results.RowsAffected() : 0);
 	}
 
-	static Waypoints InsertOne(
+	static ThjWaypointsCategories InsertOne(
 		Database& db,
-		Waypoints e
+		ThjWaypointsCategories e
 	)
 	{
 		std::vector<std::string> v;
 
 		v.push_back(std::to_string(e.id));
-		v.push_back("'" + Strings::Escape(e.shortname) + "'");
-		v.push_back("'" + Strings::Escape(e.long_name) + "'");
-		v.push_back(std::to_string(e.category));
-		v.push_back(std::to_string(e.x));
-		v.push_back(std::to_string(e.y));
-		v.push_back(std::to_string(e.z));
-		v.push_back(std::to_string(e.heading));
+		v.push_back("'" + Strings::Escape(e.name) + "'");
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -241,7 +200,7 @@ public:
 
 	static int InsertMany(
 		Database& db,
-		const std::vector<Waypoints> &entries
+		const std::vector<ThjWaypointsCategories> &entries
 	)
 	{
 		std::vector<std::string> insert_chunks;
@@ -250,13 +209,7 @@ public:
 			std::vector<std::string> v;
 
 			v.push_back(std::to_string(e.id));
-			v.push_back("'" + Strings::Escape(e.shortname) + "'");
-			v.push_back("'" + Strings::Escape(e.long_name) + "'");
-			v.push_back(std::to_string(e.category));
-			v.push_back(std::to_string(e.x));
-			v.push_back(std::to_string(e.y));
-			v.push_back(std::to_string(e.z));
-			v.push_back(std::to_string(e.heading));
+			v.push_back("'" + Strings::Escape(e.name) + "'");
 
 			insert_chunks.push_back("(" + Strings::Implode(",", v) + ")");
 		}
@@ -274,9 +227,9 @@ public:
 		return (results.Success() ? results.RowsAffected() : 0);
 	}
 
-	static std::vector<Waypoints> All(Database& db)
+	static std::vector<ThjWaypointsCategories> All(Database& db)
 	{
-		std::vector<Waypoints> all_entries;
+		std::vector<ThjWaypointsCategories> all_entries;
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -288,16 +241,10 @@ public:
 		all_entries.reserve(results.RowCount());
 
 		for (auto row = results.begin(); row != results.end(); ++row) {
-			Waypoints e{};
+			ThjWaypointsCategories e{};
 
-			e.id        = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.shortname = row[1] ? row[1] : "";
-			e.long_name = row[2] ? row[2] : "";
-			e.category  = row[3] ? static_cast<int32_t>(atoi(row[3])) : 0;
-			e.x         = row[4] ? strtof(row[4], nullptr) : 0;
-			e.y         = row[5] ? strtof(row[5], nullptr) : 0;
-			e.z         = row[6] ? strtof(row[6], nullptr) : 0;
-			e.heading   = row[7] ? strtof(row[7], nullptr) : 0;
+			e.id   = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.name = row[1] ? row[1] : "";
 
 			all_entries.push_back(e);
 		}
@@ -305,9 +252,9 @@ public:
 		return all_entries;
 	}
 
-	static std::vector<Waypoints> GetWhere(Database& db, const std::string &where_filter)
+	static std::vector<ThjWaypointsCategories> GetWhere(Database& db, const std::string &where_filter)
 	{
-		std::vector<Waypoints> all_entries;
+		std::vector<ThjWaypointsCategories> all_entries;
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -320,16 +267,10 @@ public:
 		all_entries.reserve(results.RowCount());
 
 		for (auto row = results.begin(); row != results.end(); ++row) {
-			Waypoints e{};
+			ThjWaypointsCategories e{};
 
-			e.id        = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.shortname = row[1] ? row[1] : "";
-			e.long_name = row[2] ? row[2] : "";
-			e.category  = row[3] ? static_cast<int32_t>(atoi(row[3])) : 0;
-			e.x         = row[4] ? strtof(row[4], nullptr) : 0;
-			e.y         = row[5] ? strtof(row[5], nullptr) : 0;
-			e.z         = row[6] ? strtof(row[6], nullptr) : 0;
-			e.heading   = row[7] ? strtof(row[7], nullptr) : 0;
+			e.id   = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.name = row[1] ? row[1] : "";
 
 			all_entries.push_back(e);
 		}
@@ -399,19 +340,13 @@ public:
 
 	static int ReplaceOne(
 		Database& db,
-		const Waypoints &e
+		const ThjWaypointsCategories &e
 	)
 	{
 		std::vector<std::string> v;
 
 		v.push_back(std::to_string(e.id));
-		v.push_back("'" + Strings::Escape(e.shortname) + "'");
-		v.push_back("'" + Strings::Escape(e.long_name) + "'");
-		v.push_back(std::to_string(e.category));
-		v.push_back(std::to_string(e.x));
-		v.push_back(std::to_string(e.y));
-		v.push_back(std::to_string(e.z));
-		v.push_back(std::to_string(e.heading));
+		v.push_back("'" + Strings::Escape(e.name) + "'");
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -426,7 +361,7 @@ public:
 
 	static int ReplaceMany(
 		Database& db,
-		const std::vector<Waypoints> &entries
+		const std::vector<ThjWaypointsCategories> &entries
 	)
 	{
 		std::vector<std::string> insert_chunks;
@@ -435,13 +370,7 @@ public:
 			std::vector<std::string> v;
 
 			v.push_back(std::to_string(e.id));
-			v.push_back("'" + Strings::Escape(e.shortname) + "'");
-			v.push_back("'" + Strings::Escape(e.long_name) + "'");
-			v.push_back(std::to_string(e.category));
-			v.push_back(std::to_string(e.x));
-			v.push_back(std::to_string(e.y));
-			v.push_back(std::to_string(e.z));
-			v.push_back(std::to_string(e.heading));
+			v.push_back("'" + Strings::Escape(e.name) + "'");
 
 			insert_chunks.push_back("(" + Strings::Implode(",", v) + ")");
 		}
@@ -460,4 +389,4 @@ public:
 	}
 };
 
-#endif //EQEMU_BASE_WAYPOINTS_REPOSITORY_H
+#endif //EQEMU_BASE_THJ_WAYPOINTS_CATEGORIES_REPOSITORY_H

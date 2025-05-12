@@ -9,18 +9,18 @@
  * @docs https://docs.eqemu.io/developer/repositories
  */
 
-#ifndef EQEMU_BASE_CHARACTER_WAYPOINTS_REPOSITORY_H
-#define EQEMU_BASE_CHARACTER_WAYPOINTS_REPOSITORY_H
+#ifndef EQEMU_BASE_THJ_WAYPOINTS_ACCOUNT_REPOSITORY_H
+#define EQEMU_BASE_THJ_WAYPOINTS_ACCOUNT_REPOSITORY_H
 
 #include "../../database.h"
 #include "../../strings.h"
 #include <ctime>
 
-class BaseCharacterWaypointsRepository {
+class BaseThjWaypointsAccountRepository {
 public:
-	struct CharacterWaypoints {
+	struct ThjWaypointsAccount {
 		int32_t  id;
-		uint64_t character_id;
+		uint64_t account_id;
 		int32_t  waypoint_id;
 		time_t   unlock_time;
 	};
@@ -34,7 +34,7 @@ public:
 	{
 		return {
 			"id",
-			"character_id",
+			"account_id",
 			"waypoint_id",
 			"unlock_time",
 		};
@@ -44,7 +44,7 @@ public:
 	{
 		return {
 			"id",
-			"character_id",
+			"account_id",
 			"waypoint_id",
 			"UNIX_TIMESTAMP(unlock_time)",
 		};
@@ -62,7 +62,7 @@ public:
 
 	static std::string TableName()
 	{
-		return std::string("character_waypoints");
+		return std::string("thj_waypoints_account");
 	}
 
 	static std::string BaseSelect()
@@ -83,35 +83,35 @@ public:
 		);
 	}
 
-	static CharacterWaypoints NewEntity()
+	static ThjWaypointsAccount NewEntity()
 	{
-		CharacterWaypoints e{};
+		ThjWaypointsAccount e{};
 
-		e.id           = 0;
-		e.character_id = 0;
-		e.waypoint_id  = 0;
-		e.unlock_time  = std::time(nullptr);
+		e.id          = 0;
+		e.account_id  = 0;
+		e.waypoint_id = 0;
+		e.unlock_time = std::time(nullptr);
 
 		return e;
 	}
 
-	static CharacterWaypoints GetCharacterWaypoints(
-		const std::vector<CharacterWaypoints> &character_waypointss,
-		int character_waypoints_id
+	static ThjWaypointsAccount GetThjWaypointsAccount(
+		const std::vector<ThjWaypointsAccount> &thj_waypoints_accounts,
+		int thj_waypoints_account_id
 	)
 	{
-		for (auto &character_waypoints : character_waypointss) {
-			if (character_waypoints.id == character_waypoints_id) {
-				return character_waypoints;
+		for (auto &thj_waypoints_account : thj_waypoints_accounts) {
+			if (thj_waypoints_account.id == thj_waypoints_account_id) {
+				return thj_waypoints_account;
 			}
 		}
 
 		return NewEntity();
 	}
 
-	static CharacterWaypoints FindOne(
+	static ThjWaypointsAccount FindOne(
 		Database& db,
-		int character_waypoints_id
+		int thj_waypoints_account_id
 	)
 	{
 		auto results = db.QueryDatabase(
@@ -119,18 +119,18 @@ public:
 				"{} WHERE {} = {} LIMIT 1",
 				BaseSelect(),
 				PrimaryKey(),
-				character_waypoints_id
+				thj_waypoints_account_id
 			)
 		);
 
 		auto row = results.begin();
 		if (results.RowCount() == 1) {
-			CharacterWaypoints e{};
+			ThjWaypointsAccount e{};
 
-			e.id           = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.character_id = row[1] ? strtoull(row[1], nullptr, 10) : 0;
-			e.waypoint_id  = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
-			e.unlock_time  = strtoll(row[3] ? row[3] : "-1", nullptr, 10);
+			e.id          = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.account_id  = row[1] ? strtoull(row[1], nullptr, 10) : 0;
+			e.waypoint_id = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
+			e.unlock_time = strtoll(row[3] ? row[3] : "-1", nullptr, 10);
 
 			return e;
 		}
@@ -140,7 +140,7 @@ public:
 
 	static int DeleteOne(
 		Database& db,
-		int character_waypoints_id
+		int thj_waypoints_account_id
 	)
 	{
 		auto results = db.QueryDatabase(
@@ -148,7 +148,7 @@ public:
 				"DELETE FROM {} WHERE {} = {}",
 				TableName(),
 				PrimaryKey(),
-				character_waypoints_id
+				thj_waypoints_account_id
 			)
 		);
 
@@ -157,14 +157,14 @@ public:
 
 	static int UpdateOne(
 		Database& db,
-		const CharacterWaypoints &e
+		const ThjWaypointsAccount &e
 	)
 	{
 		std::vector<std::string> v;
 
 		auto columns = Columns();
 
-		v.push_back(columns[1] + " = " + std::to_string(e.character_id));
+		v.push_back(columns[1] + " = " + std::to_string(e.account_id));
 		v.push_back(columns[2] + " = " + std::to_string(e.waypoint_id));
 		v.push_back(columns[3] + " = FROM_UNIXTIME(" + (e.unlock_time > 0 ? std::to_string(e.unlock_time) : "null") + ")");
 
@@ -181,15 +181,15 @@ public:
 		return (results.Success() ? results.RowsAffected() : 0);
 	}
 
-	static CharacterWaypoints InsertOne(
+	static ThjWaypointsAccount InsertOne(
 		Database& db,
-		CharacterWaypoints e
+		ThjWaypointsAccount e
 	)
 	{
 		std::vector<std::string> v;
 
 		v.push_back(std::to_string(e.id));
-		v.push_back(std::to_string(e.character_id));
+		v.push_back(std::to_string(e.account_id));
 		v.push_back(std::to_string(e.waypoint_id));
 		v.push_back("FROM_UNIXTIME(" + (e.unlock_time > 0 ? std::to_string(e.unlock_time) : "null") + ")");
 
@@ -213,7 +213,7 @@ public:
 
 	static int InsertMany(
 		Database& db,
-		const std::vector<CharacterWaypoints> &entries
+		const std::vector<ThjWaypointsAccount> &entries
 	)
 	{
 		std::vector<std::string> insert_chunks;
@@ -222,7 +222,7 @@ public:
 			std::vector<std::string> v;
 
 			v.push_back(std::to_string(e.id));
-			v.push_back(std::to_string(e.character_id));
+			v.push_back(std::to_string(e.account_id));
 			v.push_back(std::to_string(e.waypoint_id));
 			v.push_back("FROM_UNIXTIME(" + (e.unlock_time > 0 ? std::to_string(e.unlock_time) : "null") + ")");
 
@@ -242,9 +242,9 @@ public:
 		return (results.Success() ? results.RowsAffected() : 0);
 	}
 
-	static std::vector<CharacterWaypoints> All(Database& db)
+	static std::vector<ThjWaypointsAccount> All(Database& db)
 	{
-		std::vector<CharacterWaypoints> all_entries;
+		std::vector<ThjWaypointsAccount> all_entries;
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -256,12 +256,12 @@ public:
 		all_entries.reserve(results.RowCount());
 
 		for (auto row = results.begin(); row != results.end(); ++row) {
-			CharacterWaypoints e{};
+			ThjWaypointsAccount e{};
 
-			e.id           = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.character_id = row[1] ? strtoull(row[1], nullptr, 10) : 0;
-			e.waypoint_id  = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
-			e.unlock_time  = strtoll(row[3] ? row[3] : "-1", nullptr, 10);
+			e.id          = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.account_id  = row[1] ? strtoull(row[1], nullptr, 10) : 0;
+			e.waypoint_id = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
+			e.unlock_time = strtoll(row[3] ? row[3] : "-1", nullptr, 10);
 
 			all_entries.push_back(e);
 		}
@@ -269,9 +269,9 @@ public:
 		return all_entries;
 	}
 
-	static std::vector<CharacterWaypoints> GetWhere(Database& db, const std::string &where_filter)
+	static std::vector<ThjWaypointsAccount> GetWhere(Database& db, const std::string &where_filter)
 	{
-		std::vector<CharacterWaypoints> all_entries;
+		std::vector<ThjWaypointsAccount> all_entries;
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -284,12 +284,12 @@ public:
 		all_entries.reserve(results.RowCount());
 
 		for (auto row = results.begin(); row != results.end(); ++row) {
-			CharacterWaypoints e{};
+			ThjWaypointsAccount e{};
 
-			e.id           = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.character_id = row[1] ? strtoull(row[1], nullptr, 10) : 0;
-			e.waypoint_id  = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
-			e.unlock_time  = strtoll(row[3] ? row[3] : "-1", nullptr, 10);
+			e.id          = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.account_id  = row[1] ? strtoull(row[1], nullptr, 10) : 0;
+			e.waypoint_id = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
+			e.unlock_time = strtoll(row[3] ? row[3] : "-1", nullptr, 10);
 
 			all_entries.push_back(e);
 		}
@@ -359,13 +359,13 @@ public:
 
 	static int ReplaceOne(
 		Database& db,
-		const CharacterWaypoints &e
+		const ThjWaypointsAccount &e
 	)
 	{
 		std::vector<std::string> v;
 
 		v.push_back(std::to_string(e.id));
-		v.push_back(std::to_string(e.character_id));
+		v.push_back(std::to_string(e.account_id));
 		v.push_back(std::to_string(e.waypoint_id));
 		v.push_back("FROM_UNIXTIME(" + (e.unlock_time > 0 ? std::to_string(e.unlock_time) : "null") + ")");
 
@@ -382,7 +382,7 @@ public:
 
 	static int ReplaceMany(
 		Database& db,
-		const std::vector<CharacterWaypoints> &entries
+		const std::vector<ThjWaypointsAccount> &entries
 	)
 	{
 		std::vector<std::string> insert_chunks;
@@ -391,7 +391,7 @@ public:
 			std::vector<std::string> v;
 
 			v.push_back(std::to_string(e.id));
-			v.push_back(std::to_string(e.character_id));
+			v.push_back(std::to_string(e.account_id));
 			v.push_back(std::to_string(e.waypoint_id));
 			v.push_back("FROM_UNIXTIME(" + (e.unlock_time > 0 ? std::to_string(e.unlock_time) : "null") + ")");
 
@@ -412,4 +412,4 @@ public:
 	}
 };
 
-#endif //EQEMU_BASE_CHARACTER_WAYPOINTS_REPOSITORY_H
+#endif //EQEMU_BASE_THJ_WAYPOINTS_ACCOUNT_REPOSITORY_H

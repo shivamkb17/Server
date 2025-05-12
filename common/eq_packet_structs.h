@@ -1521,6 +1521,7 @@ struct WaypointListEntry_Struct {
 struct WaypointList_Struct {
 	bool group_enabled;
 	bool expedition_enabled;
+	bool group_selected;
     uint32_t entry_count;
     WaypointListEntry_Struct entries[];
 };

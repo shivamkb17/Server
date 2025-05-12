@@ -11,7 +11,7 @@
 
 std::vector<ThjWaypointsRepository::ThjWaypoints>& Zone::GetAllWaypoints(bool force_reload) {
     if (force_reload || m_all_waypoints.empty()) {
-        m_all_waypoints = ThjWaypointsRepository::All(database);
+        m_all_waypoints = ThjWaypointsRepository::All(content_db);
     }
 
     return m_all_waypoints;
@@ -95,8 +95,12 @@ void Client::SendWaypointList() {
 
     wp_list->group_enabled = AllowExpandedWaypoints();
     wp_list->expedition_enabled = (AllowExpandedWaypoints() && GetExpedition());
-	wp_list->group_selected = false;
+    wp_list->group_selected = false;
     wp_list->entry_count = entry_count;
+
+    // Add counters for enabled/disabled waypoints
+    size_t enabled_count = 0;
+    size_t disabled_count = 0;
 
     // Interleave all waypoints with unlocked status
     for (size_t i = 0; i < entry_count; i++) {
@@ -105,7 +109,16 @@ void Client::SendWaypointList() {
 
         entry.category_id = wp.category;
         entry.waypoint_id = wp.id;
-        entry.enabled = (unlocked_ids.find(wp.id) != unlocked_ids.end()) ? 1 : 0;
+        bool is_enabled = (unlocked_ids.find(wp.id) != unlocked_ids.end());
+        entry.enabled = is_enabled ? 1 : 0;
+
+        // Update counters
+        if (is_enabled) {
+            enabled_count++;
+        } else {
+            disabled_count++;
+        }
+
         strncpy(entry.name, wp.long_name.c_str(), sizeof(entry.name) - 1);
         entry.name[sizeof(entry.name) - 1] = '\0';
     }
@@ -113,9 +126,11 @@ void Client::SendWaypointList() {
     QueuePacket(outapp);
     safe_delete(outapp);
 
-    LogDebug("Sent {} waypoints to client {} (Group: {}, Expedition: {})",
+    LogDebug("Sent {} waypoints to client {} (Enabled: {}, Disabled: {}, Group: {}, Expedition: {})",
              entry_count,
              GetName(),
+             enabled_count,
+             disabled_count,
              wp_list->group_enabled ? "Enabled" : "Disabled",
              wp_list->expedition_enabled ? "Enabled" : "Disabled");
 }
@@ -147,23 +162,5 @@ void Client::EnableExpandedWaypoints() {
     m_expanded_waypoints = 1;
     SetAccountBucket("expanded_waypoints", "true");
 
-    size_t packet_size = sizeof(bool) +   // group_enabled
-                         sizeof(bool) +   // expedition_enabled
-                         sizeof(uint32);  // entry_count
-
-    auto outapp = new EQApplicationPacket(OP_WaypointList, packet_size);
-
-    WaypointList_Struct* wp_list = reinterpret_cast<WaypointList_Struct*>(outapp->pBuffer);
-
-    wp_list->group_enabled = true;
-    wp_list->expedition_enabled = GetExpedition();
-	wp_list->group_selected = false;
-    wp_list->entry_count = 0;
-
-    QueuePacket(outapp);
-    safe_delete(outapp);
-
-    LogDebug("Sent expanded waypoints enabled packet to client {} (Group: Enabled, Expedition: {})",
-             GetName(),
-             wp_list->expedition_enabled ? "Enabled" : "Disabled");
+	SendWaypointList();
 }

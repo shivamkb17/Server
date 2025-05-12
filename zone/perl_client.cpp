@@ -1605,6 +1605,13 @@ void Perl_Client_SendWaypointList(Client* self)
 	}
 }
 
+void Perl_Client_EnableExpandedWaypoints(Client* self)
+{
+	if (self) {
+		self->EnableExpandedWaypoints();
+	}
+}
+
 void Perl_Client_SendWebLink(Client* self, const char* url) // @categories Script Utility
 {
 	self->SendWebLink(url);
@@ -3964,6 +3971,7 @@ void perl_register_client()
 	package.add("SendToInstance", &Perl_Client_SendToInstance);
 	package.add("SendWebLink", &Perl_Client_SendWebLink);
 	package.add("SendWaypointList", &Perl_Client_SendWaypointList);
+	package.add("EnableExpandedWaypoints", &Perl_Client_EnableExpandedWaypoints);
 	package.add("SendZoneFlagInfo", &Perl_Client_SendZoneFlagInfo);
 	package.add("SetAAEXPModifier", (void(*)(Client*, float))&Perl_Client_SetAAEXPModifier);
 	package.add("SetAAEXPModifier", (void(*)(Client*, uint32, float))&Perl_Client_SetAAEXPModifier);

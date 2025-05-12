@@ -355,7 +355,8 @@ public:
 
 	// Waypoints
 	std::vector<ThjWaypointsRepository::ThjWaypoints>& GetAllWaypoints(bool force_reload = true);
-	bool WaypointShouldSpawn(std::string zone_shortname);
+	const ThjWaypointsRepository::ThjWaypoints* WaypointGetSpawn(std::string zone_shortname);
+	bool SpawnWaypointNPC();
 
 	WaterMap *watermap;
 	ZonePoint *GetClosestZonePoint(const glm::vec3 &location, uint32 to, Client *client, float max_distance = 40000.0f);

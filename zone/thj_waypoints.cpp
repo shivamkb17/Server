@@ -17,8 +17,36 @@ std::vector<ThjWaypointsRepository::ThjWaypoints>& Zone::GetAllWaypoints(bool fo
     return m_all_waypoints;
 }
 
-bool Zone::WaypointShouldSpawn(std::string zone_shortname) {
+const ThjWaypointsRepository::ThjWaypoints* Zone::WaypointGetSpawn(std::string zone_shortname) {
+    auto waypoints = GetAllWaypoints();
 
+    for (const auto& wp : waypoints) {
+        if (wp.shortname == zone_shortname) {
+            return &wp;
+        }
+    }
+
+    return nullptr;
+}
+
+bool Zone::SpawnWaypointNPC()
+{
+	#define WAYPOINT_NPC_ID 26999
+
+	auto waypoint = WaypointGetSpawn(short_name);
+
+	if (!waypoint) {
+		return false;
+	}
+
+	glm::vec4 position = glm::vec4(waypoint->x, waypoint->y, waypoint->z, waypoint->heading);
+	if(auto waypoint_npctype = content_db.LoadNPCTypesData(WAYPOINT_NPC_ID))
+	{
+		auto waypoint_npc = new NPC(waypoint_npctype, nullptr, position, GravityBehavior::Water);
+		entity_list.AddNPC(waypoint_npc, true, true);
+	}
+
+	return true;
 }
 
 std::vector<ThjWaypointsRepository::ThjWaypoints>& Client::GetUnlockedWaypoints(bool force_reload) {

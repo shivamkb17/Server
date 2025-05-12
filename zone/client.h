@@ -76,6 +76,7 @@ namespace EQ
 #include "../common/repositories/buyer_buy_lines_repository.h"
 #include "../common/repositories/character_evolving_items_repository.h"
 #include "../common/repositories/player_titlesets_repository.h"
+#include "../common/repositories/waypoints_repository.h"
 
 #include "bot_structs.h"
 
@@ -953,13 +954,18 @@ public:
 	uint32 GetMoney(uint8 type, uint8 subtype);
 	int GetAccountAge();
 
-	std::vector<WaypointListEntry_Struct> GetAllWaypoints();
-	bool IsWaypointUnlocked(int32_t waypoint_id, bool check_account = true);
-	bool UnlockWaypoint(const std::string& shortname, bool unlock_account = true);
-	bool UnlockWaypointByShortname(const std::string& shortname, bool add_to_account = true);
-	bool UnlockWaypointById(int32_t waypoint_id, bool add_to_account = true);
+private:
+	std::vector<WaypointsRepository::Waypoints> m_unlocked_waypoints = { };
+	int m_expanded_waypoints = -1;
+
+public:
+	std::vector<WaypointsRepository::Waypoints>& GetUnlockedWaypoints(bool force_reload = false);
+	bool IsWaypointUnlocked(int32 waypoint_id);
+	bool UnlockWaypoint(int32 waypoint_id);
 	void SendWaypointList();
-	bool GroupWaypointsEnabled();
+	bool AllowAccountWaypoints();
+	bool AllowExpandedWaypoints();
+	void EnableExpandedWaypoints();
 
 	void SendPath(Mob* target);
 

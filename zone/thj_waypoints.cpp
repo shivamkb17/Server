@@ -37,7 +37,7 @@ bool Zone::SpawnWaypointNPC()
 
 	auto waypoint = WaypointGetSpawn(short_name);
 
-	if (!waypoint) {
+	if (!waypoint || entity_list.GetNPCByID(26999)) {
 		return false;
 	}
 
@@ -130,6 +130,10 @@ bool Client::WaypointUnlock(std::string waypoint_shortname)
 }
 
 bool Client::WaypointUnlock(int32 waypoint_id) {
+    if (WaypointCheck(waypoint_id)) {
+        return false;
+    }
+
     bool added = false;
 
     if (AllowAccountWaypoints()) {
@@ -168,11 +172,7 @@ void Client::WaypointListSend(bool force) {
     wp_list->expedition_enabled = (WaypointCheckGroupFeature() && GetExpedition());
     wp_list->group_selected = GetWaypointGroupFeatureState();
     wp_list->entry_count = entry_count;
-	wp_list->force_show = force;
-
-    // Add counters for enabled/disabled waypoints
-    size_t enabled_count = 0;
-    size_t disabled_count = 0;
+    wp_list->force_show = force;
 
     // Interleave all waypoints with unlocked status
     for (size_t i = 0; i < entry_count; i++) {
@@ -184,25 +184,22 @@ void Client::WaypointListSend(bool force) {
         bool is_enabled = (unlocked_ids.find(wp.id) != unlocked_ids.end());
         entry.enabled = is_enabled ? 1 : 0;
 
-        // Update counters
-        if (is_enabled) {
-            enabled_count++;
+        if (wp.shortname == std::string(zone->GetShortName())) {
+            std::string modified_name = wp.long_name + " [Current Zone]";
+            strncpy(entry.name, modified_name.c_str(), sizeof(entry.name) - 1);
+            entry.enabled = 0;
         } else {
-            disabled_count++;
+            strncpy(entry.name, wp.long_name.c_str(), sizeof(entry.name) - 1);
         }
-
-        strncpy(entry.name, wp.long_name.c_str(), sizeof(entry.name) - 1);
         entry.name[sizeof(entry.name) - 1] = '\0';
     }
 
     QueuePacket(outapp);
     safe_delete(outapp);
 
-    LogDebug("Sent {} waypoints to client {} (Enabled: {}, Disabled: {}, Group: {}, Expedition: {})",
+    LogDebug("Sent {} waypoints to client {} (Group: {}, Expedition: {})",
              entry_count,
              GetName(),
-             enabled_count,
-             disabled_count,
              wp_list->group_enabled ? "Enabled" : "Disabled",
              wp_list->expedition_enabled ? "Enabled" : "Disabled");
 }
@@ -240,8 +237,6 @@ void Client::TransportToWaypoint(uint32 waypoint_id)
 		return;
     }
 
-    //MovePC(zone_id, instance_id, x, y, z, h, zone_mode);
-
 	auto group = GetGroup();
 	if (GetWaypointGroupFeatureState() && group) {
 		for (const auto& gm : group->members) {
@@ -249,21 +244,21 @@ void Client::TransportToWaypoint(uint32 waypoint_id)
 				continue;
 			}
 
-			gm->CastToClient()->WayportGroupTransport(this, zone_id, "", x, y, z, h);
+			gm->CastToClient()->WayportGroupTransport(zone_id, x, y, z, h);
 		}
 	} else {
-		WayportGroupTransport(this, zone_id, "", x, y, z, h);
+		WayportGroupTransport(zone_id, x, y, z, h);
 	}
 }
 
-void Client::WayportGroupTransport(Mob *Caster, uint32 zoneID, const char* zoneName, float x, float y, float z, float heading) {
-    if (!Caster || PendingTranslocate)
+void Client::WayportGroupTransport(uint32 zoneID, float x, float y, float z, float heading) {
+    if (PendingTranslocate)
         return;
 
     auto outapp = new EQApplicationPacket(OP_Translocate, sizeof(Translocate_Struct));
     Translocate_Struct *ts = (Translocate_Struct*)outapp->pBuffer;
 
-    strcpy(ts->Caster, Caster->GetName());
+    strn0cpy(ts->Caster, "The Magic Map", sizeof(ts->Caster));
     ts->SpellID = 0;
 
     PendingTranslocateData.spell_id = 0;

@@ -973,7 +973,7 @@ public:
 	void TransportToWaypoint(uint32 waypoint_id);
 	bool GetWaypointGroupFeatureState();
 	void SetWaypointGroupFeatureState(bool val);
-	void WayportGroupTransport(Mob *Caster, uint32 zoneID, const char* zoneName, float x, float y, float z, float heading);
+	void WayportGroupTransport(uint32 zoneID, float x, float y, float z, float heading);
 
 	void SendPath(Mob* target);
 

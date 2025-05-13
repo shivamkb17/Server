@@ -41,14 +41,6 @@ public:
      * All
      */
 
-    // Get all waypoints for a specific account
-    static std::vector<ThjWaypointsAccount> GetByAccountId(Database& db, uint64 account_id) {
-        return GetWhere(
-            db,
-            fmt::format("account_id = {}", account_id)
-        );
-    }
-
     // Check if an account has a specific waypoint
     static bool HasWaypoint(Database& db, uint64 account_id, int32 waypoint_id) {
         auto count = Count(
@@ -97,59 +89,6 @@ public:
         }
 
         return waypoint_ids;
-    }
-
-    // Remove a specific waypoint from an account
-    static bool RemoveWaypoint(Database& db, uint64 account_id, int32 waypoint_id) {
-        return DeleteWhere(
-            db,
-            fmt::format(
-                "account_id = {} AND waypoint_id = {}",
-                account_id,
-                waypoint_id
-            )
-        ) > 0;
-    }
-
-    // Get all accounts that have a specific waypoint
-    static std::vector<uint64> GetAccountsWithWaypoint(Database& db, int32 waypoint_id) {
-        std::vector<uint64> account_ids;
-
-        auto results = db.QueryDatabase(
-            fmt::format(
-                "SELECT DISTINCT account_id FROM {} WHERE waypoint_id = {}",
-                TableName(),
-                waypoint_id
-            )
-        );
-
-        if (results.Success()) {
-            for (auto row = results.begin(); row != results.end(); ++row) {
-                account_ids.push_back(Strings::ToUnsignedBigInt(row[0]));
-            }
-        }
-
-        return account_ids;
-    }
-
-    // Get waypoints unlocked after a certain time
-    static std::vector<ThjWaypointsAccount> GetUnlockedAfter(Database& db, uint64 account_id, time_t timestamp) {
-        return GetWhere(
-            db,
-            fmt::format(
-                "account_id = {} AND unlock_time > FROM_UNIXTIME({})",
-                account_id,
-                timestamp
-            )
-        );
-    }
-
-    // Count waypoints for an account
-    static int64 CountWaypointsForAccount(Database& db, uint64 account_id) {
-        return Count(
-            db,
-            fmt::format("account_id = {}", account_id)
-        );
     }
 };
 

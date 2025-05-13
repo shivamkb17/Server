@@ -7,6 +7,7 @@
 #include "client.h"
 #include "zone.h"
 #include "dynamic_zone.h"
+#include "groups.h"
 
 #include "thj_waypoints.h"
 
@@ -239,7 +240,50 @@ void Client::TransportToWaypoint(uint32 waypoint_id)
 		return;
     }
 
-    MovePC(zone_id, instance_id, x, y, z, h, zone_mode);
+    //MovePC(zone_id, instance_id, x, y, z, h, zone_mode);
+
+	auto group = GetGroup();
+	if (GetWaypointGroupFeatureState() && group) {
+		for (const auto& gm : group->members) {
+			if (!gm->IsClient()) {
+				continue;
+			}
+
+			gm->CastToClient()->WayportGroupTransport(this, zone_id, "", x, y, z, h);
+		}
+	} else {
+		WayportGroupTransport(this, zone_id, "", x, y, z, h);
+	}
+}
+
+void Client::WayportGroupTransport(Mob *Caster, uint32 zoneID, const char* zoneName, float x, float y, float z, float heading) {
+    if (!Caster || PendingTranslocate)
+        return;
+
+    auto outapp = new EQApplicationPacket(OP_Translocate, sizeof(Translocate_Struct));
+    Translocate_Struct *ts = (Translocate_Struct*)outapp->pBuffer;
+
+    strcpy(ts->Caster, Caster->GetName());
+    ts->SpellID = 0;
+
+    PendingTranslocateData.spell_id = 0;
+    PendingTranslocateData.zone_id = ts->ZoneID = zoneID;
+    PendingTranslocateData.instance_id = 0;
+    PendingTranslocateData.x = ts->x = x;
+    PendingTranslocateData.y = ts->y = y;
+    PendingTranslocateData.z = ts->z = z;
+    PendingTranslocateData.heading = heading;
+
+    ts->unknown008 = 0;
+    ts->Complete = 0;
+
+    PendingTranslocate = true;
+    TranslocateTime = time(nullptr);
+
+    QueuePacket(outapp);
+    safe_delete(outapp);
+
+    return;
 }
 
 bool Client::GetWaypointGroupFeatureState()

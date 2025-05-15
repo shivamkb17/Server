@@ -159,10 +159,7 @@ void Client::WaypointListSend(bool force) {
     }
 
     size_t entry_count = all_waypoints.size();
-    size_t packet_size = sizeof(bool) +
-                         sizeof(bool) +
-                         sizeof(uint32) +
-                         (entry_count * sizeof(WaypointListEntry_Struct));
+	size_t packet_size = sizeof(WaypointList_Struct) + (entry_count * sizeof(WaypointListEntry_Struct));
 
     auto outapp = new EQApplicationPacket(OP_WaypointList, packet_size);
 

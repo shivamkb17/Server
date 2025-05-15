@@ -159,7 +159,10 @@ void Client::WaypointListSend(int x, int y, int z, bool force) {
     }
 
     size_t entry_count = all_waypoints.size();
-	size_t packet_size = sizeof(WaypointList_Struct) + (entry_count * sizeof(WaypointListEntry_Struct));
+    size_t packet_size = sizeof(bool) +
+                         sizeof(bool) +
+                         sizeof(uint32) +
+                         (entry_count * sizeof(WaypointListEntry_Struct));
 
     auto outapp = new EQApplicationPacket(OP_WaypointList, packet_size);
 
@@ -171,15 +174,19 @@ void Client::WaypointListSend(int x, int y, int z, bool force) {
     wp_list->entry_count = entry_count;
     wp_list->force_show = force;
 
+	LogDebug("Check 1");
+
 	wp_list->x = x;
 	wp_list->y = y;
 	wp_list->z = z;
+
+	LogDebug("Check 2");
 
 	m_waypoint_x = x;
 	m_waypoint_y = y;
 	m_waypoint_z = z;
 
-	LogDebug("x [{}] y [{}] z[{}]", wp_list->x, wp_list->y, wp_list->z);
+	LogDebug("Check 3");
 
     // Interleave all waypoints with unlocked status
     for (size_t i = 0; i < entry_count; i++) {
@@ -203,6 +210,12 @@ void Client::WaypointListSend(int x, int y, int z, bool force) {
 
     QueuePacket(outapp);
     safe_delete(outapp);
+
+    LogDebug("Sent {} waypoints to client {} (Group: {}, Expedition: {})",
+             entry_count,
+             GetName(),
+             wp_list->group_enabled ? "Enabled" : "Disabled",
+             wp_list->expedition_enabled ? "Enabled" : "Disabled");
 }
 
 void Client::TransportToWaypoint(uint32 waypoint_id)

@@ -350,7 +350,5 @@ SELECT
     COUNT(*) as count
 FROM thj_waypoints;
 
--- View the migration summary
-SELECT * FROM v_thj_waypoints_summary;
-
+SELECT * FROM peq.v_thj_waypoints_summary;
 */

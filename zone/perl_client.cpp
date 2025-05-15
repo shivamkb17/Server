@@ -49,10 +49,10 @@ void Perl_Client_WorldKick(Client* self) // @categories Script Utility
 	self->WorldKick();
 }
 
-void Perl_Client_WaypointListSend(Client* self)
+void Perl_Client_WaypointListSend(Client* self, int x, int y, int z)
 {
 	if (self) {
-		self->WaypointListSend();
+		self->WaypointListSend(x, y, z, true);
 	}
 }
 
@@ -4174,7 +4174,7 @@ void perl_register_client()
 	package.add("UpdateWho", (void(*)(Client*, uint8))&Perl_Client_UpdateWho);
 	package.add("UseDiscipline", &Perl_Client_UseDiscipline);
 	package.add("UseAugmentContainer", &Perl_Client_UseAugmentContainer);
-	package.add("WaypointListSend", (void(*)(Client*))&Perl_Client_WaypointListSend);
+	package.add("WaypointListSend", (void(*)(Client*, int, int, int))&Perl_Client_WaypointListSend);
 	package.add("WaypointUnlock", (bool(*)(Client*, std::string))&Perl_Client_WaypointUnlock);
 	package.add("WaypointCheck", (bool(*)(Client*, std::string))&Perl_Client_WaypointCheck);
 	package.add("WaypointCheckGroupFeature", (bool(*)(Client*))&Perl_Client_WaypointCheckGroupFeature);

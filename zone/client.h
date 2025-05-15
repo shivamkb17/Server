@@ -958,6 +958,9 @@ private:
 	std::vector<ThjWaypointsRepository::ThjWaypoints> m_unlocked_waypoints = { };
 	int m_expanded_waypoints = -1;
 	int m_group_feature_state = -1;
+	int m_waypoint_x;
+	int m_waypoint_y;
+	int m_waypoint_z;
 
 public:
 	std::vector<ThjWaypointsRepository::ThjWaypoints>& GetUnlockedWaypoints(bool force_reload = false);
@@ -966,7 +969,7 @@ public:
 	const ThjWaypointsRepository::ThjWaypoints* GetWaypoint(int waypoint_id);
 	bool WaypointUnlock(int32 waypoint_id);
 	bool WaypointUnlock(std::string waypoint_shortname);
-	void WaypointListSend(bool force = true);
+	void WaypointListSend(int x, int y, int z, bool force = true);
 	bool AllowAccountWaypoints();
 	bool WaypointCheckGroupFeature();
 	void WaypointEnableGroupFeature();

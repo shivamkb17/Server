@@ -60,9 +60,9 @@ bool Lua_Client::IsLD() {
 	return self->IsLD();
 }
 
-void Lua_Client::WaypointListSend() {
+void Lua_Client::WaypointListSend(int x, int y, int z) {
 	Lua_Safe_Call_Void();
-	self->WaypointListSend();
+	self->WaypointListSend(x, y, z, true);
 }
 
 bool Lua_Client::WaypointUnlock(std::string waypoint_shortname) {

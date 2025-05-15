@@ -639,7 +639,7 @@ public:
 	bool IsPetNameChangeAllowed();
 	void ClearPetNameChange();
 
-	void WaypointListSend(int x, int y, int z);
+	void WaypointListSend();
 	bool WaypointUnlock(std::string waypoint_shortname);
 	bool WaypointCheck(std::string waypoint_shortname);
 	bool WaypointCheckGroupFeature();

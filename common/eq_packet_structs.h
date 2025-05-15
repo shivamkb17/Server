@@ -1519,14 +1519,11 @@ struct WaypointListEntry_Struct {
 };
 
 struct WaypointList_Struct {
-    bool group_enabled;
-    bool expedition_enabled;
-    bool group_selected;
-    bool force_show = false;
+	bool group_enabled;
+	bool expedition_enabled;
+	bool group_selected;
+	bool force_show = false;
     uint32_t entry_count;
-    int32_t x;
-    int32_t y;
-    int32_t z;
     WaypointListEntry_Struct entries[];
 };
 

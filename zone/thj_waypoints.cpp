@@ -149,7 +149,7 @@ bool Client::WaypointUnlock(int32 waypoint_id) {
     return added;
 }
 
-void Client::WaypointListSend(int x, int y, int z, bool force) {
+void Client::WaypointListSend(bool force) {
     auto& all_waypoints = zone->GetAllWaypoints();
     auto& unlocked_waypoints = GetUnlockedWaypoints();
 
@@ -173,20 +173,6 @@ void Client::WaypointListSend(int x, int y, int z, bool force) {
     wp_list->group_selected = GetWaypointGroupFeatureState();
     wp_list->entry_count = entry_count;
     wp_list->force_show = force;
-
-	LogDebug("Check 1");
-
-	wp_list->x = x;
-	wp_list->y = y;
-	wp_list->z = z;
-
-	LogDebug("Check 2");
-
-	m_waypoint_x = x;
-	m_waypoint_y = y;
-	m_waypoint_z = z;
-
-	LogDebug("Check 3");
 
     // Interleave all waypoints with unlocked status
     for (size_t i = 0; i < entry_count; i++) {
@@ -348,5 +334,5 @@ void Client::WaypointEnableGroupFeature() {
     m_expanded_waypoints = 1;
     SetAccountBucket("expanded_waypoints", "true");
 
-	WaypointListSend(0, 0, 0, false);
+	WaypointListSend(false);
 }

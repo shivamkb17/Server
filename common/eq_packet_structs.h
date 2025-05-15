@@ -1525,6 +1525,9 @@ struct WaypointList_Struct {
     bool force_show;
     bool autoconfirm_selected;
     uint32_t entry_count;
+    int32_t x;
+    int32_t y;
+    int32_t z;
     WaypointListEntry_Struct entries[];
 };
 

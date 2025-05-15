@@ -171,6 +171,20 @@ void Client::SendWaypointList(bool force) {
     wp_list->entry_count = entry_count;
     wp_list->force_show = force;
 
+	LogDebug("Check 1");
+
+	wp_list->x = x;
+	wp_list->y = y;
+	wp_list->z = z;
+
+	LogDebug("Check 2");
+
+	m_waypoint_x = x;
+	m_waypoint_y = y;
+	m_waypoint_z = z;
+
+	LogDebug("Check 3");
+
     // Interleave all waypoints with unlocked status
     for (size_t i = 0; i < entry_count; i++) {
         const auto& wp = all_waypoints[i];

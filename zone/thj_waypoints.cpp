@@ -40,10 +40,22 @@ bool Zone::SpawnWaypointNPC()
 #define WAYPOINT_NPC_ID 26999
 
 	auto waypoint = WaypointGetSpawn(short_name);
+	auto present = entity_list.GetNPCByID(26999);
 
-	if (!waypoint || entity_list.GetNPCByID(26999))
+	if (!waypoint)
 	{
-		LogWaypointsDetail("Skipping spawning Waypoint, already present or not required.");
+		if (present) {
+			present->Depop();
+			LogWaypoints("Despawning Waypoint which is no longer configured in database.");
+		}
+
+		LogWaypointsDetail("Skipping spawning Waypoint, not required.");
+		return false;
+	}
+
+	if (present)
+	{
+		LogWaypointsDetail("Skipping spawning Waypoint, already present.");
 		return false;
 	}
 

@@ -6196,38 +6196,64 @@ void Mob::ApplyDamageTable(DamageHitInfo &hit)
 	bool ignoreDefault = false;
 	LuaParser::Instance()->ApplyDamageTable(this, hit, ignoreDefault);
 
-	if (ignoreDefault) {
+	if (ignoreDefault)
+	{
 		return;
 	}
 #endif
 
-	// someone may want to add this to custom servers, can remove this if that's the case
-	if (!IsClient()&& !IsBot()) {
+	if (!IsClient() && !IsBot())
+	{
 		return;
 	}
 
-	// this was parsed, but we do see the min of 10 and the normal minus factor is 105, so makes sense
 	if (hit.offense < 115)
 		return;
 
-	// things that come out to 1 dmg seem to skip this (ex non-bash slam classes)
 	if (hit.damage_done < 2)
 		return;
 
 	auto &damage_table = GetDamageTable();
 
-	if (zone->random.Roll(damage_table.chance))
-		return;
-
 	int basebonus = hit.offense - damage_table.minusfactor;
 	basebonus = std::max(10, basebonus / 2);
 	int extrapercent = zone->random.Roll0(basebonus);
-	int percent = std::min(100 + extrapercent, damage_table.max_extra);
+	int raw_percent = std::min(100 + extrapercent, damage_table.max_extra);
+
+	int percent;
+
+	if (hit.skill == EQ::skills::SkillArchery)
+	{
+		float bonus_scale = RuleR(Custom, MinimumArcheryDamageBonus);
+		int bonus_range = damage_table.max_extra - 100;
+		int min_percent = 100 + static_cast<int>(bonus_range * bonus_scale);
+
+		percent = std::max(raw_percent, min_percent);
+
+		if (zone->random.Roll(damage_table.chance))
+		{
+			// Roll passed = no bonus, apply minimum
+			percent = min_percent;
+		}
+
+		LogDebugDetail("ApplyDamageTable [Archery]: raw [{}], min [{}], final [{}] (scale {:.2f})",
+				 raw_percent, min_percent, percent, bonus_scale);
+	}
+	else
+	{
+		if (zone->random.Roll(damage_table.chance))
+		{
+			return;
+		}
+		percent = raw_percent;
+	}
+
 	hit.damage_done = (hit.damage_done * percent) / 100;
 
 	if (IsWarriorClass() && GetLevel() > 54)
 		hit.damage_done++;
-	Log(Logs::Detail, Logs::Attack, "Damage table applied %d (max %d)", percent, damage_table.max_extra);
+
+	Log(Logs::Detail, Logs::Attack, "Damage table applied %d%% (max %d%%)", percent, damage_table.max_extra);
 }
 
 void Mob::TrySkillProc(Mob *on, EQ::skills::SkillType skill, uint16 ReuseTime, bool Success, uint16 hand, bool IsDefensive)

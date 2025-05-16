@@ -168,6 +168,7 @@ void Client::SendWaypointList(bool force) {
     wp_list->group_enabled = CheckWaypointGroupFeature();
     wp_list->expedition_enabled = (CheckWaypointGroupFeature() && GetExpedition());
     wp_list->group_selected = GetWaypointGroupFeatureState();
+	wp_list->autoconfirm_selected = GetWaypointAutoTransportState();
     wp_list->entry_count = entry_count;
     wp_list->force_show = force;
 
@@ -209,14 +210,20 @@ void Client::TransportToWaypoint(uint32 waypoint_id)
     float y = 0.0f;
     float z = 0.0f;
     float h = 0.0f;
-    uint8 zone_mode = ZoneToSafeCoords;
+    ZoneMode zone_mode = ZoneSolicited;
 
     if (waypoint_id == 0) {
         if (GetExpedition()) {
             zone_id = GetExpedition()->GetZoneID();
             instance_id = GetExpedition()->GetInstanceID();
-            zone_mode = ZoneSolicited;
-            LogDebug("Expedition teleport -> Zone: [{}], Instance: [{}]", zone_id, instance_id);
+            zone_mode = ZoneMode::ZoneToSafeCoords;
+
+			auto safe_coords = zone_store.GetZoneSafeCoordinates(zone_id, database.GetInstanceVersion(instance_id));
+
+			x = safe_coords.x;
+			y = safe_coords.y;
+			z = safe_coords.z;
+			h = safe_coords.w;
         }
     }
     else if (auto waypoint = GetWaypoint(waypoint_id)) {
@@ -227,28 +234,39 @@ void Client::TransportToWaypoint(uint32 waypoint_id)
 
         zone_mode = ZoneSolicited;
         zone_id = zone_store.GetZoneID(waypoint->shortname);
-        LogDebug("Waypoint teleport -> Zone: [{}], Waypoint ID: [{}]", zone_id, waypoint_id);
     }
     else {
         LogError("Waypoint not found");
 		return;
     }
 
+	LogDebug("Teleport to Waypoint for [{}] -> Zone: [{}], Instance: [{}], X: [{}], Y: [{}], Z: [{}], H: [{}]", GetCleanName(), zone_id, instance_id, x, y, z, h);
+
 	auto group = GetGroup();
 	if (GetWaypointGroupFeatureState() && group) {
 		for (const auto& gm : group->members) {
-			if (!gm->IsClient()) {
+			if (!gm || !gm->IsClient()) {
 				continue;
 			}
 
-			gm->CastToClient()->WayportGroupTransport(zone_id, x, y, z, h);
+			auto gmc = gm->CastToClient();
+
+			if (gmc->GetWaypointAutoTransportState()) {
+				gmc->WaypointTransport(zone_id, instance_id, x, y, z, h, zone_mode);
+			} else {
+				gmc->PromptWaypointTransport(zone_id, instance_id, x, y, z, h);
+			}
 		}
 	} else {
-		WayportGroupTransport(zone_id, x, y, z, h);
+		if (GetWaypointAutoTransportState()) {
+			WaypointTransport(zone_id, instance_id, x, y, z, h, zone_mode);
+		} else {
+			PromptWaypointTransport(zone_id, instance_id, x, y, z, h);
+		}
 	}
 }
 
-void Client::WayportGroupTransport(uint32 zoneID, float x, float y, float z, float heading) {
+void Client::PromptWaypointTransport(uint32 zoneID, uint32 instance_id, float x, float y, float z, float heading) {
     if (PendingTranslocate)
         return;
 
@@ -260,7 +278,7 @@ void Client::WayportGroupTransport(uint32 zoneID, float x, float y, float z, flo
 
     PendingTranslocateData.spell_id = 0;
     PendingTranslocateData.zone_id = ts->ZoneID = zoneID;
-    PendingTranslocateData.instance_id = 0;
+    PendingTranslocateData.instance_id = instance_id;
     PendingTranslocateData.x = ts->x = x;
     PendingTranslocateData.y = ts->y = y;
     PendingTranslocateData.z = ts->z = z;
@@ -275,6 +293,11 @@ void Client::WayportGroupTransport(uint32 zoneID, float x, float y, float z, flo
     QueuePacket(outapp);
     safe_delete(outapp);
 
+    return;
+}
+
+void Client::WaypointTransport(uint32 zoneID, uint32 instance_id, float x, float y, float z, float heading, ZoneMode zm) {
+	MovePC(zoneID, instance_id, x, y, y, heading, 0, zm);
     return;
 }
 
@@ -295,6 +318,7 @@ bool Client::GetWaypointGroupFeatureState()
         m_group_feature_state = (bucket_val == "enabled") ? 1 : 0;
     }
 
+	LogDebug("Group Port State: [{}]", (m_group_feature_state == 1));
     return (m_group_feature_state == 1);
 }
 
@@ -302,13 +326,37 @@ void Client::SetWaypointGroupFeatureState(bool val)
 {
     m_group_feature_state = val ? 1 : 0;
 
-	LogDebug("Setting State to .... [{}]", val);
-
     if (val) {
         SetBucket("waypoints.group_feature_state", "enabled");
     } else {
         SetBucket("waypoints.group_feature_state", "disabled");
     }
+
+	LogDebug("Group Port State: [{}]", (m_group_feature_state == 1));
+}
+
+bool Client::GetWaypointAutoTransportState()
+{
+    if (m_auto_transport_state == -1) {
+        std::string bucket_val = GetBucket("waypoints.auto_transport_state");
+        m_auto_transport_state = (bucket_val == "enabled") ? 1 : 0;
+    }
+
+	LogDebug("Auto Port State: [{}]", (m_auto_transport_state == 1));
+    return (m_auto_transport_state == 1);
+}
+
+void Client::SetWaypointAutoTransportState(bool val)
+{
+    m_auto_transport_state = val ? 1 : 0;
+
+    if (val) {
+        SetBucket("waypoints.auto_transport_state", "enabled");
+    } else {
+        SetBucket("waypoints.auto_transport_state", "disabled");
+    }
+
+	LogDebug("Auto Port State: [{}]", (m_auto_transport_state == 1));
 }
 
 bool Client::CheckWaypointGroupFeature() {

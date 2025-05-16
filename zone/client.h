@@ -958,6 +958,7 @@ private:
 	std::vector<ThjWaypointsRepository::ThjWaypoints> m_unlocked_waypoints = { };
 	int m_expanded_waypoints = -1;
 	int m_group_feature_state = -1;
+	int m_auto_transport_state = -1;
 
 public:
 	std::vector<ThjWaypointsRepository::ThjWaypoints>& GetUnlockedWaypoints(bool force_reload = false);
@@ -973,7 +974,10 @@ public:
 	void TransportToWaypoint(uint32 waypoint_id);
 	bool GetWaypointGroupFeatureState();
 	void SetWaypointGroupFeatureState(bool val);
-	void WayportGroupTransport(uint32 zoneID, float x, float y, float z, float heading);
+	bool GetWaypointAutoTransportState();
+	void SetWaypointAutoTransportState(bool val);
+	void PromptWaypointTransport(uint32 zoneID, uint32 instance_id, float x, float y, float z, float heading);
+	void WaypointTransport(uint32 zoneID, uint32 instance_id, float x, float y, float z, float heading, ZoneMode zm);
 
 	void SendPath(Mob* target);
 

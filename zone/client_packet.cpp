@@ -17034,6 +17034,7 @@ void Client::Handle_OP_WaypointRequest(const EQApplicationPacket *app)
     WaypointRequest_Struct* waypoint_request = (WaypointRequest_Struct*) app->pBuffer;
 
 	SetWaypointGroupFeatureState(waypoint_request->group_selected);
+	SetWaypointAutoTransportState(waypoint_request->autoconfirm_selected);
 
     if (waypoint_request->expedition_selected && GetExpedition() && CheckWaypointGroupFeature())
 	{

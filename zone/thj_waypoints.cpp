@@ -52,27 +52,33 @@ bool Zone::SpawnWaypointNPC()
 }
 
 std::vector<ThjWaypointsRepository::ThjWaypoints>& Client::GetUnlockedWaypoints(bool force_reload) {
-    if (force_reload || m_unlocked_waypoints.empty()) {
-        m_unlocked_waypoints.clear();
+    if (!force_reload && !m_unlocked_waypoints.empty()) {
+        return m_unlocked_waypoints;
+    }
 
-        auto all_waypoints = ThjWaypointsRepository::All(content_db);
-        std::set<int32> unlocked_ids;
+    m_unlocked_waypoints.clear();
 
-        if (AllowAccountWaypoints()) {
-            auto account_waypoints = ThjWaypointsAccountRepository::GetWaypointIds(database, AccountID());
-            unlocked_ids.insert(account_waypoints.begin(), account_waypoints.end());
-        } else {
-            auto character_waypoints = ThjWaypointsCharacterRepository::GetWaypointIds(database, CharacterID());
-            unlocked_ids.insert(character_waypoints.begin(), character_waypoints.end());
-        }
+    auto all_waypoints = ThjWaypointsRepository::All(content_db);
+    std::set<int32> unlocked_ids;
 
-        auto race_waypoints = ThjWaypointsDefaultRepository::GetWaypointIdsForCharacter(content_db, GetBaseRace(), GetClassesBits(), GetLevel());
-        unlocked_ids.insert(race_waypoints.begin(), race_waypoints.end());
+    // Load character or account waypoints
+    const auto& waypoint_ids = AllowAccountWaypoints()
+        ? ThjWaypointsAccountRepository::GetWaypointIds(database, AccountID())
+        : ThjWaypointsCharacterRepository::GetWaypointIds(database, CharacterID());
 
-        for (const auto& wp : all_waypoints) {
-            if (unlocked_ids.find(wp.id) != unlocked_ids.end()) {
-                m_unlocked_waypoints.push_back(wp);
-            }
+    unlocked_ids.insert(waypoint_ids.begin(), waypoint_ids.end());
+
+    // Load race/class/level based defaults
+    auto race_waypoints = ThjWaypointsDefaultRepository::GetWaypointIdsForCharacter(
+        content_db, GetBaseRace(), GetClassesBits(), GetLevel()
+    );
+
+    unlocked_ids.insert(race_waypoints.begin(), race_waypoints.end());
+
+    // Filter unlocked waypoints
+    for (const auto& wp : all_waypoints) {
+        if (unlocked_ids.count(wp.id)) {
+            m_unlocked_waypoints.push_back(wp);
         }
     }
 
@@ -142,7 +148,7 @@ bool Client::UnlockWaypoint(int32 waypoint_id) {
     }
 
     if (added) {
-        GetUnlockedWaypoints(true);
+        m_unlocked_waypoints.clear();
     }
 
     return added;
@@ -374,5 +380,5 @@ void Client::EnableWaypointGroupFeature() {
     m_expanded_waypoints = 1;
     SetAccountBucket("waypoints.group_feature", "true");
 
-	SendWaypointList(false);
+    SendWaypointList(false);
 }

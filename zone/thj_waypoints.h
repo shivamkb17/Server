@@ -351,4 +351,5 @@ SELECT
 FROM thj_waypoints;
 
 SELECT * FROM peq.v_thj_waypoints_summary;
+
 */

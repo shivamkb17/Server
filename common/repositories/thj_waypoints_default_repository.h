@@ -18,28 +18,6 @@
 
 class ThjWaypointsDefaultRepository: public BaseThjWaypointsDefaultRepository {
 public:
-    /**
-     * This file was auto generated and can be modified and extended upon
-     *
-     * Base repository methods are automatically
-     * generated in the "base" version of this repository. The base repository
-     * is immutable and to be left untouched, while methods in this class
-     * are used as extension methods for more specific persistence-layer
-     * accessors or mutators.
-     *
-     * Base Methods (Subject to be expanded upon in time)
-     *
-     * Note: Not all tables are designed appropriately to fit functionality with all base methods
-     *
-     * InsertOne
-     * UpdateOne
-     * DeleteOne
-     * FindOne
-     * GetWhere(std::string where_filter)
-     * DeleteWhere(std::string where_filter)
-     * InsertMany
-     * All
-     */
 
     // Get all waypoint IDs for a character based on race, class, and level
     static std::vector<int32> GetWaypointIdsForCharacter(Database& db, int32 race_id, int32 class_id, int32 level) {

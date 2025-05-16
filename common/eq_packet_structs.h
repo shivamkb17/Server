@@ -1513,7 +1513,7 @@ struct CustomDiscTimers_Struct {
 
 struct WaypointListEntry_Struct {
     int32_t category_id;
-	int32_t waypoint_id;
+    int32_t waypoint_id;
     uint8_t enabled;
     char name[64];
 };

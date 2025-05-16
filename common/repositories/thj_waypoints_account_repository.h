@@ -18,28 +18,6 @@
 
 class ThjWaypointsAccountRepository: public BaseThjWaypointsAccountRepository {
 public:
-    /**
-     * This file was auto generated and can be modified and extended upon
-     *
-     * Base repository methods are automatically
-     * generated in the "base" version of this repository. The base repository
-     * is immutable and to be left untouched, while methods in this class
-     * are used as extension methods for more specific persistence-layer
-     * accessors or mutators.
-     *
-     * Base Methods (Subject to be expanded upon in time)
-     *
-     * Note: Not all tables are designed appropriately to fit functionality with all base methods
-     *
-     * InsertOne
-     * UpdateOne
-     * DeleteOne
-     * FindOne
-     * GetWhere(std::string where_filter)
-     * DeleteWhere(std::string where_filter)
-     * InsertMany
-     * All
-     */
 
     // Check if an account has a specific waypoint
     static bool HasWaypoint(Database& db, uint64 account_id, int32 waypoint_id) {
@@ -61,12 +39,12 @@ public:
             return true; // Already has it
         }
 
-        ThjWaypointsAccount entry = NewEntity();
-        entry.account_id = account_id;
-        entry.waypoint_id = waypoint_id;
-        entry.unlock_time = std::time(nullptr);
+        ThjWaypointsAccount e = NewEntity();
+        e.account_id = account_id;
+        e.waypoint_id = waypoint_id;
+        e.unlock_time = std::time(nullptr);
 
-        auto result = InsertOne(db, entry);
+        auto result = InsertOne(db, e);
         return result.id > 0;
     }
 

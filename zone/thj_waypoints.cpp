@@ -31,8 +31,7 @@ const ThjWaypointsRepository::ThjWaypoints* Zone::WaypointGetSpawn(std::string z
     return nullptr;
 }
 
-bool Zone::SpawnWaypointNPC()
-{
+bool Zone::SpawnWaypointNPC() {
 	#define WAYPOINT_NPC_ID 26999
 
 	auto waypoint = WaypointGetSpawn(short_name);
@@ -86,9 +85,7 @@ std::vector<ThjWaypointsRepository::ThjWaypoints>& Client::GetUnlockedWaypoints(
 }
 
 bool Client::IsWaypointUnlocked(int32 waypoint_id) {
-    auto& waypoints = GetUnlockedWaypoints();
-
-    for (const auto& wp : waypoints) {
+    for (const auto& wp : GetUnlockedWaypoints()) {
         if (wp.id == waypoint_id) {
             return true;
         }
@@ -98,9 +95,7 @@ bool Client::IsWaypointUnlocked(int32 waypoint_id) {
 }
 
 bool Client::IsWaypointUnlocked(std::string waypoint_shortname) {
-    auto& waypoints = GetUnlockedWaypoints();
-
-    for (const auto& wp : waypoints) {
+    for (const auto& wp : GetUnlockedWaypoints()) {
         if (wp.shortname == waypoint_shortname) {
             return true;
         }
@@ -110,9 +105,7 @@ bool Client::IsWaypointUnlocked(std::string waypoint_shortname) {
 }
 
 const ThjWaypointsRepository::ThjWaypoints* Client::GetWaypoint(int waypoint_id) {
-	auto& waypoints = GetUnlockedWaypoints();
-
-    for (const auto& wp : waypoints) {
+    for (const auto& wp : GetUnlockedWaypoints()) {
         if (wp.id == waypoint_id) {
             return &wp;
         }
@@ -121,11 +114,8 @@ const ThjWaypointsRepository::ThjWaypoints* Client::GetWaypoint(int waypoint_id)
     return nullptr;
 }
 
-bool Client::UnlockWaypoint(std::string waypoint_shortname)
-{
-    auto all_waypoints = zone->GetAllWaypoints();
-
-    for (const auto& waypoint : all_waypoints) {
+bool Client::UnlockWaypoint(std::string waypoint_shortname) {
+    for (const auto& waypoint : zone->GetAllWaypoints()) {
         if (waypoint.shortname == waypoint_shortname) {
             return UnlockWaypoint(waypoint.id);
         }
@@ -207,8 +197,7 @@ void Client::SendWaypointList(bool force) {
 					wp_list->expedition_enabled ? "Enabled" : "Disabled");
 }
 
-void Client::TransportToWaypoint(uint32 waypoint_id)
-{
+void Client::TransportToWaypoint(uint32 waypoint_id) {
     uint32 zone_id = Zones::BAZAAR;  // Default to bazaar
     uint32 instance_id = 0;
     float x = 0.0f;
@@ -311,8 +300,7 @@ bool Client::AllowAccountWaypoints() {
     return true;
 }
 
-bool Client::GetWaypointGroupFeatureState()
-{
+bool Client::GetWaypointGroupFeatureState() {
     if (!CheckWaypointGroupFeature())
     {
         return false;
@@ -326,8 +314,7 @@ bool Client::GetWaypointGroupFeatureState()
     return (m_group_feature_state == 1);
 }
 
-void Client::SetWaypointGroupFeatureState(bool val)
-{
+void Client::SetWaypointGroupFeatureState(bool val) {
     m_group_feature_state = val ? 1 : 0;
 
     if (val) {
@@ -337,8 +324,7 @@ void Client::SetWaypointGroupFeatureState(bool val)
     }
 }
 
-bool Client::GetWaypointAutoTransportState()
-{
+bool Client::GetWaypointAutoTransportState() {
     if (m_auto_transport_state == -1) {
         std::string bucket_val = GetBucket("waypoints.auto_transport_state");
         m_auto_transport_state = (bucket_val == "enabled") ? 1 : 0;
@@ -347,8 +333,7 @@ bool Client::GetWaypointAutoTransportState()
     return (m_auto_transport_state == 1);
 }
 
-void Client::SetWaypointAutoTransportState(bool val)
-{
+void Client::SetWaypointAutoTransportState(bool val) {
     m_auto_transport_state = val ? 1 : 0;
 
     if (val) {

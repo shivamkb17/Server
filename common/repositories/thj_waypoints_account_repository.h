@@ -44,8 +44,7 @@ public:
         e.waypoint_id = waypoint_id;
         e.unlock_time = std::time(nullptr);
 
-        auto result = InsertOne(db, e);
-        return result.id > 0;
+        return InsertOne(db, e).id > 0;
     }
 
     // Get all waypoint IDs for an account

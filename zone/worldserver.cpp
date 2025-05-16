@@ -4680,6 +4680,7 @@ void WorldServer::ProcessReload(const ServerReload::Request& request)
 
 		case ServerReload::Type::Waypoints:
 			zone->GetAllWaypoints(true);
+			zone->SpawnWaypointNPC();
 			break;
 
 		case ServerReload::Type::WorldRepop:

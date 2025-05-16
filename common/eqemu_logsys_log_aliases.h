@@ -929,7 +929,7 @@
 
 #define LogWaypointsDetail(message, ...) do {\
     if (LogSys.IsLogEnabled(Logs::Detail, Logs::Waypoints))\
-        OutF(LogSys, Logs::Detail, Logs::Waypoints__FILE__, __func__, __LINE__, message, ##__VA_ARGS__);\
+        OutF(LogSys, Logs::Detail, Logs::Waypoints, __FILE__, __func__, __LINE__, message, ##__VA_ARGS__);\
 } while (0)
 
 #define Log(debug_level, log_category, message, ...) do {\

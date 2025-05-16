@@ -13,6 +13,7 @@
 
 std::vector<ThjWaypointsRepository::ThjWaypoints>& Zone::GetAllWaypoints(bool force_reload) {
     if (force_reload || m_all_waypoints.empty()) {
+		LogWaypointsDetail("Cache Miss, Loading Waypoints for Zone");
         m_all_waypoints = ThjWaypointsRepository::All(content_db);
     }
 
@@ -20,9 +21,7 @@ std::vector<ThjWaypointsRepository::ThjWaypoints>& Zone::GetAllWaypoints(bool fo
 }
 
 const ThjWaypointsRepository::ThjWaypoints* Zone::WaypointGetSpawn(std::string zone_shortname) {
-    auto waypoints = GetAllWaypoints();
-
-    for (const auto& wp : waypoints) {
+    for (const auto& wp : GetAllWaypoints()) {
         if (wp.shortname == zone_shortname) {
             return &wp;
         }
@@ -37,12 +36,14 @@ bool Zone::SpawnWaypointNPC() {
 	auto waypoint = WaypointGetSpawn(short_name);
 
 	if (!waypoint || entity_list.GetNPCByID(26999)) {
+		LogWaypointsDetail("Skipping spawning Waypoint, already present or not required.");
 		return false;
 	}
 
 	glm::vec4 position = glm::vec4(waypoint->x, waypoint->y, waypoint->z, waypoint->heading);
 	if(auto waypoint_npctype = content_db.LoadNPCTypesData(WAYPOINT_NPC_ID))
 	{
+		LogWaypointsDetail("Spawning Waypoint for zone [{}], instance [{}], version [{}]", GetShortName(), GetInstanceID(), GetInstanceVersion());
 		auto waypoint_npc = new NPC(waypoint_npctype, nullptr, position, GravityBehavior::Water);
 		entity_list.AddNPC(waypoint_npc, true, true);
 	}
@@ -54,6 +55,8 @@ std::vector<ThjWaypointsRepository::ThjWaypoints>& Client::GetUnlockedWaypoints(
     if (!force_reload && !m_unlocked_waypoints.empty()) {
         return m_unlocked_waypoints;
     }
+
+	LogWaypointsDetail("Cache Miss, Loading Waypoints for Client");
 
     m_unlocked_waypoints.clear();
 
@@ -129,6 +132,8 @@ bool Client::UnlockWaypoint(int32 waypoint_id) {
         return false;
     }
 
+	LogWaypointsDetail("Unlocking waypoint [{}] for [{}]", waypoint_id, GetCleanName());
+
     bool added = false;
 
     if (AllowAccountWaypoints()) {
@@ -187,14 +192,14 @@ void Client::SendWaypointList(bool force) {
         entry.name[sizeof(entry.name) - 1] = '\0';
     }
 
-    QueuePacket(outapp);
-    safe_delete(outapp);
-
     LogWaypoints("Sent {} waypoints to client {} (Group: {}, Expedition: {})",
 				e,
 				GetName(),
 				wl->group_enabled ? "Enabled" : "Disabled",
 				wl->expedition_enabled ? "Enabled" : "Disabled");
+
+    QueuePacket(outapp);
+    safe_delete(outapp);
 }
 
 void Client::TransportToWaypoint(uint32 waypoint_id) {
@@ -230,7 +235,7 @@ void Client::TransportToWaypoint(uint32 waypoint_id) {
         zone_id = zone_store.GetZoneID(waypoint->shortname);
     }
     else {
-        LogError("Waypoint not found");
+        LogError("Waypoint [{}] not found", waypoint_id);
         return;
     }
 

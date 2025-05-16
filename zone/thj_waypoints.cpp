@@ -158,19 +158,19 @@ void Client::SendWaypointList(bool force) {
 
     auto outapp = new EQApplicationPacket(OP_WaypointList, packet_size);
 
-    WaypointList_Struct* wp_list = reinterpret_cast<WaypointList_Struct*>(outapp->pBuffer);
+    WaypointList_Struct* wl = reinterpret_cast<WaypointList_Struct*>(outapp->pBuffer);
 
-    wp_list->group_enabled = CheckWaypointGroupFeature();
-    wp_list->expedition_enabled = (CheckWaypointGroupFeature() && GetExpedition());
-    wp_list->group_selected = GetWaypointGroupFeatureState();
-	wp_list->autoconfirm_selected = GetWaypointAutoTransportState();
-    wp_list->entry_count = entry_count;
-    wp_list->force_show = force;
+    wl->group_enabled = CheckWaypointGroupFeature();
+    wl->expedition_enabled = (CheckWaypointGroupFeature() && GetExpedition());
+    wl->group_selected = GetWaypointGroupFeatureState();
+	wl->autoconfirm_selected = GetWaypointAutoTransportState();
+    wl->entry_count = entry_count;
+    wl->force_show = force;
 
     // Interleave all waypoints with unlocked status
     for (size_t i = 0; i < entry_count; i++) {
         const auto& wp = all_waypoints[i];
-        WaypointListEntry_Struct& entry = wp_list->entries[i];
+        WaypointListEntry_Struct& entry = wl->entries[i];
 
         entry.category_id = wp.category;
         entry.waypoint_id = wp.id;
@@ -193,8 +193,8 @@ void Client::SendWaypointList(bool force) {
     LogDebugDetail("Sent {} waypoints to client {} (Group: {}, Expedition: {})",
 					entry_count,
 					GetName(),
-					wp_list->group_enabled ? "Enabled" : "Disabled",
-					wp_list->expedition_enabled ? "Enabled" : "Disabled");
+					wl->group_enabled ? "Enabled" : "Disabled",
+					wl->expedition_enabled ? "Enabled" : "Disabled");
 }
 
 void Client::TransportToWaypoint(uint32 waypoint_id) {
@@ -206,7 +206,7 @@ void Client::TransportToWaypoint(uint32 waypoint_id) {
     float h = 0.0f;
     ZoneMode zone_mode = ZoneSolicited;
 
-    if (waypoint_id == 0) {
+    if (!waypoint_id) {
         if (GetExpedition()) {
             zone_id = GetExpedition()->GetZoneID();
             instance_id = GetExpedition()->GetInstanceID();
@@ -231,7 +231,7 @@ void Client::TransportToWaypoint(uint32 waypoint_id) {
     }
     else {
         LogError("Waypoint not found");
-		return;
+        return;
     }
 
 	LogDebugDetail("Teleport to Waypoint for [{}] -> Zone: [{}], Instance: [{}], X: [{}], Y: [{}], Z: [{}], H: [{}]", GetCleanName(), zone_id, instance_id, x, y, z, h);
@@ -247,17 +247,20 @@ void Client::TransportToWaypoint(uint32 waypoint_id) {
 
 			if (gmc->GetWaypointAutoTransportState()) {
 				gmc->WaypointTransport(zone_id, instance_id, x, y, z, h, zone_mode);
-			} else {
-				gmc->PromptWaypointTransport(zone_id, instance_id, x, y, z, h);
+				return;
 			}
+
+			gmc->PromptWaypointTransport(zone_id, instance_id, x, y, z, h);
 		}
-	} else {
-		if (GetWaypointAutoTransportState()) {
-			WaypointTransport(zone_id, instance_id, x, y, z, h, zone_mode);
-		} else {
-			PromptWaypointTransport(zone_id, instance_id, x, y, z, h);
-		}
+		return;
 	}
+
+	if (GetWaypointAutoTransportState()) {
+		WaypointTransport(zone_id, instance_id, x, y, z, h, zone_mode);
+		return;
+	}
+
+	PromptWaypointTransport(zone_id, instance_id, x, y, z, h);
 }
 
 void Client::PromptWaypointTransport(uint32 zoneID, uint32 instance_id, float x, float y, float z, float heading) {
@@ -311,7 +314,7 @@ bool Client::GetWaypointGroupFeatureState() {
         m_group_feature_state = (bucket_val == "enabled") ? 1 : 0;
     }
 
-    return (m_group_feature_state == 1);
+    return m_group_feature_state;
 }
 
 void Client::SetWaypointGroupFeatureState(bool val) {
@@ -358,7 +361,7 @@ bool Client::CheckWaypointGroupFeature() {
         }
     }
 
-    return (1 == m_expanded_waypoints);
+    return m_expanded_waypoints;
 }
 
 void Client::EnableWaypointGroupFeature() {

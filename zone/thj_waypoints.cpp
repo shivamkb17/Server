@@ -153,8 +153,8 @@ void Client::SendWaypointList(bool force) {
         unlocked_ids.insert(wp.id);
     }
 
-    size_t entry_count = all_waypoints.size();
-	size_t packet_size = sizeof(WaypointList_Struct) + (entry_count * sizeof(WaypointListEntry_Struct));
+    size_t e = all_waypoints.size();
+	size_t packet_size = sizeof(WaypointList_Struct) + (e * sizeof(WaypointListEntry_Struct));
 
     auto outapp = new EQApplicationPacket(OP_WaypointList, packet_size);
 
@@ -164,11 +164,11 @@ void Client::SendWaypointList(bool force) {
     wl->expedition_enabled = (CheckWaypointGroupFeature() && GetExpedition());
     wl->group_selected = GetWaypointGroupFeatureState();
 	wl->autoconfirm_selected = GetWaypointAutoTransportState();
-    wl->entry_count = entry_count;
+    wl->entry_count = e;
     wl->force_show = force;
 
     // Interleave all waypoints with unlocked status
-    for (size_t i = 0; i < entry_count; i++) {
+    for (size_t i = 0; i < e; i++) {
         const auto& wp = all_waypoints[i];
         WaypointListEntry_Struct& entry = wl->entries[i];
 
@@ -191,7 +191,7 @@ void Client::SendWaypointList(bool force) {
     safe_delete(outapp);
 
     LogDebugDetail("Sent {} waypoints to client {} (Group: {}, Expedition: {})",
-					entry_count,
+					e,
 					GetName(),
 					wl->group_enabled ? "Enabled" : "Disabled",
 					wl->expedition_enabled ? "Enabled" : "Disabled");

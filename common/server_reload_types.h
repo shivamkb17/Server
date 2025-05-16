@@ -82,7 +82,7 @@ namespace ServerReload {
 		"Traps",
 		"Variables",
 		"Veteran Rewards",
-		"Waypoints"
+		"Waypoints",
 		"World Repop",
 		"World Repop Timers (Clear Respawn Timers)",
 		"Zone Data",

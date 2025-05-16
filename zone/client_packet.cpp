@@ -17022,31 +17022,30 @@ void Client::Handle_OP_EvolveItem(const EQApplicationPacket *app)
 
 void Client::Handle_OP_WaypointRequest(const EQApplicationPacket *app)
 {
-    if (app->size != sizeof(WaypointRequest_Struct)) {
-        LogError(
-            "Received OP_WaypointRequest packet. Expected size {}, received size {}.",
-            sizeof(WaypointRequest_Struct),
-            app->size
-        );
-        return;
-    }
+	if (app->size != sizeof(WaypointRequest_Struct)) {
+		LogError(
+			"Received OP_WaypointRequest packet. Expected size {}, received size {}.",
+			sizeof(WaypointRequest_Struct),
+			app->size
+		);
+		return;
+	}
 
-    WaypointRequest_Struct* waypoint_request = (WaypointRequest_Struct*) app->pBuffer;
+	WaypointRequest_Struct* waypoint_request = (WaypointRequest_Struct*) app->pBuffer;
 
 	SetWaypointGroupFeatureState(waypoint_request->group_selected);
 	SetWaypointAutoTransportState(waypoint_request->autoconfirm_selected);
 
-    if (waypoint_request->expedition_selected && GetExpedition() && CheckWaypointGroupFeature())
+	if (waypoint_request->expedition_selected && GetExpedition() && CheckWaypointGroupFeature())
 	{
-        TransportToWaypoint(0);
-        return;
-    }
-
-    if (waypoint_request->waypoint_id)
-	{
-    	TransportToWaypoint(waypoint_request->waypoint_id);
+		TransportToWaypoint(0);
+		return;
 	}
 
+	if (waypoint_request->waypoint_id)
+	{
+		TransportToWaypoint(waypoint_request->waypoint_id);
+	}
 }
 
 bool Client::IsFilteredAFKPacket(const EQApplicationPacket *p)

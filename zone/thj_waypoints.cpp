@@ -190,11 +190,11 @@ void Client::SendWaypointList(bool force) {
     QueuePacket(outapp);
     safe_delete(outapp);
 
-    LogDebugDetail("Sent {} waypoints to client {} (Group: {}, Expedition: {})",
-					e,
-					GetName(),
-					wl->group_enabled ? "Enabled" : "Disabled",
-					wl->expedition_enabled ? "Enabled" : "Disabled");
+    LogWaypoints("Sent {} waypoints to client {} (Group: {}, Expedition: {})",
+				e,
+				GetName(),
+				wl->group_enabled ? "Enabled" : "Disabled",
+				wl->expedition_enabled ? "Enabled" : "Disabled");
 }
 
 void Client::TransportToWaypoint(uint32 waypoint_id) {
@@ -234,7 +234,7 @@ void Client::TransportToWaypoint(uint32 waypoint_id) {
         return;
     }
 
-	LogDebugDetail("Teleport to Waypoint for [{}] -> Zone: [{}], Instance: [{}], X: [{}], Y: [{}], Z: [{}], H: [{}]", GetCleanName(), zone_id, instance_id, x, y, z, h);
+	LogWaypoints("Teleport to Waypoint for [{}] -> Zone: [{}], Instance: [{}], X: [{}], Y: [{}], Z: [{}], H: [{}]", GetCleanName(), zone_id, instance_id, x, y, z, h);
 
 	auto group = GetGroup();
 	if (GetWaypointGroupFeatureState() && group) {

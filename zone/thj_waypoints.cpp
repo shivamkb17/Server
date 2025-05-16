@@ -356,7 +356,7 @@ void Client::PromptWaypointTransport(uint32 zoneID, uint32 instance_id, float x,
 
 void Client::WaypointTransport(uint32 zoneID, uint32 instance_id, float x, float y, float z, float heading, ZoneMode zm)
 {
-	MovePC(zoneID, instance_id, x, y, y, heading, 0, zm);
+	MovePC(zoneID, instance_id, x, y, z, heading, 0, zm);
 	return;
 }
 

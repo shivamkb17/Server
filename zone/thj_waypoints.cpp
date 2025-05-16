@@ -80,7 +80,7 @@ std::vector<ThjWaypointsRepository::ThjWaypoints>& Client::GetUnlockedWaypoints(
     return m_unlocked_waypoints;
 }
 
-bool Client::WaypointCheck(int32 waypoint_id) {
+bool Client::IsWaypointUnlocked(int32 waypoint_id) {
     auto& waypoints = GetUnlockedWaypoints();
 
     for (const auto& wp : waypoints) {
@@ -92,7 +92,7 @@ bool Client::WaypointCheck(int32 waypoint_id) {
     return false;
 }
 
-bool Client::WaypointCheck(std::string waypoint_shortname) {
+bool Client::IsWaypointUnlocked(std::string waypoint_shortname) {
     auto& waypoints = GetUnlockedWaypoints();
 
     for (const auto& wp : waypoints) {
@@ -116,21 +116,21 @@ const ThjWaypointsRepository::ThjWaypoints* Client::GetWaypoint(int waypoint_id)
     return nullptr;
 }
 
-bool Client::WaypointUnlock(std::string waypoint_shortname)
+bool Client::UnlockWaypoint(std::string waypoint_shortname)
 {
     auto all_waypoints = zone->GetAllWaypoints();
 
     for (const auto& waypoint : all_waypoints) {
         if (waypoint.shortname == waypoint_shortname) {
-            return WaypointUnlock(waypoint.id);
+            return UnlockWaypoint(waypoint.id);
         }
     }
 
     return false;
 }
 
-bool Client::WaypointUnlock(int32 waypoint_id) {
-    if (WaypointCheck(waypoint_id)) {
+bool Client::UnlockWaypoint(int32 waypoint_id) {
+    if (IsWaypointUnlocked(waypoint_id)) {
         return false;
     }
 
@@ -149,7 +149,7 @@ bool Client::WaypointUnlock(int32 waypoint_id) {
     return added;
 }
 
-void Client::WaypointListSend(bool force) {
+void Client::SendWaypointList(bool force) {
     auto& all_waypoints = zone->GetAllWaypoints();
     auto& unlocked_waypoints = GetUnlockedWaypoints();
 
@@ -165,8 +165,8 @@ void Client::WaypointListSend(bool force) {
 
     WaypointList_Struct* wp_list = reinterpret_cast<WaypointList_Struct*>(outapp->pBuffer);
 
-    wp_list->group_enabled = WaypointCheckGroupFeature();
-    wp_list->expedition_enabled = (WaypointCheckGroupFeature() && GetExpedition());
+    wp_list->group_enabled = CheckWaypointGroupFeature();
+    wp_list->expedition_enabled = (CheckWaypointGroupFeature() && GetExpedition());
     wp_list->group_selected = GetWaypointGroupFeatureState();
     wp_list->entry_count = entry_count;
     wp_list->force_show = force;
@@ -278,16 +278,21 @@ void Client::WayportGroupTransport(uint32 zoneID, float x, float y, float z, flo
     return;
 }
 
+bool Client::AllowAccountWaypoints() {
+    // Can adjust this for Self-Found, Hardcore, etc.
+    return true;
+}
+
 bool Client::GetWaypointGroupFeatureState()
 {
-	if (!WaypointCheckGroupFeature())
-	{
-		return false;
-	}
+    if (!CheckWaypointGroupFeature())
+    {
+        return false;
+    }
 
     if (m_group_feature_state == -1) {
-        std::string bucket_val = GetAccountBucket("group_feature_state");
-        m_group_feature_state = !bucket_val.empty() ? 1 : 0;
+        std::string bucket_val = GetBucket("waypoints.group_feature_state");
+        m_group_feature_state = (bucket_val == "enabled") ? 1 : 0;
     }
 
     return (m_group_feature_state == 1);
@@ -297,25 +302,22 @@ void Client::SetWaypointGroupFeatureState(bool val)
 {
     m_group_feature_state = val ? 1 : 0;
 
+	LogDebug("Setting State to .... [{}]", val);
+
     if (val) {
-        SetBucket("group_feature_state", "enabled");
+        SetBucket("waypoints.group_feature_state", "enabled");
     } else {
-        DeleteBucket("group_feature_state");
+        SetBucket("waypoints.group_feature_state", "disabled");
     }
 }
 
-bool Client::AllowAccountWaypoints() {
-    // Can adjust this for Self-Found, Hardcore, etc.
-    return true;
-}
-
-bool Client::WaypointCheckGroupFeature() {
+bool Client::CheckWaypointGroupFeature() {
     if (GetGM()) {
         return true;
     }
 
     if (m_expanded_waypoints == -1) {
-        std::string bucket_val = GetAccountBucket("expanded_waypoints");
+        std::string bucket_val = GetAccountBucket("waypoints.group_feature");
 
         if (!bucket_val.empty()) {
             m_expanded_waypoints = 1;
@@ -327,9 +329,9 @@ bool Client::WaypointCheckGroupFeature() {
     return (1 == m_expanded_waypoints);
 }
 
-void Client::WaypointEnableGroupFeature() {
+void Client::EnableWaypointGroupFeature() {
     m_expanded_waypoints = 1;
-    SetAccountBucket("expanded_waypoints", "true");
+    SetAccountBucket("waypoints.group_feature", "true");
 
-	WaypointListSend(false);
+	SendWaypointList(false);
 }

@@ -17035,7 +17035,7 @@ void Client::Handle_OP_WaypointRequest(const EQApplicationPacket *app)
 
 	SetWaypointGroupFeatureState(waypoint_request->group_selected);
 
-    if (waypoint_request->expedition_selected && GetExpedition() && WaypointCheckGroupFeature())
+    if (waypoint_request->expedition_selected && GetExpedition() && CheckWaypointGroupFeature())
 	{
         TransportToWaypoint(0);
         return;

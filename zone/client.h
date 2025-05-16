@@ -961,15 +961,15 @@ private:
 
 public:
 	std::vector<ThjWaypointsRepository::ThjWaypoints>& GetUnlockedWaypoints(bool force_reload = false);
-	bool WaypointCheck(int32 waypoint_id);
-	bool WaypointCheck(std::string waypoint_shortname);
+	bool IsWaypointUnlocked(int32 waypoint_id);
+	bool IsWaypointUnlocked(std::string waypoint_shortname);
 	const ThjWaypointsRepository::ThjWaypoints* GetWaypoint(int waypoint_id);
-	bool WaypointUnlock(int32 waypoint_id);
-	bool WaypointUnlock(std::string waypoint_shortname);
-	void WaypointListSend(bool force = true);
+	bool UnlockWaypoint(int32 waypoint_id);
+	bool UnlockWaypoint(std::string waypoint_shortname);
+	void SendWaypointList(bool force = true);
 	bool AllowAccountWaypoints();
-	bool WaypointCheckGroupFeature();
-	void WaypointEnableGroupFeature();
+	bool CheckWaypointGroupFeature();
+	void EnableWaypointGroupFeature();
 	void TransportToWaypoint(uint32 waypoint_id);
 	bool GetWaypointGroupFeatureState();
 	void SetWaypointGroupFeatureState(bool val);

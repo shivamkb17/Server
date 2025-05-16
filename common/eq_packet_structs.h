@@ -1529,9 +1529,10 @@ struct WaypointList_Struct {
 
 struct WaypointRequest_Struct
 {
-    int32_t waypoint_id; // 0 if expedition
-    bool    expedition_selected; // true if expedition
+    int32_t waypoint_id;
+    bool    expedition_selected;
     bool    group_selected;
+    bool    autoconfirm_selected;
 };
 
 /*

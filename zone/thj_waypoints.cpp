@@ -13,7 +13,7 @@
 
 std::vector<ThjWaypointsRepository::ThjWaypoints>& Zone::GetAllWaypoints(bool force_reload) {
     if (force_reload || m_all_waypoints.empty()) {
-		LogWaypointsDetail("Cache Miss, Loading Waypoints for Zone");
+		LogWaypointsDetail("Cache Miss or Reload, Loading Waypoints for Zone");
         m_all_waypoints = ThjWaypointsRepository::All(content_db);
     }
 

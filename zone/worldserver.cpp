@@ -4678,6 +4678,10 @@ void WorldServer::ProcessReload(const ServerReload::Request& request)
 			zone->LoadVeteranRewards();
 			break;
 
+		case ServerReload::Type::Waypoints:
+			zone->GetAllWaypoints(true);
+			break;
+
 		case ServerReload::Type::WorldRepop:
 			parse->ReloadQuests();
 			if (zone && zone->IsLoaded()) {

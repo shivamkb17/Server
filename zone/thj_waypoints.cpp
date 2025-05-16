@@ -53,7 +53,6 @@ bool Zone::SpawnWaypointNPC()
 
 std::vector<ThjWaypointsRepository::ThjWaypoints>& Client::GetUnlockedWaypoints(bool force_reload) {
     if (force_reload || m_unlocked_waypoints.empty()) {
-        LogDebug("Querying Database for waypoints");
         m_unlocked_waypoints.clear();
 
         auto all_waypoints = ThjWaypointsRepository::All(content_db);
@@ -195,11 +194,11 @@ void Client::SendWaypointList(bool force) {
     QueuePacket(outapp);
     safe_delete(outapp);
 
-    LogDebug("Sent {} waypoints to client {} (Group: {}, Expedition: {})",
-             entry_count,
-             GetName(),
-             wp_list->group_enabled ? "Enabled" : "Disabled",
-             wp_list->expedition_enabled ? "Enabled" : "Disabled");
+    LogDebugDetail("Sent {} waypoints to client {} (Group: {}, Expedition: {})",
+					entry_count,
+					GetName(),
+					wp_list->group_enabled ? "Enabled" : "Disabled",
+					wp_list->expedition_enabled ? "Enabled" : "Disabled");
 }
 
 void Client::TransportToWaypoint(uint32 waypoint_id)
@@ -240,7 +239,7 @@ void Client::TransportToWaypoint(uint32 waypoint_id)
 		return;
     }
 
-	LogDebug("Teleport to Waypoint for [{}] -> Zone: [{}], Instance: [{}], X: [{}], Y: [{}], Z: [{}], H: [{}]", GetCleanName(), zone_id, instance_id, x, y, z, h);
+	LogDebugDetail("Teleport to Waypoint for [{}] -> Zone: [{}], Instance: [{}], X: [{}], Y: [{}], Z: [{}], H: [{}]", GetCleanName(), zone_id, instance_id, x, y, z, h);
 
 	auto group = GetGroup();
 	if (GetWaypointGroupFeatureState() && group) {
@@ -318,7 +317,6 @@ bool Client::GetWaypointGroupFeatureState()
         m_group_feature_state = (bucket_val == "enabled") ? 1 : 0;
     }
 
-	LogDebug("Group Port State: [{}]", (m_group_feature_state == 1));
     return (m_group_feature_state == 1);
 }
 
@@ -331,8 +329,6 @@ void Client::SetWaypointGroupFeatureState(bool val)
     } else {
         SetBucket("waypoints.group_feature_state", "disabled");
     }
-
-	LogDebug("Group Port State: [{}]", (m_group_feature_state == 1));
 }
 
 bool Client::GetWaypointAutoTransportState()
@@ -342,7 +338,6 @@ bool Client::GetWaypointAutoTransportState()
         m_auto_transport_state = (bucket_val == "enabled") ? 1 : 0;
     }
 
-	LogDebug("Auto Port State: [{}]", (m_auto_transport_state == 1));
     return (m_auto_transport_state == 1);
 }
 
@@ -355,8 +350,6 @@ void Client::SetWaypointAutoTransportState(bool val)
     } else {
         SetBucket("waypoints.auto_transport_state", "disabled");
     }
-
-	LogDebug("Auto Port State: [{}]", (m_auto_transport_state == 1));
 }
 
 bool Client::CheckWaypointGroupFeature() {

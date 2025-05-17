@@ -1385,11 +1385,6 @@ void Mob::DoArcheryAttackDmg(Mob *other, const EQ::ItemInstance *RangeWeapon, co
 		other->AddToHateList(this, hate, 0);
 	}
 
-	if (RuleR(Custom, ScaleAutoAttackByHStr) && IsClient())
-	{
-		TotalDmg += TotalDmg * (RuleR(Custom, ScaleAutoAttackByHStr) * GetHeroicSTR() / 300.0);
-	}
-
 	MeleeLifeTap(TotalDmg);
 	other->Damage(this, TotalDmg, SPELL_UNKNOWN, EQ::skills::SkillArchery);
 
@@ -1980,11 +1975,6 @@ void Mob::DoThrowingAttackDmg(Mob *other, const EQ::ItemInstance *RangeWeapon, c
 
 	if (IsClient() && !CastToClient()->GetFeigned()) {
 		other->AddToHateList(this, WDmg, 0);
-	}
-
-	if (RuleR(Custom, ScaleAutoAttackByHStr) && IsClient())
-	{
-		TotalDmg += TotalDmg * (RuleR(Custom, ScaleAutoAttackByHStr) * GetHeroicSTR() / 300.0);
 	}
 
 	MeleeLifeTap(TotalDmg);

@@ -1276,12 +1276,12 @@ RULE_BOOL(Custom,   ConditionalPetRampageImmunity, 			false, "Enable to make pet
 RULE_BOOL(Custom, 	DontInterruptHealsByMelee, 				false, "Enable to prevent direct heal spells from being interrupted by melee attacks")
 RULE_BOOL(Custom,	AlternateMobFDBehavior,					true, "Enable to cause mob FD effects to randomly pick a new target")
 
-RULE_BOOL(Custom,   DisableClearInstanceTimers, 			false , "BREAK GLASS IN EMERGENCY")
+RULE_BOOL(Custom,   DisableClearInstanceTimers, false , "BREAK GLASS IN EMERGENCY")
 
-RULE_BOOL(Custom,   EnableAccountAltCurrency, 				false, "Enable account-based alternate currency.")
-RULE_INT(Custom,  	AAConsumeBaseValue, 					50, "Base value for AA consumption")
+RULE_BOOL(Custom,   EnableAccountAltCurrency, false, "Enable account-based alternate currency.")
+RULE_INT(Custom,  	AAConsumeBaseValue, 				50, "Base value for AA consumption")
 
-RULE_REAL(Custom, 	ScaleAutoAttackByHStr, 					0.0f, "Scale auto attack damage by this value. 0.0 to disable.")
+RULE_REAL(Custom, ScaleAutoAttackByHStr, 0.0f, "Scale auto attack damage by this value. 0.0 to disable.")
 
 // Seasonal
 RULE_INT(Custom,  	EnableSeasonalCharacters, 				0, "Set to Seasonal ID to track for current Seasonal characters, 0 to disable.")

@@ -8709,46 +8709,50 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 		swarm_pet_npc->SetEntityVariable("class_bitmask", std::to_string(GetClassesBits()));
 
 		auto memmed_spells = GetMemmedSpells();
-		for (int i = 0; i < memmed_spells.size(); i++) {
+		for (int i = memmed_spells.size() - 1; i >= 0; i--)
+		{
 			int spell = memmed_spells[i];
-			if (!IsValidSpell(spell) || IsBeneficialSpell(spell) || !spells[spell].aoe_range < 1 || !spells[spell].aoe_max_targets < 1) {
+			if (!IsValidSpell(spell) || IsBeneficialSpell(spell) || spells[spell].aoe_range < 1 || spells[spell].aoe_max_targets < 1)
+			{
 				continue;
 			}
 
 			int spell_type = 0;
 			int recast_time = (spells[spell].recast_time + spells[spell].recovery_time) / 1000;
 
-			if (IsDamageSpell(spell)) {
+			if (IsDamageSpell(spell))
+			{
 				spell_type = SpellType_Nuke;
 			}
-
-			if (IsLifetapSpell(spell)) {
+			if (IsLifetapSpell(spell))
+			{
 				spell_type = SpellType_Lifetap;
 			}
-
-			if (IsSlowSpell(spell)) {
+			if (IsSlowSpell(spell))
+			{
 				spell_type = SpellType_Slow;
 			}
-
-			if (IsDebuffSpell(spell)) {
+			if (IsDebuffSpell(spell))
+			{
 				spell_type = SpellType_Debuff;
 			}
-
-			if (IsEffectInSpell(spell, SE_CurrentHP) && spells[spell].buff_duration > 0) {
+			if (IsEffectInSpell(spell, SE_CurrentHP) && spells[spell].buff_duration > 0)
+			{
 				spell_type = SpellType_DOT;
-				recast_time = -1;
 			}
-
-			if (!spell_type && IsEffectInSpell(SE_MovementSpeed, spell)) {
+			if (!spell_type && IsEffectInSpell(SE_MovementSpeed, spell))
+			{
 				spell_type = SpellType_Snare;
 			}
-
-			if (IsEffectInSpell(SE_CancelMagic, spell)) {
+			if (IsEffectInSpell(SE_CancelMagic, spell))
+			{
 				spell_type = SpellType_Dispel;
 			}
 
-			if (spell_type && spell) {
-				swarm_pet_npc->AddSpellToNPCList(0, spell, spell_type, -1, -1, 0, 0, 0);
+			if (spell_type && spell)
+			{
+				int priority = memmed_spells.size() - i;
+				swarm_pet_npc->AddSpellToNPCList(priority, spell, spell_type, -1, recast_time, 0, 0, 0);
 			}
 		}
 

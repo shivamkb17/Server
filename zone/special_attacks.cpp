@@ -479,7 +479,7 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk, bool is_riposte
 
 	// Check to see if actually have skill
 	if (!MaxSkill(static_cast<EQ::skills::SkillType>(ca_atk->m_skill)) && !bypass_skill_check) {
-		LogDebug("INVALID SKILL USAGE");
+		LogDebug("INVALID SKILL USAGE: [{}] tried to use skill [{}]", GetCleanName(), ca_atk->m_skill);
 		return;
 	}
 

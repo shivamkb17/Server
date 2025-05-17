@@ -6780,6 +6780,11 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 			hit.damage_done -= hit.damage_done * defender->spellbonuses.ShieldTargetSpa[SBIndex::SHIELD_TARGET_MITIGATION_PERCENT] / 100;
 		}
 	}
+
+	if (IsClient() && (hit.skill == EQ::skills::SkillArchery || hit.skill == EQ::skills::SkillThrowing)) {
+		hit.damage_done = EQ::ClampLower(hit.damage_done, (int64)(GetHeroicSTR() + GetHeroicDEX()) * (GetLevel()/70));
+	}
+
 	ReportCriticalHit(hit);
 	CheckNumHitsRemaining(NumHit::OutgoingHitSuccess);
 }

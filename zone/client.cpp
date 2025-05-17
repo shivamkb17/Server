@@ -8609,9 +8609,24 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 		glm::vec2(8, 8), glm::vec2(-8, 8), glm::vec2(8, -8), glm::vec2(-8, -8)
 	};
 
+	static const std::vector<std::string> eq_ordinals = {
+		"Azia", "Beza", "Caza", "Dena", "Ena", "Faza", "Geza", "Heza", "Iza", "Jaza",
+		"Kaza", "Laza", "Maza", "Naza", "Oza", "Paza", "Qaza", "Raza", "Saza", "Taza",
+		"Uza", "Vaza", "Waza", "Xaza", "Yaza", "Zaza"};
+
 	while(summon_count > 0) {
 		auto npc_type_copy = new NPCType;
 		memcpy(npc_type_copy, made_npc, sizeof(NPCType));
+
+		if (pet.count > 1)
+		{
+			int suffix_index = pet_count - summon_count;
+			std::string suffix = (suffix_index < eq_ordinals.size()) ? eq_ordinals[suffix_index] : std::to_string(suffix_index + 1);
+
+			std::string indexed_name = fmt::format("{}_{}", name_override, suffix);
+			strncpy(npc_type_copy->name, indexed_name.c_str(), sizeof(npc_type_copy->name) - 1);
+			npc_type_copy->name[sizeof(npc_type_copy->name) - 1] = '\0';
+		}
 
 		NPC* swarm_pet_npc = new NPC(
 				npc_type_copy,
@@ -8712,7 +8727,17 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 		for (int i = memmed_spells.size() - 1; i >= 0; i--)
 		{
 			int spell = memmed_spells[i];
-			if (!IsValidSpell(spell) || IsBeneficialSpell(spell) || spells[spell].aoe_range < 1 || spells[spell].aoe_max_targets < 1)
+			if (!IsValidSpell(spell))
+			{
+				continue;
+			}
+
+			if (IsBeneficialSpell(spell))
+			{
+				continue;
+			}
+
+			if (spells[spell].aoe_range > 1 || spells[spell].aoe_max_targets > 1)
 			{
 				continue;
 			}

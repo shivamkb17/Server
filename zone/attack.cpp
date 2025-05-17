@@ -6674,7 +6674,7 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 		hit.damage_done *= RuleR(Combat, ArcheryBaseDamageBonus);
 
 		if (IsClient())	{
-			int min = GetHeroicSTR() + GetHeroicDEX();
+			int min = GetHeroicSTR();
 			if (hit.damage_done < min) {
 				LogDebug("hit clamped to [{}] from [{}]", min, hit.damage_done);
 				hit.damage_done = min;

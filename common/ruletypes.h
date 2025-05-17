@@ -1282,6 +1282,7 @@ RULE_BOOL(Custom,   EnableAccountAltCurrency, false, "Enable account-based alter
 RULE_INT(Custom,  	AAConsumeBaseValue, 				50, "Base value for AA consumption")
 
 RULE_REAL(Custom, ScaleAutoAttackByHStr, 0.0f, "Scale auto attack damage by this value. 0.0 to disable.")
+RULE_INT(Custom, ArcheryMinimumDamagePercent, 50, "Archery should deal this minimum percentage of potential damage")
 
 // Seasonal
 RULE_INT(Custom,  	EnableSeasonalCharacters, 				0, "Set to Seasonal ID to track for current Seasonal characters, 0 to disable.")

@@ -6223,6 +6223,20 @@ void Mob::ApplyDamageTable(DamageHitInfo &hit)
 	basebonus = std::max(10, basebonus / 2);
 	int extrapercent = zone->random.Roll0(basebonus);
 	int percent = std::min(100 + extrapercent, damage_table.max_extra);
+
+	if (hit.skill == EQ::skills::SkillArchery)
+	{
+		int min_percentage = RuleI(Custom, ArcheryMinimumDamagePercent);
+		if (min_percentage > 0)
+		{
+			int min_percent = 100 + (damage_table.max_extra - 100) * min_percentage / 100;
+			if (percent < min_percent)
+			{
+				percent = min_percent;
+			}
+		}
+	}
+
 	hit.damage_done = (hit.damage_done * percent) / 100;
 
 	if (IsWarriorClass() && GetLevel() > 54)

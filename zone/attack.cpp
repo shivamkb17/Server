@@ -6674,7 +6674,7 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 		hit.damage_done *= RuleR(Combat, ArcheryBaseDamageBonus);
 
 		if (IsClient())	{
-			hit.damage_done = EQ::ClampLower(hit.damage_done, (int64)((GetHeroicSTR() + GetHeroicDEX()) * (GetLevel() / 70)));
+			hit.damage_done = EQ::ClampLower(hit.damage_done, (int64)((GetHeroicSTR() + GetHeroicDEX()) * (GetLevel() / 65)));
 		}
 	}
 

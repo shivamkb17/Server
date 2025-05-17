@@ -1383,11 +1383,8 @@ void Mob::DoArcheryAttackDmg(Mob *other, const EQ::ItemInstance *RangeWeapon, co
 
 	if (IsClient() && !CastToClient()->GetFeigned()) {
 		other->AddToHateList(this, hate, 0);
-	}
 
-	if (TotalDmg < (WDmg + GetHeroicSTR() + GetHeroicDEX()))
-	{
-		TotalDmg = (WDmg + GetHeroicSTR() + GetHeroicDEX());
+		TotalDmg = EQ::ClampLower(TotalDmg, (int64)((WDmg + ADmg) + ((GetHeroicSTR() + GetHeroicDEX()) / 2)));
 	}
 
 	MeleeLifeTap(TotalDmg);
@@ -1956,7 +1953,7 @@ void Mob::DoThrowingAttackDmg(Mob *other, const EQ::ItemInstance *RangeWeapon, c
 		WDmg += WDmg * focus / 100;
 	}
 
-	int TotalDmg = 0;
+	int64 TotalDmg = 0;
 
 	if (WDmg > 0) {
 		DamageHitInfo my_hit {};
@@ -1980,6 +1977,8 @@ void Mob::DoThrowingAttackDmg(Mob *other, const EQ::ItemInstance *RangeWeapon, c
 
 	if (IsClient() && !CastToClient()->GetFeigned()) {
 		other->AddToHateList(this, WDmg, 0);
+
+		TotalDmg = EQ::ClampLower(TotalDmg, (int64)((WDmg) + ((GetHeroicSTR() + GetHeroicDEX()) / 2)));
 	}
 
 	if (TotalDmg < (WDmg + GetHeroicSTR() + GetHeroicDEX())) {

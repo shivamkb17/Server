@@ -6672,6 +6672,10 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 
 		//Scale Factor for Archery Damage Tuning
 		hit.damage_done *= RuleR(Combat, ArcheryBaseDamageBonus);
+
+		if (IsClient())	{
+			hit.damage_done = EQ::ClampLower(hit.damage_done, (int64)((GetHeroicSTR() + GetHeroicDEX()) * (GetLevel() / 70)));
+		}
 	}
 
 	int extra_mincap = 0;
@@ -6779,10 +6783,6 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 			DoShieldDamageOnShielderSpellEffect(defender, hit.damage_done, hit.skill);
 			hit.damage_done -= hit.damage_done * defender->spellbonuses.ShieldTargetSpa[SBIndex::SHIELD_TARGET_MITIGATION_PERCENT] / 100;
 		}
-	}
-
-	if (IsClient() && (hit.skill == EQ::skills::SkillArchery || hit.skill == EQ::skills::SkillThrowing)) {
-		hit.damage_done = EQ::ClampLower(hit.damage_done, (int64)(GetHeroicSTR() + GetHeroicDEX()) * (GetLevel()/70));
 	}
 
 	ReportCriticalHit(hit);

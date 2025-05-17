@@ -1387,7 +1387,7 @@ void Mob::DoArcheryAttackDmg(Mob *other, const EQ::ItemInstance *RangeWeapon, co
 
 	if (RuleR(Custom, ScaleAutoAttackByHStr) && IsClient())
 	{
-		TotalDmg += TotalDmg * (RuleR(Custom, ScaleAutoAttackByHStr) * GetHeroicSTR() / 300.0);
+		TotalDmg += TotalDmg * (RuleR(Custom, ScaleAutoAttackByHStr) * GetHeroicSTR() / 200.0);
 	}
 
 	MeleeLifeTap(TotalDmg);
@@ -1984,7 +1984,7 @@ void Mob::DoThrowingAttackDmg(Mob *other, const EQ::ItemInstance *RangeWeapon, c
 
 	if (RuleR(Custom, ScaleAutoAttackByHStr) && IsClient())
 	{
-		TotalDmg += TotalDmg * (RuleR(Custom, ScaleAutoAttackByHStr) * GetHeroicSTR() / 300.0);
+		TotalDmg += TotalDmg * (RuleR(Custom, ScaleAutoAttackByHStr) * GetHeroicSTR() / 200.0);
 	}
 
 	MeleeLifeTap(TotalDmg);

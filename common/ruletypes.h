@@ -1281,8 +1281,7 @@ RULE_BOOL(Custom,   DisableClearInstanceTimers, 			false , "BREAK GLASS IN EMERG
 RULE_BOOL(Custom,   EnableAccountAltCurrency, 				false, "Enable account-based alternate currency.")
 RULE_INT(Custom,  	AAConsumeBaseValue, 					50, "Base value for AA consumption")
 
-RULE_REAL(Custom, 	ScaleAutoAttackByHStr, 					1.0f, "Scale auto attack damage by this value. 0.0 to disable.")
-RULE_REAL(Custom,	ScaleArcheryByHStrDivisor,				200.0f, "Value to divide ScaleAutoAttackByHStr by for Archery and Throwing. Value of 100 allows Archery to be the same as Melee, 200 makes the other rule half as effective for ranged.")
+RULE_REAL(Custom, 	ScaleAutoAttackByHStr, 					0.0f, "Scale auto attack damage by this value. 0.0 to disable.")
 
 // Seasonal
 RULE_INT(Custom,  	EnableSeasonalCharacters, 				0, "Set to Seasonal ID to track for current Seasonal characters, 0 to disable.")

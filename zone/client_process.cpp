@@ -736,6 +736,25 @@ bool Client::Process() {
 
 			SendBulkStatsUpdate();
 		}
+
+		if (hp_regen_per_second_timer.Check() && !dead)
+		{
+			//LogDebug("Fast Tic.");
+			int buff_count = GetMaxTotalSlots();
+			for (int buffs_i = 0; buffs_i < buff_count; ++buffs_i)
+			{
+				if (!IsValidSpell(buffs[buffs_i].spellid))
+				{
+					continue;
+				}
+
+				if (buffs[buffs_i].ticsremaining <= 0 && buffs[buffs_i].ShouldExpire())
+				{
+					LogSpells("Buff [{}] in slot [{}] has expired during fast tic. Fading", buffs[buffs_i].spellid, buffs_i);
+					BuffFadeBySlot(buffs_i);
+				}
+			}
+		}
 	}
 
 	if (client_state == CLIENT_KICKED) {

@@ -737,11 +737,9 @@ bool Client::Process() {
 			SendBulkStatsUpdate();
 		}
 
-		if (!dead && fast_tic_timer.Check())
-		{
+		if (!dead && fast_tic_timer.Check()) {
 			int buff_count = GetMaxTotalSlots();
-			for (int buffs_i = 0; buffs_i < buff_count; ++buffs_i)
-			{
+			for (int buffs_i = 0; buffs_i < buff_count; ++buffs_i) {
 				if (buffs[buffs_i].spellid >= UINT16_MAX) {
 					continue;
 				}
@@ -750,8 +748,7 @@ bool Client::Process() {
 					continue;
 				}
 
-				if (buffs[buffs_i].expiration_timer.Check(false))
-				{
+				if (buffs[buffs_i].expiration_timer.Check(false)) {
 					LogSpells("Buff [{}] in slot [{}] has expired during fast tic. Fading", buffs[buffs_i].spellid, buffs_i);
 					BuffFadeBySlot(buffs_i);
 				}

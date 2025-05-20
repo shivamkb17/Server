@@ -279,7 +279,7 @@ struct Buffs_Struct {
 	bool	persistant_buff;
 	bool	client; //True if the caster is a client
 	bool	UpdateClient;
-	uint32	ticsinitial ;
+	uint32	ticsinitial;
 
 	Timer expiration_timer;
 

@@ -33,12 +33,12 @@ public:
 	 * @param default_name A fallback name to use if no names are found
 	 * @return A randomly selected name from the list or the default name
 	 */
-	static std::string GetRandomFamiliarName(Database &db, int spell_id)
+	static std::string GetRandomFamiliarName(Database &db, int spell_id, std::string default_name)
 	{
 		auto names = GetFamiliarNamesBySpellID(db, spell_id);
 		if (names.empty())
 		{
-			return "";
+			return default_name;
 		}
 
 		// Get a random index within the available names

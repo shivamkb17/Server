@@ -168,14 +168,13 @@ void Mob::MakeFamiliar(uint16 spell_id) {
         GravityBehavior::Ground
     );
 
-	std::string petname = std::string(GetCleanName()) + "`s Familiar";
+	std::string petname = std::string(GetCleanName()) + "`s_Familiar";
 
-	// Override pet name based on spell naming scheme encoding
 	if (IsClient()) {
-		// We are going to reuse this repo to store familiar names by spell id.
+		// We are going to reuse this repo to store familiar names by spell id as 'class id'.
 		auto vanity_name = CharacterPetNameRepository::GetPetName(database, CastToClient()->CharacterID(), spell_id, petname);
-		if (vanity_name.empty()) {
-			vanity_name = FamiliarNamesRepository::GetRandomFamiliarName(content_db, spell_id);
+		if (vanity_name.empty() || vanity_name == petname) {
+			vanity_name = FamiliarNamesRepository::GetRandomFamiliarName(content_db, spell_id, petname);
 			if (vanity_name != petname) {
 				CharacterPetNameRepository::SetPetName(database, CastToClient()->CharacterID(), spell_id, vanity_name);
 			}

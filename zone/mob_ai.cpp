@@ -1536,22 +1536,17 @@ void Mob::AI_Process() {
 				}
 				else
 				{
-					if (IsNPC() && CastToNPC()->GetSwarmOwner() && IsEffectInSpell(CastToNPC()->GetPetSpellID(), SE_Familiar))
-					{
+					if (IsNPC() && CastToNPC()->GetSwarmOwner() && IsEffectInSpell(CastToNPC()->GetPetSpellID(), SE_Familiar)) {
 						Mob *owner = entity_list.GetMob(CastToNPC()->GetSwarmOwner());
-						if (owner)
-						{
+						if (owner) {
 							uint16 pet_id = GetID();
 							glm::vec4 owner_position = owner->GetPosition();
 							float owner_heading = owner->GetHeading();
 
 							std::vector<uint16> familiar_ids;
 
-							for (auto &npc : entity_list.GetNPCList())
-							{
-								if (npc.second->GetSwarmOwner() == owner->GetID() &&
-									IsEffectInSpell(npc.second->GetPetSpellID(), SE_Familiar))
-								{
+							for (auto &npc : entity_list.GetNPCList()) {
+								if (npc.second->GetSwarmOwner() == owner->GetID() && IsEffectInSpell(npc.second->GetPetSpellID(), SE_Familiar)) {
 									familiar_ids.push_back(npc.second->GetID());
 								}
 							}
@@ -1561,8 +1556,7 @@ void Mob::AI_Process() {
 							int familiar_index = 0;
 							int total_familiars = familiar_ids.size();
 
-							for (size_t i = 0; i < familiar_ids.size(); i++)
-							{
+							for (size_t i = 0; i < familiar_ids.size(); i++) {
 								if (familiar_ids[i] == pet_id)
 								{
 									familiar_index = i;
@@ -1573,20 +1567,21 @@ void Mob::AI_Process() {
 							float heading_radians = (owner_heading / 512.0f) * 2.0f * M_PI;
 
 							float base_distance = 5;
-							if (base_distance <= 0)
+							if (base_distance <= 0) {
 								base_distance = 5.0f;
+							}
 
 							float distance_increment = 1;
-							if (distance_increment <= 0)
+							if (distance_increment <= 0) {
 								distance_increment = 1.5f;
+							}
 
 							float distance = base_distance + (familiar_index * distance_increment);
 
 							float max_angle_offset = M_PI / 6.0f;
 
 							float angle_offset = 0.0f;
-							if (total_familiars > 1)
-							{
+							if (total_familiars > 1) {
 								angle_offset = max_angle_offset * (2.0f * ((float)familiar_index / (total_familiars - 1)) - 1.0f);
 							}
 
@@ -1601,64 +1596,41 @@ void Mob::AI_Process() {
 							float xy_distance = DistanceSquared(GetPosition(), target_position);
 							float z_distance = owner_position.z - GetPosition().z;
 
-							if (xy_distance >= 0.1 || z_distance > 100)
-							{
+							if (xy_distance >= 0.1 || z_distance > 100) {
 								bool running = false;
 
-								if (xy_distance >= 1225)
-								{
+								if (xy_distance >= 1225) {
 									running = true;
 								}
 
-								if (xy_distance >= 202500 || z_distance > 100)
-								{
+								if (xy_distance >= 202500 || z_distance > 100) {
 									Teleport(target_position);
+								} else {
+									running ? RunTo(target_position.x, target_position.y, target_position.z) : WalkTo(target_position.x, target_position.y, target_position.z);
 								}
-								else
-								{
-									if (running)
-									{
-										RunTo(target_position.x, target_position.y, target_position.z);
-									}
-									else
-									{
-										WalkTo(target_position.x, target_position.y, target_position.z);
-									}
-								}
-							}
-							else
-							{
+							} else {
 								moved = false;
 								StopNavigation();
 							}
 						}
-					}
-					else
-					{
+					} else {
 						float distance = DistanceSquared(m_Position, follow->GetPosition());
 						int follow_distance = GetFollowDistance();
 
-						if (distance >= follow_distance)
-						{
+						if (distance >= follow_distance) {
 							bool running = false;
-							if (GetFollowCanRun() && distance >= follow_distance + 150)
-							{
+							if (GetFollowCanRun() && distance >= follow_distance + 150)	{
 								running = true;
 							}
 
 							auto &Goal = follow->GetPosition();
 
-							if (running)
-							{
+							if (running) {
 								RunTo(Goal.x, Goal.y, Goal.z);
-							}
-							else
-							{
+							} else {
 								WalkTo(Goal.x, Goal.y, Goal.z);
 							}
-						}
-						else
-						{
+						} else {
 							moved = false;
 							StopNavigation();
 						}

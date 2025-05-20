@@ -81,44 +81,75 @@ void Mob::GetRandPetName(char *name)
 	strn0cpy(name, temp.c_str(), 64);
 }
 
-NPC* Mob::GetFamiliar(uint16 spell_id) {
-    if (!IsClient()) {
-        return nullptr; // Only supported clients for this
-    }
+uint8 Mob::GetClassForFamiliar(uint16 spell_id)
+{
+	if (!IsClient())
+	{
+		return Class::Warrior;
+	}
 
-    int act_power = 0;
-    PetRecord record;
+	for (uint8 class_id = Class::Warrior; class_id <= Class::Berserker; class_id++)
+	{
+		if (GetSpellLevel(spell_id, class_id) != UINT8_MAX)
+		{
+			return class_id;
+		}
+	}
 
-    if (!content_db.GetPoweredPetEntry(spells[spell_id].teleport_zone, act_power, &record)) {
-        LogError("Unknown familiar pet spell id: {}, check pets table", spell_id);
-        return nullptr;
-    }
+	return UINT8_MAX;
+}
 
-    auto npc_type = content_db.LoadNPCTypesData(record.npc_type);
-    if (npc_type == nullptr) {
-        LogError("Unknown npc type for familiar pet spell id: [{}]", spell_id);
-        return nullptr;
-    }
+NPC *Mob::GetFamiliar(uint16 spell_id)
+{
+	if (!IsClient())
+	{
+		return nullptr;
+	}
 
-    // Find the familiar of this type
-    for (auto npc : entity_list.GetNPCList()) {
-        if (npc.second->npctype_id != npc_type->npc_id) {
-            continue;
-        }
+	int act_power = 0;
+	PetRecord record;
 
-        if (!npc.second->GetSwarmInfo() || npc.second->GetSwarmInfo()->owner_id != GetID()) {
-            continue;
-        }
+	if (!content_db.GetPoweredPetEntry(spells[spell_id].teleport_zone, act_power, &record))
+	{
+		LogError("Unknown familiar pet spell id: {}, check pets table", spell_id);
+		return nullptr;
+	}
 
-        // Found the familiar
-        return npc.second;
-    }
+	auto npc_type = content_db.LoadNPCTypesData(record.npc_type);
+	if (npc_type == nullptr)
+	{
+		LogError("Unknown npc type for familiar pet spell id: [{}]", spell_id);
+		return nullptr;
+	}
 
-    return nullptr;
+	uint8 familiar_class_id = GetClassForFamiliar(spell_id);
+
+	for (auto npc : entity_list.GetNPCList())
+	{
+		if (npc.second->npctype_id != npc_type->npc_id)
+		{
+			continue;
+		}
+
+		if (!npc.second->GetSwarmInfo() || npc.second->GetSwarmInfo()->owner_id != GetID())
+		{
+			continue;
+		}
+
+		uint16 pet_spell_id = npc.second->GetPetSpellID();
+		uint8 pet_class_id = GetClassForFamiliar(pet_spell_id);
+
+		if (pet_class_id == familiar_class_id)
+		{
+			return npc.second;
+		}
+	}
+
+	return nullptr;
 }
 
 bool Mob::CheckFamiliarConflict(uint16 spell_id) {
-    return (GetFamiliar(spell_id) != nullptr);
+    return (GetFamiliar(spell_id));
 }
 
 void Mob::DismissFamiliar(uint16 spell_id) {
@@ -133,9 +164,9 @@ void Mob::MakeFamiliar(uint16 spell_id) {
         return; // Only supported clients for this
     }
 
-    // Check if familiar already exists
+
     if (CheckFamiliarConflict(spell_id)) {
-        return; // Don't create another one
+        return;
     }
 
     int act_power = 0;

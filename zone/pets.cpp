@@ -169,7 +169,14 @@ void Mob::MakeFamiliar(uint16 spell_id, std::string petname) {
 
     strn0cpy(familiar_npc->name, petname.c_str(), sizeof(familiar_npc->name));
 
-    familiar_npc->SetFollowID(GetID());
+	// Override pet name based on spell naming scheme encoding
+	int effect_index = GetSpellEffectIndex(spell_id, SE_Familiar);
+	int effect_name_val = spells[spell_id].base_value[effect_index];
+	if (effect_name_val) {
+		LogDebug("Found value [{}] for index [{}]", effect_name_val, effect_index);
+	}
+
+	familiar_npc->SetFollowID(GetID());
 
     if (!familiar_npc->GetSwarmInfo()) {
         auto nSI = new SwarmPet;

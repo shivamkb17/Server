@@ -906,7 +906,7 @@ public:
     NPC* GetFamiliar(uint16 spell_id);
     bool CheckFamiliarConflict(uint16 spell_id);
     void DismissFamiliar(uint16 spell_id);
-    void MakeFamiliar(uint16 spell_id, std::string petname);
+    void MakeFamiliar(uint16 spell_id);
 
 	// aura functions
 	void MakeAura(uint16 spell_id);

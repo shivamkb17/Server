@@ -2430,7 +2430,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 					break;
 				}
 
-				caster->MakeFamiliar(spell_id, "Custom_Familiar_Name");
+				caster->MakeFamiliar(spell_id);
 				break;
 			}
 			case SE_TemporaryPets: //Dook- swarms and wards:

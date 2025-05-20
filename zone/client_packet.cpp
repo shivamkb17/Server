@@ -1852,7 +1852,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		if (IsValidSpell(buffs[i].spellid)) {
 			// Cause familiars to spawn
 			if (IsEffectInSpell(m_pp.buffs[i].spellid, SE_Familiar)) {
-				MakeFamiliar(m_pp.buffs[i].spellid, "Custom");
+				MakeFamiliar(m_pp.buffs[i].spellid);
 			}
 		}
 	}

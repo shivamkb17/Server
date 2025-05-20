@@ -23,6 +23,7 @@
 #include "../common/repositories/pets_repository.h"
 #include "../common/repositories/pets_beastlord_data_repository.h"
 #include "../common/repositories/character_pet_name_repository.h"
+#include "../common/repositories/familiar_names_repository.h"
 
 #include "entity.h"
 #include "client.h"
@@ -127,7 +128,7 @@ void Mob::DismissFamiliar(uint16 spell_id) {
     }
 }
 
-void Mob::MakeFamiliar(uint16 spell_id, std::string petname) {
+void Mob::MakeFamiliar(uint16 spell_id) {
     if (!IsClient()) {
         return; // Only supported clients for this
     }
@@ -167,14 +168,23 @@ void Mob::MakeFamiliar(uint16 spell_id, std::string petname) {
         GravityBehavior::Ground
     );
 
-    strn0cpy(familiar_npc->name, petname.c_str(), sizeof(familiar_npc->name));
+	std::string petname = std::string(GetCleanName()) + "`s Familiar";
 
 	// Override pet name based on spell naming scheme encoding
-	int effect_index = GetSpellEffectIndex(spell_id, SE_Familiar);
-	int effect_name_val = spells[spell_id].base_value[effect_index];
-	if (effect_name_val) {
-		LogDebug("Found value [{}] for index [{}]", effect_name_val, effect_index);
+	if (IsClient()) {
+		// We are going to reuse this repo to store familiar names by spell id.
+		auto vanity_name = CharacterPetNameRepository::GetPetName(database, CastToClient()->CharacterID(), spell_id, petname);
+		if (vanity_name.empty()) {
+			vanity_name = FamiliarNamesRepository::GetRandomFamiliarName(content_db, spell_id);
+			if (vanity_name != petname) {
+				CharacterPetNameRepository::SetPetName(database, CastToClient()->CharacterID(), spell_id, vanity_name);
+			}
+		}
+
+		strn0cpy(familiar_npc->name, vanity_name.c_str(), sizeof(familiar_npc->name));
 	}
+
+	familiar_npc->size += FamiliarNamesRepository::GetFamiliarSizeMod(content_db, spell_id);
 
 	familiar_npc->SetFollowID(GetID());
 

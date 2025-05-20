@@ -116,7 +116,7 @@ NPC *Mob::GetFamiliar(uint16 spell_id)
 	}
 
 	auto npc_type = content_db.LoadNPCTypesData(record.npc_type);
-	if (npc_type == nullptr)
+	if (!npc_type)
 	{
 		LogError("Unknown npc type for familiar pet spell id: [{}]", spell_id);
 		return nullptr;
@@ -149,55 +149,55 @@ NPC *Mob::GetFamiliar(uint16 spell_id)
 }
 
 bool Mob::CheckFamiliarConflict(uint16 spell_id) {
-    return (GetFamiliar(spell_id));
+	return (GetFamiliar(spell_id));
 }
 
 void Mob::DismissFamiliar(uint16 spell_id) {
-    NPC* familiar = GetFamiliar(spell_id);
-    if (familiar) {
-        familiar->Depop();
-    }
+	NPC* familiar = GetFamiliar(spell_id);
+	if (familiar) {
+		familiar->Depop();
+	}
 }
 
 void Mob::MakeFamiliar(uint16 spell_id) {
-    if (!IsClient()) {
-        return; // Only supported clients for this
-    }
+	if (!IsClient()) {
+		return; // Only supported clients for this
+	}
 
 
-    if (CheckFamiliarConflict(spell_id)) {
-        return;
-    }
+	if (CheckFamiliarConflict(spell_id)) {
+		return;
+	}
 
-    int act_power = 0;
-    PetRecord record;
+	int act_power = 0;
+	PetRecord record;
 
-    if (!content_db.GetPoweredPetEntry(spells[spell_id].teleport_zone, act_power, &record)) {
-        LogError("Unknown familiar pet spell id: {}, check pets table", spell_id);
-        Message(Chat::Red, "Unable to find data for pet %s", spells[spell_id].teleport_zone);
-        return;
-    }
+	if (!content_db.GetPoweredPetEntry(spells[spell_id].teleport_zone, act_power, &record)) {
+		LogError("Unknown familiar pet spell id: {}, check pets table", spell_id);
+		Message(Chat::Red, "Unable to find data for pet %s", spells[spell_id].teleport_zone);
+		return;
+	}
 
-    // Ripped from swarm pets, keeping the location array so we can support multi later if we want
-    static const glm::vec2 locations[MAX_SWARM_PETS] = {
-        glm::vec2(5, 5), glm::vec2(-5, 5), glm::vec2(5, -5), glm::vec2(-5, -5),
-        glm::vec2(10, 10), glm::vec2(-10, 10), glm::vec2(10, -10), glm::vec2(-10, -10),
-        glm::vec2(8, 8), glm::vec2(-8, 8), glm::vec2(8, -8), glm::vec2(-8, -8)
-    };
+	// Ripped from swarm pets, keeping the location array so we can support multi later if we want
+	static const glm::vec2 locations[MAX_SWARM_PETS] = {
+		glm::vec2(5, 5), glm::vec2(-5, 5), glm::vec2(5, -5), glm::vec2(-5, -5),
+		glm::vec2(10, 10), glm::vec2(-10, 10), glm::vec2(10, -10), glm::vec2(-10, -10),
+		glm::vec2(8, 8), glm::vec2(-8, 8), glm::vec2(8, -8), glm::vec2(-8, -8)
+	};
 
-    auto npc_type = content_db.LoadNPCTypesData(record.npc_type);
-    if (npc_type == nullptr) {
-        LogError("Unknown npc type for familiar pet spell id: [{}]", spell_id);
-        Message(0, "Unable to find pet!");
-        return;
-    }
+	auto npc_type = content_db.LoadNPCTypesData(record.npc_type);
+	if (!npc_type) {
+		LogError("Unknown npc type for familiar pet spell id: [{}]", spell_id);
+		Message(0, "Unable to find pet!");
+		return;
+	}
 
-    NPC* familiar_npc = new NPC(
-        npc_type,
-        0,
-        GetPosition() + glm::vec4(locations[0], 0.0f, 0.0f),
-        GravityBehavior::Ground
-    );
+	NPC* f = new NPC(
+		npc_type,
+		0,
+		GetPosition() + glm::vec4(locations[0], 0.0f, 0.0f),
+		GravityBehavior::Ground
+	);
 
 	std::string petname = std::string(GetCleanName()) + "`s_Familiar";
 
@@ -211,34 +211,56 @@ void Mob::MakeFamiliar(uint16 spell_id) {
 			}
 		}
 
-		strn0cpy(familiar_npc->name, vanity_name.c_str(), sizeof(familiar_npc->name));
+		strn0cpy(f->name, vanity_name.c_str(), sizeof(f->name));
 	}
 
-	familiar_npc->size += FamiliarNamesRepository::GetFamiliarSizeMod(content_db, spell_id);
+	f->size += FamiliarNamesRepository::GetFamiliarSizeMod(content_db, spell_id);
 
-	familiar_npc->SetFollowID(GetID());
+	f->SetFollowID(GetID());
 
-    if (!familiar_npc->GetSwarmInfo()) {
-        auto nSI = new SwarmPet;
-        familiar_npc->SetSwarmInfo(nSI);
-        familiar_npc->GetSwarmInfo()->duration = new Timer(INT32_MAX);
-    }
-    else {
-        familiar_npc->GetSwarmInfo()->duration->Start(INT32_MAX);
-    }
+	if (!f->GetSwarmInfo()) {
+		auto nSI = new SwarmPet;
+		f->SetSwarmInfo(nSI);
+		f->GetSwarmInfo()->duration = new Timer(INT32_MAX);
+	}
+	else {
+		f->GetSwarmInfo()->duration->Start(INT32_MAX);
+	}
 
-    familiar_npc->StartSwarmTimer(INT32_MAX);
-    familiar_npc->GetSwarmInfo()->familiar = true;
-    familiar_npc->SetPetSpellID(spell_id);
+	f->StartSwarmTimer(INT32_MAX);
+	f->GetSwarmInfo()->m_familiar = true;
+	f->SetPetSpellID(spell_id);
 
-    //removing this prevents the pet from attacking
-    familiar_npc->GetSwarmInfo()->owner_id = GetUltimateOwner()->GetID();
+	//removing this prevents the pet from attacking
+	f->GetSwarmInfo()->owner_id = GetUltimateOwner()->GetID();
 
-    familiar_npc->SetSpecialAbility(SpecialAbility::AggroImmunity, 1);
-    familiar_npc->SetSpecialAbility(SpecialAbility::BeingAggroImmunity, 1);
-    familiar_npc->SetSpecialAbility(SpecialAbility::NPCAggroImmunity, 1);
+	// Immunities
+	f->SetSpecialAbility(SpecialAbility::SlowImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::CharmImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::SnareImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::DispellImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::MeleeImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::MagicImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::FleeingImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::MeleeImmunityExceptBane, 1);
+	f->SetSpecialAbility(SpecialAbility::MeleeImmunityExceptMagical, 1);
+	f->SetSpecialAbility(SpecialAbility::AggroImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::BeingAggroImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::CastingFromRangeImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::HarmFromClientImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::RangedAttackImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::ClientDamageImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::NPCDamageImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::ClientAggroImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::NPCAggroImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::MemoryFadeImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::OpenImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::AssassinateImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::HeadshotImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::BotAggroImmunity, 1);
+	f->SetSpecialAbility(SpecialAbility::BotDamageImmunity, 1);
 
-    entity_list.AddNPC(familiar_npc, true, true);
+	entity_list.AddNPC(f, true, true);
 }
 
 void Mob::MakePet(uint16 spell_id, const char* pettype, const char *petname) {

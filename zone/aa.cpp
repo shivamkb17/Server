@@ -926,7 +926,7 @@ SwarmPet::SwarmPet()
 	target = 0;
 	owner_id = 0;
 	duration = nullptr;
-	familiar = false;
+	m_familiar = false;
 }
 
 SwarmPet::~SwarmPet()

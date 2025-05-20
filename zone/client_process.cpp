@@ -742,12 +742,15 @@ bool Client::Process() {
 			int buff_count = GetMaxTotalSlots();
 			for (int buffs_i = 0; buffs_i < buff_count; ++buffs_i)
 			{
-				if (!IsValidSpell(buffs[buffs_i].spellid) || buffs[buffs_i].ticsremaining > 0)
-				{
+				if (buffs[buffs_i].spellid >= UINT16_MAX) {
 					continue;
 				}
 
-				if (buffs[buffs_i].ShouldExpire())
+				if (buffs[buffs_i].ticsremaining > 0) {
+					continue;
+				}
+
+				if (buffs[buffs_i].expiration_timer.Check(false))
 				{
 					LogSpells("Buff [{}] in slot [{}] has expired during fast tic. Fading", buffs[buffs_i].spellid, buffs_i);
 					BuffFadeBySlot(buffs_i);

@@ -279,7 +279,7 @@ struct Buffs_Struct {
 	bool	persistant_buff;
 	bool	client; //True if the caster is a client
 	bool	UpdateClient;
-	uint32	ticsinitial;
+	uint32	ticsinitial ;
 
 	Timer expiration_timer;
 
@@ -288,11 +288,6 @@ struct Buffs_Struct {
 		uint32 duration_ms = (ticsremaining + 1) * 6000;
 		expiration_timer.SetTimer(duration_ms);
 		expiration_timer.Start();
-	}
-
-	bool ShouldExpire()
-	{
-		return expiration_timer.Check(false);
 	}
 
 	// cereal

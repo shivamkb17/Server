@@ -142,8 +142,11 @@ create table account_kill_counts(account_id int(11) primary key, race_id int(11)
 		.condition = "empty",
 		.match = "",
 		.sql = R"(
-alter table `character_pet_name` add column `class_id` tinyint(11) not null default -1;
-)",
+	ALTER TABLE `character_pet_name`
+		DROP PRIMARY KEY,
+		ADD COLUMN `class_id` TINYINT(11) NOT NULL DEFAULT -1,
+		ADD PRIMARY KEY (`character_id`, `class_id`);
+	)",
 		.content_schema_update = false,
 	},
 

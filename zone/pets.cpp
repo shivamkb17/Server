@@ -204,19 +204,24 @@ void Mob::MakeFamiliar(uint16 spell_id) {
 	std::string petname = std::string(GetCleanName()) + "`s_Familiar";
 
 	if (IsClient()) {
-		// We are going to reuse this repo to store familiar names by spell id as 'class id'.
 		auto vanity_name = CharacterPetNameRepository::GetPetName(database, CastToClient()->CharacterID(), spell_id, petname);
+		int size_mod = 0;
 		if (vanity_name.empty() || vanity_name == petname) {
-			vanity_name = FamiliarNamesRepository::GetRandomFamiliarName(content_db, spell_id, petname);
+			auto info = FamiliarNamesRepository::GetRandomFamiliarInfo(content_db, spell_id, petname);
+
+			vanity_name = info.name_list;
+			size_mod    = info.size_mod;
+
 			if (vanity_name != petname) {
 				CharacterPetNameRepository::SetPetName(database, CastToClient()->CharacterID(), spell_id, vanity_name);
 			}
+		} else {
+			size_mod = FamiliarNamesRepository::GetFamiliarSizeMod(content_db, spell_id);
 		}
 
 		strn0cpy(f->name, vanity_name.c_str(), sizeof(f->name));
+		f->size += size_mod;
 	}
-
-	f->size += FamiliarNamesRepository::GetFamiliarSizeMod(content_db, spell_id);
 
 	f->SetFollowID(GetID());
 

@@ -14,7 +14,7 @@ public:
 			return std::vector<std::string>();
 		}
 
-		return Strings::Split(familiar_names.name_list, ',');
+		return Strings::Split(familiar_names.name_list, ' ');
 	}
 
 	static std::string GetRandomFamiliarName(Database &db, int spell_id, std::string default_name) {

@@ -141,10 +141,12 @@ NPC *Mob::GetFamiliar(uint16 spell_id)
 
 		if (pet_class_id == familiar_class_id)
 		{
+			LogDebug("Found a familiar!");
 			return npc.second;
 		}
 	}
 
+	LogDebug("Did not find a familiar");
 	return nullptr;
 }
 

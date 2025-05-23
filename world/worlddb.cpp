@@ -550,6 +550,49 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **o
 	}
 }
 
+void WorldDatabase::GetCharacterSets(uint32 account_id, EQApplicationPacket **out_app, uint32 selected_set)
+{
+	auto character_sets = AccountCharacterSetsRepository::GetAccountCharacterSets(database, account_id);
+
+	if (character_sets.empty()) {
+		// Create default set if none exist
+		auto default_set = AccountCharacterSetsRepository::GetOrCreateDefaultSet(database, account_id);
+		character_sets.push_back(default_set);
+	}
+
+	size_t packet_size = sizeof(CharacterSetList_Struct) + (sizeof(CharacterSetListEntry_Struct) * character_sets.size());
+	*out_app = new EQApplicationPacket(OP_SendCharacterSets, packet_size);
+
+	unsigned char *buff_ptr = (*out_app)->pBuffer;
+	auto *csl = (CharacterSetList_Struct *) buff_ptr;
+
+	csl->selected_set = selected_set;
+	csl->count = character_sets.size();
+
+	buff_ptr += sizeof(CharacterSetList_Struct);
+
+	for (size_t i = 0; i < character_sets.size(); ++i) {
+		auto *entry = (CharacterSetListEntry_Struct *) buff_ptr;
+
+		entry->id = character_sets[i].set_id;
+		memset(entry->name, 0, sizeof(entry->name));
+		strncpy(entry->name, character_sets[i].set_name.c_str(), sizeof(entry->name) - 1);
+
+		LogDebug("Packed Set name [{}]", character_sets[i].set_name.c_str());
+
+		buff_ptr += sizeof(CharacterSetListEntry_Struct);
+	}
+
+	LogDebug("Sending [{}] character sets for account [{}] selected set [{}]", character_sets.size(), account_id, selected_set);
+}
+
+bool WorldDatabase::CreateCharacterSet(uint32 account_id, std::string set_name)
+{
+	auto result = AccountCharacterSetsRepository::CreateCharacterSet(database, account_id, set_name);
+
+	return !result.set_name.empty();
+}
+
 int WorldDatabase::MoveCharacterToBind(int character_id, uint8 bind_number)
 {
 	/*  if an invalid bind point is specified, use the primary bind */

@@ -207,6 +207,11 @@ struct CharacterSetList_Struct
    struct CharacterSetListEntry_Struct entries[];
 };
 
+struct CharacterSetCreateRequest_Struct
+{
+	char name[64];
+};
+
 /* End Character Sets */
 
 /*

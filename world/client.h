@@ -116,6 +116,7 @@ private:
 	bool HandleZoneChangePacket(const EQApplicationPacket *app);
 	bool HandleChecksumPacket(const EQApplicationPacket *app);
 	bool HandleCharacterSetRequest(const EQApplicationPacket *app);
+	bool HandleCharacterSetCreateRequest(const EQApplicationPacket *app);
 	bool ChecksumVerificationCRCEQGame(uint64 checksum);
 	bool ChecksumVerificationCRCSkillCaps(uint64 checksum);
 	bool ChecksumVerificationCRCBaseData(uint64 checksum);

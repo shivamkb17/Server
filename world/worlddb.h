@@ -35,6 +35,9 @@ public:
 	int MoveCharacterToBind(int character_id, uint8 bind_number = 0);
 	int MoveCharacterToInstanceSafeReturn(int character_id, int instance_zone_id, int instance_id);
 
+	void GetCharacterSets(uint32 account_id, EQApplicationPacket **out_app, uint32 selected_set);
+	bool CreateCharacterSet(uint32 account_id, std::string set_name);
+
 	void GetLauncherList(std::vector<std::string> &result);
 	bool GetCharacterLevel(const char *name, int &level);
 

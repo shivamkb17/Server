@@ -248,6 +248,16 @@ void Client::SendCharInfo(uint32 character_set) {
 
 	seen_character_select = true;
 
+	EQApplicationPacket *sets_app = nullptr;
+	database.GetCharacterSets(GetAccountID(), &sets_app, character_set);
+	if (sets_app) {
+		QueuePacket(sets_app);
+		safe_delete(sets_app);
+	}
+	else {
+		LogError("Database did not return character sets packet for account [{}]", GetAccountID());
+	}
+
 	// Send OP_SendCharInfo
 	EQApplicationPacket *outapp = nullptr;
 	database.GetCharSelectInfo(GetAccountID(), &outapp, m_ClientVersionBit, character_set);
@@ -1087,6 +1097,15 @@ bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app) {
 	return true;
 }
 
+bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
+
+	bool result = database.CreateCharacterSet(GetAccountID(), "New Set Name");
+
+	SendCharInfo();
+
+	return true;
+}
+
 bool Client::HandleZoneChangePacket(const EQApplicationPacket *app) {
 	// HoT sends this to world while zoning and wants it echoed back.
 	if (m_ClientVersionBit & EQ::versions::maskRoFAndLater)
@@ -1207,6 +1226,11 @@ bool Client::HandlePacket(const EQApplicationPacket *app) {
 		case OP_CharacterSetRequest:
 		{
 			return HandleCharacterSetRequest(app);
+		}
+		case OP_CharacterSetCreateRequest:
+		{
+
+			return true;
 		}
 		default:
 		{

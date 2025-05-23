@@ -209,6 +209,51 @@ ON DUPLICATE KEY UPDATE
 			)",
 		.content_schema_update = false,
 	},
+	ManifestEntry{
+		.version = 12,
+		.description = "2025_05_23_account_character_sets_tables_and_migration",
+		.check = "SHOW TABLES LIKE 'account_character_sets'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+	CREATE TABLE `account_character_sets` (
+	`set_id` int(11) NOT NULL AUTO_INCREMENT,
+	`account_id` int(11) NOT NULL,
+	`set_name` varchar(255) NOT NULL,
+	`created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (`set_id`),
+	UNIQUE KEY `unique_account_set_name` (`account_id`, `set_name`),
+	INDEX `idx_account_id` (`account_id`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+	CREATE TABLE `account_character_set_members` (
+	`set_id` int(11) NOT NULL,
+	`character_id` int(11) NOT NULL,
+	PRIMARY KEY (`set_id`, `character_id`),
+	INDEX `idx_character_id` (`character_id`),
+	INDEX `idx_set_id` (`set_id`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+	INSERT INTO account_character_sets (account_id, set_name, created_at)
+	SELECT DISTINCT
+		cd.account_id,
+		'Default' as set_name,
+		NOW() as created_at
+	FROM character_data cd
+	WHERE cd.deleted_at IS NULL
+	AND cd.account_id IS NOT NULL;
+
+	INSERT INTO account_character_set_members (set_id, character_id)
+	SELECT
+		acs.set_id,
+		cd.id as character_id
+	FROM character_data cd
+	JOIN account_character_sets acs ON cd.account_id = acs.account_id
+	WHERE cd.deleted_at IS NULL
+	AND acs.set_name = 'Default';
+	)",
+		.content_schema_update = false,
+	},
 
 	// Add character_aa_disabled table
 	ManifestEntry{

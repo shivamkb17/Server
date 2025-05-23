@@ -127,6 +127,7 @@ Client::Client(EQStreamInterface* ieqs)
 	zone_waiting_for_bootup = 0;
 	enter_world_triggered = false;
 	StartInTutorial = false;
+	m_character_set = 0;
 
 	m_ClientVersion = eqs->ClientVersion();
 	m_ClientVersionBit = EQ::versions::ConvertClientVersionToClientVersionBit(m_ClientVersion);
@@ -234,7 +235,7 @@ void Client::SendExpansionInfo() {
 	safe_delete(outapp);
 }
 
-void Client::SendCharInfo() {
+void Client::SendCharInfo(uint32 character_set) {
 	if (cle) {
 		cle->SetOnline(CLE_Status::CharSelect);
 	}
@@ -249,7 +250,7 @@ void Client::SendCharInfo() {
 
 	// Send OP_SendCharInfo
 	EQApplicationPacket *outapp = nullptr;
-	database.GetCharSelectInfo(GetAccountID(), &outapp, m_ClientVersionBit);
+	database.GetCharSelectInfo(GetAccountID(), &outapp, m_ClientVersionBit, character_set);
 
 	if (outapp) {
 		QueuePacket(outapp);
@@ -1081,6 +1082,11 @@ bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app) {
 	return true;
 }
 
+bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app) {
+	SendCharInfo(1);
+	return true;
+}
+
 bool Client::HandleZoneChangePacket(const EQApplicationPacket *app) {
 	// HoT sends this to world while zoning and wants it echoed back.
 	if (m_ClientVersionBit & EQ::versions::maskRoFAndLater)
@@ -1197,6 +1203,10 @@ bool Client::HandlePacket(const EQApplicationPacket *app) {
 			// Essentially we are just 'eating' these packets, indicating
 			// they are handled.
 			return true;
+		}
+		case OP_CharacterSetRequest:
+		{
+			return HandleCharacterSetRequest(app);
 		}
 		default:
 		{

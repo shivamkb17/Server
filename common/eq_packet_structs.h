@@ -187,6 +187,28 @@ struct CharacterSelect_Struct
 	CharacterSelectEntry_Struct Entries[0];
 };
 
+/* Character Sets */
+
+struct CharacterSetRequest_Struct
+{
+	uint32 requested_set;
+};
+
+struct CharacterSetListEntry_Struct
+{
+   uint32 id;
+   char   name[64];
+};
+
+struct CharacterSetList_Struct
+{
+   uint32 selected_set;
+   uint32 count;
+   struct CharacterSetListEntry_Struct entries[];
+};
+
+/* End Character Sets */
+
 /*
 ** Generic Spawn Struct
 ** Length: 257 Bytes

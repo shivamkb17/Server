@@ -35,13 +35,15 @@
 #include "../common/repositories/character_material_repository.h"
 #include "../common/repositories/start_zones_repository.h"
 #include "../common/repositories/data_buckets_repository.h"
+#include "../common/repositories/account_character_sets_repository.h"
+#include "../common/repositories/account_character_set_members_repository.h"
 
 WorldDatabase database;
 WorldDatabase content_db;
 extern std::vector<RaceClassAllocation> character_create_allocations;
 extern std::vector<RaceClassCombos> character_create_race_class_combos;
 
-void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **out_app, uint32 client_version_bit)
+void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **out_app, uint32 client_version_bit, uint32 character_set)
 {
 	EQ::versions::ClientVersion
 		   client_version  = EQ::versions::ConvertClientVersionBitToClientVersion(client_version_bit);
@@ -56,14 +58,91 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **o
 		character_limit = 8;
 	}
 
-	auto characters = CharacterDataRepository::GetWhere(
-		database,
-		fmt::format(
-			"`account_id` = {} AND `deleted_at` IS NULL ORDER BY `name` LIMIT {}",
+	LogDebug("Character Set: [{}]", character_set);
+
+	// NEW: Handle character set filtering
+	std::string character_filter;
+	if (character_set > 0) {
+		// Get character IDs for the specified set
+		auto character_ids = AccountCharacterSetMembersRepository::GetCharacterIdsInSet(
+			database,
+			static_cast<int32_t>(character_set)
+		);
+
+		if (character_ids.empty()) {
+			// No characters in this set
+			*out_app = new EQApplicationPacket(OP_SendCharInfo, sizeof(CharacterSelect_Struct));
+			auto *cs = (CharacterSelect_Struct *) (*out_app)->pBuffer;
+			cs->CharCount  = 0;
+			cs->TotalChars = character_limit;
+			LogDebug("No characters found in character set [{}]", character_set);
+			return;
+		}
+
+		// Build filter for characters in this set
+		std::vector<std::string> character_id_strings;
+		character_id_strings.reserve(character_ids.size());
+		for (auto id : character_ids) {
+			character_id_strings.push_back(std::to_string(id));
+		}
+
+		character_filter = fmt::format(
+			"`account_id` = {} AND `id` IN ({}) ORDER BY `name` LIMIT {}",
 			account_id,
+			Strings::Join(character_id_strings, ","),
 			character_limit
-		)
-	);
+		);
+	} else {
+		// Default behavior - automatically assign setless characters to default set
+		auto default_set = AccountCharacterSetsRepository::GetOrCreateDefaultSet(database, account_id);
+
+		// Find characters not in any set
+		auto all_characters = CharacterDataRepository::GetWhere(
+			database,
+			fmt::format("`account_id` = {} AND `deleted_at` IS NULL ORDER BY `name`", account_id)
+		);
+
+		std::vector<int32_t> setless_character_ids;
+		for (auto &character : all_characters) {
+			if (AccountCharacterSetMembersRepository::GetCharacterSetId(database, character.id) == 0) {
+				setless_character_ids.push_back(character.id);
+			}
+		}
+
+		// Add setless characters to default set
+		for (auto char_id : setless_character_ids) {
+			AccountCharacterSetMembersRepository::AddCharacterToSet(database, default_set.set_id, char_id);
+		}
+
+		// Now get characters from default set
+		auto character_ids = AccountCharacterSetMembersRepository::GetCharacterIdsInSet(
+			database,
+			default_set.set_id
+		);
+
+		if (!character_ids.empty()) {
+			std::vector<std::string> character_id_strings;
+			character_id_strings.reserve(character_ids.size());
+			for (auto id : character_ids) {
+				character_id_strings.push_back(std::to_string(id));
+			}
+
+			character_filter = fmt::format(
+				"`account_id` = {} AND `id` IN ({}) ORDER BY `name` LIMIT {}",
+				account_id,
+				Strings::Join(character_id_strings, ","),
+				character_limit
+			);
+		} else {
+			character_filter = fmt::format(
+				"`account_id` = {} ORDER BY `name` LIMIT {}",
+				account_id,
+				character_limit
+			);
+		}
+	}
+
+	auto characters = CharacterDataRepository::GetWhere(database, character_filter);
 
 	size_t character_count = characters.size();
 	if (characters.empty()) {
@@ -71,6 +150,8 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **o
 		auto *cs = (CharacterSelect_Struct *) (*out_app)->pBuffer;
 		cs->CharCount  = 0;
 		cs->TotalChars = character_limit;
+
+		LogDebug("Setting character_limit to [{}]", character_limit);
 		return;
 	}
 
@@ -123,6 +204,8 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **o
 
 	cs->CharCount  = character_count;
 	cs->TotalChars = character_limit;
+
+	LogDebug("Setting character_limit to [{}]", character_limit);
 
 	buff_ptr += sizeof(CharacterSelect_Struct);
 	for (auto &e: characters) {

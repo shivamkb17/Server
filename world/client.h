@@ -37,7 +37,7 @@ public:
 	~Client();
 
 	bool	Process();
-	void	SendCharInfo();
+	void	SendCharInfo(uint32 character_set = 0);
 	void	SendMaxCharCreate();
 	void	SendMembership();
 	void	SendMembershipSettings();
@@ -89,6 +89,8 @@ private:
 	uint32	zone_waiting_for_bootup;
 	bool	enter_world_triggered;
 
+	uint32  m_character_set;
+
 	bool StartInTutorial;
 	EQ::versions::ClientVersion m_ClientVersion;
 	uint32 m_ClientVersionBit;
@@ -113,6 +115,7 @@ private:
 	bool HandleDeleteCharacterPacket(const EQApplicationPacket *app);
 	bool HandleZoneChangePacket(const EQApplicationPacket *app);
 	bool HandleChecksumPacket(const EQApplicationPacket *app);
+	bool HandleCharacterSetRequest(const EQApplicationPacket *app);
 	bool ChecksumVerificationCRCEQGame(uint64 checksum);
 	bool ChecksumVerificationCRCSkillCaps(uint64 checksum);
 	bool ChecksumVerificationCRCBaseData(uint64 checksum);

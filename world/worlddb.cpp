@@ -586,11 +586,13 @@ void WorldDatabase::GetCharacterSets(uint32 account_id, EQApplicationPacket **ou
 	LogDebug("Sending [{}] character sets for account [{}] selected set [{}]", character_sets.size(), account_id, selected_set);
 }
 
-bool WorldDatabase::CreateCharacterSet(uint32 account_id, std::string set_name)
+AccountCharacterSetsRepository::AccountCharacterSets WorldDatabase::CreateCharacterSet(uint32 account_id, std::string set_name)
 {
 	auto result = AccountCharacterSetsRepository::CreateCharacterSet(database, account_id, set_name);
 
-	return !result.set_name.empty();
+	LogDebug("Attempted to create character set, result: [{}]", result.set_name);
+
+	return result;
 }
 
 int WorldDatabase::MoveCharacterToBind(int character_id, uint8 bind_number)

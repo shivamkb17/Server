@@ -22,6 +22,7 @@
 #include "../common/eq_packet.h"
 #include "../common/repositories/inventory_repository.h"
 #include "../common/repositories/character_data_repository.h"
+#include "../common/repositories/account_character_sets_repository.h"
 
 struct PlayerProfile_Struct;
 struct CharCreate_Struct;
@@ -36,7 +37,7 @@ public:
 	int MoveCharacterToInstanceSafeReturn(int character_id, int instance_zone_id, int instance_id);
 
 	void GetCharacterSets(uint32 account_id, EQApplicationPacket **out_app, uint32 selected_set);
-	bool CreateCharacterSet(uint32 account_id, std::string set_name);
+	AccountCharacterSetsRepository::AccountCharacterSets CreateCharacterSet(uint32 account_id, std::string set_name);
 
 	void GetLauncherList(std::vector<std::string> &result);
 	bool GetCharacterLevel(const char *name, int &level);

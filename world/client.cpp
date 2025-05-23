@@ -55,6 +55,7 @@
 #include "../common/content/world_content_service.h"
 #include "../common/repositories/group_id_repository.h"
 #include "../common/repositories/character_data_repository.h"
+#include "../common/repositories/account_character_sets_repository.h"
 #include "../common/skill_caps.h"
 
 #include <iostream>
@@ -1099,9 +1100,11 @@ bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app) {
 
 bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
 
-	bool result = database.CreateCharacterSet(GetAccountID(), "New Set Name");
+	auto result = database.CreateCharacterSet(GetAccountID(), "Test Set Name");
 
-	SendCharInfo();
+	if (!result.set_name.empty()) {
+		SendCharInfo(result.set_id);
+	}
 
 	return true;
 }
@@ -1229,7 +1232,7 @@ bool Client::HandlePacket(const EQApplicationPacket *app) {
 		}
 		case OP_CharacterSetCreateRequest:
 		{
-
+			HandleCharacterSetCreateRequest(app);
 			return true;
 		}
 		default:

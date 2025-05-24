@@ -249,6 +249,10 @@ void Client::SendCharInfo(uint32 character_set) {
 
 	seen_character_select = true;
 
+	if (!character_set) {
+		character_set = m_character_set;
+	}
+
 	EQApplicationPacket *sets_app = nullptr;
 	database.GetCharacterSets(GetAccountID(), &sets_app, character_set);
 	if (sets_app) {
@@ -1087,7 +1091,7 @@ bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app) {
 	if(char_acct_id == GetAccountID()) {
 		LogInfo("Delete character: [{}]", (const char*)app->pBuffer);
 		database.DeleteCharacter((char *)app->pBuffer);
-		SendCharInfo();
+		SendCharInfo(m_character_set);
 	}
 
 	return true;
@@ -1952,6 +1956,12 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 	}
 
 	const bool success = StoreCharacter(GetAccountID(), &pp, &inv);
+
+	if (success) {
+		int char_id = database.GetCharacterID(pp.name);
+		AccountCharacterSetMembersRepository::AddCharacterToSet(database, m_character_set, char_id);
+		LogDebug("Assigned character_id: [{}] to character_set [{}]", char_id, m_character_set);
+	}
 
 	LogInfo("Character creation {} for [{}]", success ? "succeeded" : "failed", pp.name);
 	return success;

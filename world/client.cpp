@@ -1094,12 +1094,20 @@ bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app) {
 }
 
 bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app) {
-	SendCharInfo(1);
+
+	if (app->size != sizeof(CharacterSetRequest_Struct)) {
+		LogError("Error: Malformed OP_CharacterSetRequest");
+		return false;
+	}
+
+	CharacterSetRequest_Struct* csr = (CharacterSetRequest_Struct*)app->pBuffer;
+	m_character_set = csr->requested_set;
+	SendCharInfo(m_character_set);
+
 	return true;
 }
 
 bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
-
 	auto result = database.CreateCharacterSet(GetAccountID(), "Test Set Name");
 
 	if (!result.set_name.empty()) {

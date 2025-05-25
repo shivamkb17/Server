@@ -4761,7 +4761,7 @@ bool Mob::SpellOnTarget(
 		}
 	}
 
-	if (IsClient() && IsDetrimentalSpell(spell_id)) {
+	if (IsClient() && IsDetrimentalSpell(spell_id) && !IsMesmerizeSpell(spell_id) && !IsHarmonySpell(spell_id) && !IsCharmSpell(spell_id)) {
 		for (auto pet : GetAllPets()) {
 			if (pet && pet->IsNPC() && pet->IsPetAssisting()) {
 				pet->CastToNPC()->DoPetCommandAssistOnTarget(spelltar);

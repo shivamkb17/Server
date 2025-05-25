@@ -6,7 +6,7 @@ void command_petcmd(Client *c, const Seperator *sep) {
         return;
     }
 
-    const std::string usage = "Usage: #petcmd [attack, qattack, follow, guard, sit, stop, taunt (on\\off), hold (on\\off), ghold (on\\off), spellhold (on\\off), focus (on\\off), back, regroup (on\\off), assist (on\\off), health, leader, feign, leave] [all, mag, bst, nec, enc, shm, dru, brd, shd]. Verbs do not need to be applied in any specific order.";
+    const std::string usage = "Usage: #petcmd [attack, qattack, follow, guard, sit, stop, taunt (on\\off), hold (on\\off), ghold (on\\off), spellhold (on\\off), focus (on\\off), back, regroup (on\\off), assist (on\\off), health, leader, feign, leave] [all, swarm, mag, bst, nec, enc, shm, dru, brd, shd]. Verbs do not need to be applied in any specific order.";
 
     // Safely build a vector of args
     std::vector<std::string> args;
@@ -25,6 +25,7 @@ void command_petcmd(Client *c, const Seperator *sep) {
 
     // Track commands and targets
     bool all_classes = false;
+    bool swarm_only = false;
     std::vector<int> command_codes;
     std::vector<uint8> class_targets;
 
@@ -124,6 +125,12 @@ void command_petcmd(Client *c, const Seperator *sep) {
             continue;
         }
 
+        // Check if it's "swarm"
+        if (arg == "swarm") {
+            swarm_only = true;
+            continue;
+        }
+
         // Check if it's a class target
         auto class_it = class_map.find(arg);
         if (class_it != class_map.end()) {
@@ -170,34 +177,198 @@ void command_petcmd(Client *c, const Seperator *sep) {
         return;
     }
 
-    // If no classes specified, default to all
-    if (class_targets.empty() && !all_classes) {
+    // Define commands that are not supported by swarm pets
+    std::set<int> swarm_unsupported_commands = {
+        PET_FOLLOWME,
+        PET_GUARDHERE,
+        PET_SIT,
+        PET_HEALTHREPORT,
+        PET_FEIGN,
+        PET_REGROUP, PET_REGROUP_ON, PET_REGROUP_OFF,
+        PET_SPELLHOLD, PET_SPELLHOLD_ON, PET_SPELLHOLD_OFF,
+        PET_TAUNT, PET_TAUNT_ON, PET_TAUNT_OFF
+    };
+
+    // Check if swarm_only is used with unsupported commands
+    if (swarm_only) {
+        std::vector<std::string> unsupported_found;
+        for (int cmd : command_codes) {
+            if (swarm_unsupported_commands.find(cmd) != swarm_unsupported_commands.end()) {
+                // Map command back to user-friendly name for error message
+                std::string cmd_name = "unknown";
+                if (cmd == PET_FOLLOWME) cmd_name = "follow";
+                else if (cmd == PET_GUARDHERE) cmd_name = "guard";
+                else if (cmd == PET_SIT) cmd_name = "sit";
+                else if (cmd == PET_HEALTHREPORT) cmd_name = "health";
+                else if (cmd == PET_FEIGN) cmd_name = "feign";
+                else if (cmd == PET_REGROUP || cmd == PET_REGROUP_ON || cmd == PET_REGROUP_OFF) cmd_name = "regroup";
+                else if (cmd == PET_SPELLHOLD || cmd == PET_SPELLHOLD_ON || cmd == PET_SPELLHOLD_OFF) cmd_name = "spellhold";
+                else if (cmd == PET_TAUNT || cmd == PET_TAUNT_ON || cmd == PET_TAUNT_OFF) cmd_name = "taunt";
+
+                unsupported_found.push_back(cmd_name);
+            }
+        }
+
+        if (!unsupported_found.empty()) {
+            std::string msg = "The following commands are not supported by swarm pets: ";
+            for (size_t i = 0; i < unsupported_found.size(); ++i) {
+                if (i > 0) msg += ", ";
+                msg += unsupported_found[i];
+            }
+            c->Message(Chat::White, msg.c_str());
+            return;
+        }
+    }
+
+    // Default behavior: if no target specified, target all regular pets only
+    if (class_targets.empty() && !all_classes && !swarm_only) {
         all_classes = true;
     }
 
-    // Get the list of pets - safely handle null/empty cases
-    auto pets = c->GetAllPets();
-    if (pets.empty()) {
-        c->Message(Chat::White, "You don't have any pets under your control.");
-        return;
-    }
+    // Get target for commands
+    Mob* target = c->GetTarget();
 
-    // Execute all commands on matching pets
-    for (auto pet : pets) {
-        // Skip invalid pets
-        if (!pet || !pet->IsNPC()) {
-            continue;
+    // Handle swarm pets (only when explicitly targeted with 'swarm')
+    if (swarm_only) {
+        // Check if we have any persistent toggle commands that don't require active swarm pets
+        std::vector<int> persistent_commands;
+        std::vector<int> immediate_commands;
+
+        for (int cmd : command_codes) {
+            if (cmd == PET_HOLD || cmd == PET_HOLD_ON || cmd == PET_HOLD_OFF ||
+                cmd == PET_GHOLD || cmd == PET_GHOLD_ON || cmd == PET_GHOLD_OFF ||
+                cmd == PET_FOCUS || cmd == PET_FOCUS_ON || cmd == PET_FOCUS_OFF ||
+                cmd == CUSTOM_PET_ASSIST || cmd == CUSTOM_PET_ASSIST_ON || cmd == CUSTOM_PET_ASSIST_OFF) {
+                persistent_commands.push_back(cmd);
+            } else {
+                immediate_commands.push_back(cmd);
+            }
         }
 
-        auto pet_class_id = pet->CastToNPC()->GetPetOriginClass();
+        // Process persistent settings first (these work without active swarm pets)
+        for (int cmd : persistent_commands) {
+            switch (cmd) {
+                case PET_HOLD:
+                    // Toggle current hold setting
+                    {
+                        std::string current = c->GetBucket("pet_settings.swarm.hold");
+                        std::string new_setting = (current == "on") ? "off" : "on";
+                        c->SetBucket("pet_settings.swarm.hold", new_setting);
+                        c->Message(Chat::White, fmt::format("Swarm pet hold setting: {}", (new_setting == "on") ? "ON" : "OFF").c_str());
+                    }
+                    break;
+                case PET_HOLD_ON:
+                    c->SetBucket("pet_settings.swarm.hold", "on");
+                    c->Message(Chat::White, "Swarm pet hold setting: ON");
+                    break;
+                case PET_HOLD_OFF:
+                    c->SetBucket("pet_settings.swarm.hold", "off");
+                    c->Message(Chat::White, "Swarm pet hold setting: OFF");
+                    break;
+                case PET_GHOLD:
+                    // Toggle current ghold setting
+                    {
+                        std::string current = c->GetBucket("pet_settings.swarm.ghold");
+                        std::string new_setting = (current == "on") ? "off" : "on";
+                        c->SetBucket("pet_settings.swarm.ghold", new_setting);
+                        c->Message(Chat::White, fmt::format("Swarm pet ghold setting: {}", (new_setting == "on") ? "ON" : "OFF").c_str());
+                    }
+                    break;
+                case PET_GHOLD_ON:
+                    c->SetBucket("pet_settings.swarm.ghold", "on");
+                    c->Message(Chat::White, "Swarm pet ghold setting: ON");
+                    break;
+                case PET_GHOLD_OFF:
+                    c->SetBucket("pet_settings.swarm.ghold", "off");
+                    c->Message(Chat::White, "Swarm pet ghold setting: OFF");
+                    break;
+                case PET_FOCUS:
+                    // Toggle current focus setting
+                    {
+                        std::string current = c->GetBucket("pet_settings.swarm.focus");
+                        std::string new_setting = (current == "on") ? "off" : "on";
+                        c->SetBucket("pet_settings.swarm.focus", new_setting);
+                        c->Message(Chat::White, fmt::format("Swarm pet focus setting: {}", (new_setting == "on") ? "ON" : "OFF").c_str());
+                    }
+                    break;
+                case PET_FOCUS_ON:
+                    c->SetBucket("pet_settings.swarm.focus", "on");
+                    c->Message(Chat::White, "Swarm pet focus setting: ON");
+                    break;
+                case PET_FOCUS_OFF:
+                    c->SetBucket("pet_settings.swarm.focus", "off");
+                    c->Message(Chat::White, "Swarm pet focus setting: OFF");
+                    break;
+                case CUSTOM_PET_ASSIST:
+                    // Toggle current assist setting
+                    {
+                        std::string current = c->GetBucket("pet_settings.swarm.assist");
+                        std::string new_setting = (current == "on") ? "off" : "on";
+                        c->SetBucket("pet_settings.swarm.assist", new_setting);
+                        c->Message(Chat::White, fmt::format("Swarm pet assist setting: {}", (new_setting == "on") ? "ON" : "OFF").c_str());
+                    }
+                    break;
+                case CUSTOM_PET_ASSIST_ON:
+                    c->SetBucket("pet_settings.swarm.assist", "on");
+                    c->Message(Chat::White, "Swarm pet assist setting: ON");
+                    break;
+                case CUSTOM_PET_ASSIST_OFF:
+                    c->SetBucket("pet_settings.swarm.assist", "off");
+                    c->Message(Chat::White, "Swarm pet assist setting: OFF");
+                    break;
+            }
+        }
 
-        // Check if this pet's class matches our targets
-        if (all_classes || std::find(class_targets.begin(), class_targets.end(), pet_class_id) != class_targets.end()) {
-            // Execute all commands on this pet
+        // If we only had persistent commands and no active swarm pets, we're done
+        if (immediate_commands.empty()) {
+            if (!persistent_commands.empty()) {
+                c->Message(Chat::White, "Settings saved for future swarm pets.");
+            }
+            return;
+        }
+
+        // Handle immediate commands (these require active swarm pets)
+        auto swarm_pets = c->GetAllSwarmPets();
+        if (swarm_pets.empty()) {
+            c->Message(Chat::White, "You don't have any swarm pets under your control.");
+            return;
+        }
+
+        // Execute all commands (both persistent and immediate) on existing swarm pets
+        for (auto swarm_pet : swarm_pets) {
+            if (!swarm_pet || !swarm_pet->IsNPC()) {
+                continue;
+            }
+
             for (int cmd : command_codes) {
-                // Get target safely
-                Mob* target = c->GetTarget();
-                pet->CastToNPC()->DoPetCommand(cmd, target);
+                swarm_pet->CastToNPC()->DoPetCommand(cmd, target);
+            }
+        }
+    }
+
+    // Handle regular pets (skip if swarm_only is true)
+    if (!swarm_only) {
+        auto pets = c->GetAllPets();
+        if (pets.empty()) {
+            c->Message(Chat::White, "You don't have any pets under your control.");
+            return;
+        }
+
+        // Execute commands on regular pets
+        for (auto pet : pets) {
+            // Skip invalid pets
+            if (!pet || !pet->IsNPC()) {
+                continue;
+            }
+
+            auto pet_class_id = pet->CastToNPC()->GetPetOriginClass();
+
+            // Check if this pet's class matches our targets
+            if (all_classes || std::find(class_targets.begin(), class_targets.end(), pet_class_id) != class_targets.end()) {
+                // Execute all commands on this pet
+                for (int cmd : command_codes) {
+                    pet->CastToNPC()->DoPetCommand(cmd, target);
+                }
             }
         }
     }

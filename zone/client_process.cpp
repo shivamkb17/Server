@@ -446,6 +446,18 @@ bool Client::Process() {
 					}
 				}
 			}
+
+			for (auto pet : GetAllPets()) {
+				if (pet && pet->IsNPC() && pet->IsPetAssisting()) {
+					pet->CastToNPC()->DoPetCommandAssistOnTarget(auto_attack_target);
+				}
+			}
+
+			for (auto swarm_member : GetAllSwarmPets()) {
+				if (swarm_member && swarm_member->IsNPC() && swarm_member->IsPetAssisting()) {
+					swarm_member->CastToNPC()->DoPetCommandAssistOnTarget(auto_attack_target);
+				}
+			}
 		}
 
 		if ((auto_attack && GetAttackMode() == AttackMode::MELEE) && auto_attack_target != nullptr && may_use_attacks && attack_timer.Check()) {
@@ -510,6 +522,14 @@ bool Client::Process() {
 			for (auto pet : GetAllPets()) {
 				if (pet && pet->IsNPC() && pet->IsPetAssisting()) {
 					pet->CastToNPC()->DoPetCommandAssistOnTarget(auto_attack_target);
+				}
+			}
+
+			for (auto swarm_member : GetAllSwarmPets()) {
+				LogDebug("Checking swarm for assist");
+				if (swarm_member && swarm_member->IsNPC() && swarm_member->IsPetAssisting()) {
+					LogDebug("Checking....");
+					swarm_member->CastToNPC()->DoPetCommandAssistOnTarget(auto_attack_target);
 				}
 			}
 		}
@@ -653,6 +673,13 @@ bool Client::Process() {
 				for (auto client : entity_list.GetClientList()) {
 					if (client.second->GetAttackMode() == AttackMode::RANGED) {
 						client.second->SetWeaponAppearance();
+					}
+				}
+
+				if (GetPetByID(focused_pet_id)) {
+					auto focused_pet = GetPetByID(focused_pet_id);
+					if (focused_pet) {
+						ConfigurePetWindow(focused_pet);
 					}
 				}
 

@@ -1813,9 +1813,23 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 						pet->SetHP(pet_info.HP);
 						pet->SetMana(pet_info.Mana);
 
-						// Taunt persists when zoning on newer clients, overwrite default.
-						if (m_ClientVersionBit & EQ::versions::maskUFAndLater) {
-							pet->SetTaunting(pet_info.taunting);
+						if (GetBucket(fmt::format("pet_settings.{}.taunt", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+							pet->DoPetCommandTaunt(true);
+						}
+						if (GetBucket(fmt::format("pet_settings.{}.hold", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+							pet->DoPetCommandHold(true);
+						}
+						if (GetBucket(fmt::format("pet_settings.{}.ghold", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+							pet->DoPetCommandGHold(true);
+						}
+						if (GetBucket(fmt::format("pet_settings.{}.focus", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+							pet->DoPetCommandFocus(true);
+						}
+						if (GetBucket(fmt::format("pet_settings.{}.spellhold", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+							pet->DoPetCommandSpellhold(true);
+						}
+						if (GetBucket(fmt::format("pet_settings.{}.assist", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+							pet->DoPetCommandAssist(true);
 						}
 					}
 

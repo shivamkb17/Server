@@ -1163,15 +1163,17 @@ void Client::SendAlternateAdvancementTimers() {
 }
 
 void Client::GetAllToggleAAStatus() {
-
+	// Is this actually required?
 }
 
-void Client::SetToggleAAStatus() {
-
+void Client::SetToggleAAStatus(int ability_id, bool status) {
+	SetBucket(fmt::format("disabled_aa.{}", ability_id), (status ? "enabled" : "disabled"));
+	CalcBonuses();
 }
 
 bool Client::GetToggleAAStatus(int ability_id) {
-
+    std::string bucket_value = GetBucket(fmt::format("disabled_aa.{}", ability_id));
+    return (bucket_value != "disabled");
 }
 
 void Client::GetDynamicAATimers() {

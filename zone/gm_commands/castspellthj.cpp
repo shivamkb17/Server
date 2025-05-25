@@ -68,6 +68,10 @@ void command_castspellthj(Client *c, const Seperator *sep)
         return;
     }
 
+	if (IsBardSong(spell_id)) {
+		c->Message(Chat::SpellFailure, "You may not sing bard songs directly from your spellbook.");
+	}
+
 	if (IsDetrimentalSpell(spell_id)) {
 		c->Message(Chat::SpellFailure, "You cannot cast detrimental spells directly from your spellbook.");
 		return;

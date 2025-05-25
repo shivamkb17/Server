@@ -196,8 +196,8 @@ struct CharacterSetRequest_Struct
 
 struct CharacterSetListEntry_Struct
 {
-   uint32 id;
-   char   name[64];
+    uint32 set_id;
+    char   name[64];
 };
 
 struct CharacterSetList_Struct
@@ -210,6 +210,11 @@ struct CharacterSetList_Struct
 struct CharacterSetCreateRequest_Struct
 {
 	char name[64];
+};
+
+struct CharacterSetDeleteRequest_Struct
+{
+	uint32 set_id;
 };
 
 /* End Character Sets */

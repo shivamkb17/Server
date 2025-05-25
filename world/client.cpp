@@ -1112,7 +1112,14 @@ bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app) {
 }
 
 bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
-	auto result = database.CreateCharacterSet(GetAccountID(), "Test Set Name");
+	if (app->size != sizeof(CharacterSetCreateRequest_Struct)) {
+		LogError("Error: Malformed OP_CharacterSetCreateRequest");
+		return false;
+	}
+
+	CharacterSetCreateRequest_Struct* p = (CharacterSetCreateRequest_Struct*) app->pBuffer;
+
+	auto result = database.CreateCharacterSet(GetAccountID(), p->name);
 
 	if (!result.set_name.empty()) {
 		SendCharInfo(result.set_id);

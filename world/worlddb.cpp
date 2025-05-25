@@ -560,6 +560,8 @@ void WorldDatabase::GetCharacterSets(uint32 account_id, EQApplicationPacket **ou
 		character_sets.push_back(default_set);
 	}
 
+
+
 	size_t packet_size = sizeof(CharacterSetList_Struct) + (sizeof(CharacterSetListEntry_Struct) * character_sets.size());
 	*out_app = new EQApplicationPacket(OP_SendCharacterSets, packet_size);
 
@@ -574,7 +576,7 @@ void WorldDatabase::GetCharacterSets(uint32 account_id, EQApplicationPacket **ou
 	for (size_t i = 0; i < character_sets.size(); ++i) {
 		auto *entry = (CharacterSetListEntry_Struct *) buff_ptr;
 
-		entry->id = character_sets[i].set_id;
+		entry->set_id = character_sets[i].set_id;
 		memset(entry->name, 0, sizeof(entry->name));
 		strncpy(entry->name, character_sets[i].set_name.c_str(), sizeof(entry->name) - 1);
 

@@ -8763,10 +8763,10 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 
 			auto assist_val = c->GetBucket("pet_settings.swarm.assist");
 			if (assist_val.empty()) {
-				c->SetBucket("pet_settings.swarm.assist","on");
+				c->SetBucket("pet_settings.swarm.assist", "on");
 			}
 
-			if (assist_val == "on") {
+			if (assist_val.empty() || assist_val == "on") {
 				swarm_pet_npc->DoPetCommandAssist(true);
 			}
 			if (c->GetBucket("pet_settings.swarm.focus") == "on") {
@@ -8778,7 +8778,7 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 			if (c->GetBucket("pet_settings.swarm.hold") == "on") {
 				swarm_pet_npc->DoPetCommandHold(true);
 			}
- 		}
+		}
 
 		LogDebug("My HP: [{}]/[{}] My Mana: [{}]/[{}]", swarm_pet_npc->GetHP(), swarm_pet_npc->GetMaxHP(), swarm_pet_npc->GetMana(), swarm_pet_npc->GetMaxMana());
 

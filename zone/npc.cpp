@@ -2592,6 +2592,7 @@ void NPC::DoPetCommandAssist(bool enabled) {
 
 void NPC::DoPetCommandAttack(Mob* target, bool force) {
 	if (!target) { return; }
+	if (!target->IsClient()) { return; }
 
 	Client* owner = DoPetCommandChecks(force ? PET_ATTACK : PET_QATTACK);
 	if (!owner && GetSwarmOwner()) {
@@ -2652,6 +2653,7 @@ void NPC::DoPetCommandAttack(Mob* target, bool force) {
 
 void NPC::DoPetCommandAssistOnTarget(Mob* target) {
 	if (!target) { return; }
+	if (!target->IsClient()) { return; }
 
 	Client* owner = DoPetCommandChecks(PET_ATTACK);
 	if (!owner && GetSwarmOwner()) {

@@ -188,10 +188,10 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 
 			auto assist_val = c->GetBucket("pet_settings.swarm.assist");
 			if (assist_val.empty()) {
-				c->SetBucket("pet_settings.swarm.assist","on");
+				c->SetBucket("pet_settings.swarm.assist", "on");
 			}
 
-			if (assist_val == "on") {
+			if (assist_val.empty() || assist_val == "on") {
 				swarm_pet_npc->DoPetCommandAssist(true);
 			}
 			if (c->GetBucket("pet_settings.swarm.focus") == "on") {
@@ -203,7 +203,7 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 			if (c->GetBucket("pet_settings.swarm.hold") == "on") {
 				swarm_pet_npc->DoPetCommandHold(true);
 			}
- 		}
+		}
 
 		summon_count--;
 	}
@@ -531,6 +531,29 @@ void Mob::WakeTheDead(uint16 spell_id, Corpse *corpse_to_use, Mob *tar, uint32 d
 			swarm_pet_npc->GiveNPCTypeData(npc_dup);
 
 		entity_list.AddNPC(swarm_pet_npc, true, true);
+
+		if (IsClient()) {
+			Client* c = CastToClient();
+
+			auto assist_val = c->GetBucket("pet_settings.swarm.assist");
+			if (assist_val.empty()) {
+				c->SetBucket("pet_settings.swarm.assist", "on");
+			}
+
+			if (assist_val.empty() || assist_val == "on") {
+				swarm_pet_npc->DoPetCommandAssist(true);
+			}
+			if (c->GetBucket("pet_settings.swarm.focus") == "on") {
+				swarm_pet_npc->DoPetCommandFocus(true);
+			}
+			if (c->GetBucket("pet_settings.swarm.ghold") == "on") {
+				swarm_pet_npc->DoPetCommandGHold(true);
+			}
+			if (c->GetBucket("pet_settings.swarm.hold") == "on") {
+				swarm_pet_npc->DoPetCommandHold(true);
+			}
+		}
+
 		summon_count--;
 	}
 

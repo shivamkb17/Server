@@ -454,8 +454,12 @@ bool Client::Process() {
 			}
 
 			for (auto swarm_member : GetAllSwarmPets()) {
-				if (swarm_member && swarm_member->IsNPC() && swarm_member->IsPetAssisting()) {
+				if (!swarm_member) { continue; }
+				if (swarm_member->IsNPC() && swarm_member->IsPetAssisting()) {
+					LogDebug("Issuing command to : [{}]", swarm_member->GetCleanName());
 					swarm_member->CastToNPC()->DoPetCommandAssistOnTarget(auto_attack_target);
+				} else {
+					LogDebug("Skipping command to : [{}]", swarm_member->GetCleanName());
 				}
 			}
 		}
@@ -526,9 +530,7 @@ bool Client::Process() {
 			}
 
 			for (auto swarm_member : GetAllSwarmPets()) {
-				LogDebug("Checking swarm for assist");
 				if (swarm_member && swarm_member->IsNPC() && swarm_member->IsPetAssisting()) {
-					LogDebug("Checking....");
 					swarm_member->CastToNPC()->DoPetCommandAssistOnTarget(auto_attack_target);
 				}
 			}

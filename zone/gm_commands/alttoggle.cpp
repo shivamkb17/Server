@@ -13,7 +13,7 @@ void command_alt_toggle(Client *c, const Seperator *sep) {
 
     int ability_id = Strings::ToInt(sep->arg[1]);
 
-    auto aa_ability = AaAbilityRepository::FindOne(database, ability_id);
+    auto aa_ability = AaAbilityRepository::FindOne(content_db, ability_id);
     if (aa_ability.id == 0) {
         c->Message(Chat::White, fmt::format("AA ability with ID {} not found.", ability_id).c_str());
         return;

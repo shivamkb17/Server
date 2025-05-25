@@ -1131,6 +1131,10 @@ public:
 	int SetDynamicAATimer(int aa_id);
 	void ClearDynamicAATimers();
 
+	void GetAllToggleAAStatus();
+	void SetToggleAAStatus();
+	bool GetToggleAAStatus(int ability_id);
+
 	std::unordered_map<int, int> aa_timers_cache; // Cache to store AA timers as key-value pairs (aa_id -> timerID)
 
 	//New AA Methods

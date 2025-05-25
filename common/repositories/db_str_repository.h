@@ -99,7 +99,7 @@ public:
 			}
 
 			// Perform modifications
-			// Only apply logic if columns[1] == "1"
+			// Only apply logic if columns[1] == "4"
 			if (columns[1] == "4") {
 				// Query content_db to get the `aa_ability.classes` for the matching title_sid (columns[0])
 				auto content_result = content_db.QueryDatabase(
@@ -116,74 +116,100 @@ public:
 					auto row = content_result.begin();
 					int aa_classes = std::stoi(row[0]); // Convert the class bitmask to an integer
 
-				if (aa_classes != 65535) {
-					std::vector<std::string> class_tags;
+					// Check if this is an activated or passive AA and get the aa_ability.id
+					auto activation_result = content_db.QueryDatabase(
+						fmt::format(
+							"SELECT aa_ranks.recast_time, aa_ranks.spell, aa_ability.id FROM aa_ability "
+							"JOIN aa_ranks ON aa_ability.first_rank_id = aa_ranks.id "
+							"WHERE aa_ranks.desc_sid = {} and aa_ranks.level_req <= 70",
+							columns[0] // The title_sid from columns[0]
+						)
+					);
 
-					// Track 'has_X' and 'block_X' for each class
-					bool has_war = false, block_war = false;
-					bool has_clr = false, block_clr = false;
-					bool has_pal = false, block_pal = false;
-					bool has_rng = false, block_rng = false;
-					bool has_shd = false, block_shd = false;
-					bool has_dru = false, block_dru = false;
-					bool has_mnk = false, block_mnk = false;
-					bool has_brd = false, block_brd = false;
-					bool has_rog = false, block_rog = false;
-					bool has_shm = false, block_shm = false;
-					bool has_nec = false, block_nec = false;
-					bool has_wiz = false, block_wiz = false;
-					bool has_mag = false, block_mag = false;
-					bool has_enc = false, block_enc = false;
-					bool has_bst = false, block_bst = false;
-					bool has_ber = false, block_ber = false;
+					std::string activation_info = "";
+					if (activation_result.RowCount() > 0) {
+						auto activation_row = activation_result.begin();
+						int recast_time = std::stoi(activation_row[0]);
+						int spell_id = std::stoi(activation_row[1]);
+						int aa_ability_id = std::stoi(activation_row[2]);
 
-					// Parse the bitmask and mark 'has_X' for each class
-					for (const auto& [bitmask, class_name] : class_map) {
-						if (aa_classes & bitmask) {
-							if (class_name == "WAR") has_war = true;
-							else if (class_name == "CLR") has_clr = true;
-							else if (class_name == "PAL") has_pal = true;
-							else if (class_name == "RNG") has_rng = true;
-							else if (class_name == "SHD") has_shd = true;
-							else if (class_name == "DRU") has_dru = true;
-							else if (class_name == "MNK") has_mnk = true;
-							else if (class_name == "BRD") has_brd = true;
-							else if (class_name == "ROG") has_rog = true;
-							else if (class_name == "SHM") has_shm = true;
-							else if (class_name == "NEC") has_nec = true;
-							else if (class_name == "WIZ") has_wiz = true;
-							else if (class_name == "MAG") has_mag = true;
-							else if (class_name == "ENC") has_enc = true;
-							else if (class_name == "BST") has_bst = true;
-							else if (class_name == "BER") has_ber = true;
+						// Check if it's an activated AA (recast_time > 0 and spell > -1)
+						if (recast_time > 0 && spell_id > -1) {
+							activation_info = " [/alt activate " + std::to_string(aa_ability_id) + "]";
+						} else {
+							// It's a passive AA, use toggle command
+							activation_info = " [/alt toggle " + std::to_string(aa_ability_id) + "]";
 						}
 					}
 
-					// Add leftover class tags that are not blocked
-					if (has_war && !block_war) class_tags.push_back("WAR");
-					if (has_clr && !block_clr) class_tags.push_back("CLR");
-					if (has_pal && !block_pal) class_tags.push_back("PAL");
-					if (has_rng && !block_rng) class_tags.push_back("RNG");
-					if (has_shd && !block_shd) class_tags.push_back("SHD");
-					if (has_dru && !block_dru) class_tags.push_back("DRU");
-					if (has_mnk && !block_mnk) class_tags.push_back("MNK");
-					if (has_brd && !block_brd) class_tags.push_back("BRD");
-					if (has_rog && !block_rog) class_tags.push_back("ROG");
-					if (has_shm && !block_shm) class_tags.push_back("SHM");
-					if (has_nec && !block_nec) class_tags.push_back("NEC");
-					if (has_wiz && !block_wiz) class_tags.push_back("WIZ");
-					if (has_mag && !block_mag) class_tags.push_back("MAG");
-					if (has_enc && !block_enc) class_tags.push_back("ENC");
-					if (has_bst && !block_bst) class_tags.push_back("BST");
-					if (has_ber && !block_ber) class_tags.push_back("BER");
+					if (aa_classes != 65535) {
+						std::vector<std::string> class_tags;
 
-					// Join the class tags into a single string separated by spaces
-					std::string class_tags_str = "(" + Strings::Join(class_tags, " ") + ")";
-					columns[2] = class_tags_str + "<br>" + columns[2];  // Append class tags to the name in columns[2]
-				} else {
-					// If aa_classes is 65535, it means "ALL" classes
-					columns[2] = "(ALL)<br>" + columns[2];
-				}
+						// Track 'has_X' and 'block_X' for each class
+						bool has_war = false, block_war = false;
+						bool has_clr = false, block_clr = false;
+						bool has_pal = false, block_pal = false;
+						bool has_rng = false, block_rng = false;
+						bool has_shd = false, block_shd = false;
+						bool has_dru = false, block_dru = false;
+						bool has_mnk = false, block_mnk = false;
+						bool has_brd = false, block_brd = false;
+						bool has_rog = false, block_rog = false;
+						bool has_shm = false, block_shm = false;
+						bool has_nec = false, block_nec = false;
+						bool has_wiz = false, block_wiz = false;
+						bool has_mag = false, block_mag = false;
+						bool has_enc = false, block_enc = false;
+						bool has_bst = false, block_bst = false;
+						bool has_ber = false, block_ber = false;
+
+						// Parse the bitmask and mark 'has_X' for each class
+						for (const auto& [bitmask, class_name] : class_map) {
+							if (aa_classes & bitmask) {
+								if (class_name == "WAR") has_war = true;
+								else if (class_name == "CLR") has_clr = true;
+								else if (class_name == "PAL") has_pal = true;
+								else if (class_name == "RNG") has_rng = true;
+								else if (class_name == "SHD") has_shd = true;
+								else if (class_name == "DRU") has_dru = true;
+								else if (class_name == "MNK") has_mnk = true;
+								else if (class_name == "BRD") has_brd = true;
+								else if (class_name == "ROG") has_rog = true;
+								else if (class_name == "SHM") has_shm = true;
+								else if (class_name == "NEC") has_nec = true;
+								else if (class_name == "WIZ") has_wiz = true;
+								else if (class_name == "MAG") has_mag = true;
+								else if (class_name == "ENC") has_enc = true;
+								else if (class_name == "BST") has_bst = true;
+								else if (class_name == "BER") has_ber = true;
+							}
+						}
+
+						// Add leftover class tags that are not blocked
+						if (has_war && !block_war) class_tags.push_back("WAR");
+						if (has_clr && !block_clr) class_tags.push_back("CLR");
+						if (has_pal && !block_pal) class_tags.push_back("PAL");
+						if (has_rng && !block_rng) class_tags.push_back("RNG");
+						if (has_shd && !block_shd) class_tags.push_back("SHD");
+						if (has_dru && !block_dru) class_tags.push_back("DRU");
+						if (has_mnk && !block_mnk) class_tags.push_back("MNK");
+						if (has_brd && !block_brd) class_tags.push_back("BRD");
+						if (has_rog && !block_rog) class_tags.push_back("ROG");
+						if (has_shm && !block_shm) class_tags.push_back("SHM");
+						if (has_nec && !block_nec) class_tags.push_back("NEC");
+						if (has_wiz && !block_wiz) class_tags.push_back("WIZ");
+						if (has_mag && !block_mag) class_tags.push_back("MAG");
+						if (has_enc && !block_enc) class_tags.push_back("ENC");
+						if (has_bst && !block_bst) class_tags.push_back("BST");
+						if (has_ber && !block_ber) class_tags.push_back("BER");
+
+						// Join the class tags into a single string separated by spaces
+						std::string class_tags_str = "(" + Strings::Join(class_tags, " ") + ")" + activation_info;
+						columns[2] = class_tags_str + "<br>" + columns[2];  // Append class tags and activation info to the name in columns[2]
+					} else {
+						// If aa_classes is 65535, it means "ALL" classes
+						columns[2] = "(ALL)" + activation_info + "<br>" + columns[2];
+					}
 
 					//LogDebug("Produced AA Name: [{}]", columns[2]);
 				}
@@ -203,7 +229,6 @@ public:
 
 		return lines; // Return the final vector of modified lines
 	}
-
 
 };
 

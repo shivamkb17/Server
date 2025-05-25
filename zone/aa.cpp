@@ -181,6 +181,30 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 			swarm_pet_npc->GiveNPCTypeData(npc_dup);
 
 		entity_list.AddNPC(swarm_pet_npc, true, true);
+
+		// custom orders
+		if (IsClient()) {
+			Client* c = CastToClient();
+
+			auto assist_val = c->GetBucket("pet_settings.swarm.assist");
+			if (assist_val.empty()) {
+				c->SetBucket("pet_settings.swarm.assist","on");
+			}
+
+			if (assist_val == "on") {
+				swarm_pet_npc->DoPetCommandAssist(true);
+			}
+			if (c->GetBucket("pet_settings.swarm.focus") == "on") {
+				swarm_pet_npc->DoPetCommandFocus(true);
+			}
+			if (c->GetBucket("pet_settings.swarm.ghold") == "on") {
+				swarm_pet_npc->DoPetCommandGHold(true);
+			}
+			if (c->GetBucket("pet_settings.swarm.hold") == "on") {
+				swarm_pet_npc->DoPetCommandHold(true);
+			}
+ 		}
+
 		summon_count--;
 	}
 
@@ -189,12 +213,13 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 	}
 
 	//the target of these swarm pets will take offense to being cast on...
-	if (targ != nullptr)
+	if (targ != nullptr && targ->GetID() != GetID())
 		targ->AddToHateList(this, 1, 0);
 
 	// The other pointers we make are handled elsewhere.
 	delete made_npc;
 }
+
 void Mob::TypesTemporaryPets(uint32 typesid, Mob *targ, const char *name_override, uint32 duration_override, bool followme, bool sticktarg) {
 
 	SwarmPet_Struct pet;

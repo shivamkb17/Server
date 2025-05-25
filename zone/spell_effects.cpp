@@ -1323,27 +1323,32 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				else
 				{
 					MakePet(spell_id, spell.teleport_zone);
-					// TODO: we need to sync the states for these clients ...
-					// Will fix buttons for now
-					Mob *pet=GetPet();
-					if (IsClient() && pet) {
-						auto c = CastToClient();
-						if (c->ClientVersionBit() & EQ::versions::maskUFAndLater) {
-							c->SetPetCommandState(PET_BUTTON_SIT, 0);
-							c->SetPetCommandState(PET_BUTTON_STOP, 0);
-							c->SetPetCommandState(PET_BUTTON_REGROUP, 0);
-							c->SetPetCommandState(PET_BUTTON_FOLLOW, 1);
-							c->SetPetCommandState(PET_BUTTON_GUARD, 0);
-							// Creating pet from spell - taunt always false
-							// If suspended pet - that will be restore there
-							// If logging in, client will send toggle
-							c->SetPetCommandState(PET_BUTTON_HOLD, 0);
-							c->SetPetCommandState(PET_BUTTON_GHOLD, 0);
-							c->SetPetCommandState(PET_BUTTON_FOCUS, 0);
-							c->SetPetCommandState(PET_BUTTON_SPELLHOLD, 0);
-						}
 
-						pet->ApplyGlobalBuffs();
+					for (auto pet : GetAllPets()) {
+						if (pet->CastToNPC()->GetPetSpellID() == spell_id) {
+							NPC* pet_npc = pet->CastToNPC();
+
+							if (GetBucket(fmt::format("pet_settings.{}.taunt", GetClassIDName(pet_npc->GetPetOriginClass()))) == "on") {
+								pet_npc->DoPetCommandTaunt(true);
+							}
+							if (GetBucket(fmt::format("pet_settings.{}.hold", GetClassIDName(pet_npc->GetPetOriginClass()))) == "on") {
+								pet_npc->DoPetCommandHold(true);
+							}
+							if (GetBucket(fmt::format("pet_settings.{}.ghold", GetClassIDName(pet_npc->GetPetOriginClass()))) == "on") {
+								pet_npc->DoPetCommandGHold(true);
+							}
+							if (GetBucket(fmt::format("pet_settings.{}.focus", GetClassIDName(pet_npc->GetPetOriginClass()))) == "on") {
+								pet_npc->DoPetCommandFocus(true);
+							}
+							if (GetBucket(fmt::format("pet_settings.{}.spellhold", GetClassIDName(pet_npc->GetPetOriginClass()))) == "on") {
+								pet_npc->DoPetCommandSpellhold(true);
+							}
+							if (GetBucket(fmt::format("pet_settings.{}.assist", GetClassIDName(pet_npc->GetPetOriginClass()))) == "on") {
+								pet_npc->DoPetCommandAssist(true);
+							}
+
+							pet_npc->ApplyGlobalBuffs();
+						}
 					}
 				}
 				break;

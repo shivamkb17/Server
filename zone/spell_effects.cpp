@@ -6822,11 +6822,8 @@ void Mob::TryTriggerOnCastFocusEffect(focusType type, uint16 spell_id, bool chec
 				continue;
 			}
 
-			if (IsClient()) {
-				Client* c = CastToClient();
-				if (c && !c->GetToggleAAStatus(ability_rank.first->id)) {
-					continue;
-				}
+			if (!HasEnabledAA(ability_rank.first->id)) {
+				continue;
 			}
 
 			if(!is_allowed("aa", ability->id)) {
@@ -7002,11 +6999,8 @@ uint16 Mob::GetSympatheticFocusEffect(focusType type, uint16 spell_id) {
 				continue;
 			}
 
-			if (IsClient()) {
-				Client* c = CastToClient();
-				if (c && !c->GetToggleAAStatus(ability_rank.first->id)) {
-					continue;
-				}
+			if (!HasEnabledAA(ability_rank.first->id)) {
+				continue;
 			}
 
 			proc_spellid = CalcAAFocus(type, *rank, spell_id);
@@ -7335,11 +7329,8 @@ int64 Mob::GetFocusEffect(focusType type, uint16 spell_id, Mob *caster, bool fro
 				continue;
 			}
 
-			if (IsClient()) {
-				Client* c = CastToClient();
-				if (c && !c->GetToggleAAStatus(ability_rank.first->id)) {
-					continue;
-				}
+			if (!HasEnabledAA(ability_rank.first->id)) {
+				continue;
 			}
 
 			Total3 = CalcAAFocus(type, *rank, spell_id);
@@ -10578,11 +10569,8 @@ bool Mob::PassLimitToSkill(EQ::skills::SkillType skill, int32 spell_id, int proc
 				continue;
 			}
 
-			if (IsClient()) {
-				Client* c = CastToClient();
-				if (c && !c->GetToggleAAStatus(ability_rank.first->id)) {
-					continue;
-				}
+			if (!HasEnabledAA(ability_rank.first->id)) {
+				continue;
 			}
 
 			for (auto &effect : rank->effects) {

@@ -1177,7 +1177,16 @@ void Client::GetAllToggleAAStatus() {
 	}
 }
 
-bool Client::GetToggleAAStatus(int ability_id) {
+bool Mob::HasEnabledAA(int aa_id) const {
+	if (!IsClient()) {
+		return true;
+	}
+
+	const Client* c = CastToClient();
+	return c && c->GetToggleAAStatus(aa_id);
+}
+
+bool Client::GetToggleAAStatus(int ability_id) const {
 	auto it = m_aa_status_cache.find(ability_id);
 	if (it != m_aa_status_cache.end()) {
 		return it->second;

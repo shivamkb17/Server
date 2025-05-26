@@ -1133,7 +1133,7 @@ public:
 
 	void GetAllToggleAAStatus();
 	void SetToggleAAStatus(int ability_id, bool status);
-	bool GetToggleAAStatus(int ability_id);
+	bool GetToggleAAStatus(int ability_id) const;
 
 	std::unordered_map<int, int> aa_timers_cache; // Cache to store AA timers as key-value pairs (aa_id -> timerID)
 

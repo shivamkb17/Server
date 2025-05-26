@@ -6,7 +6,7 @@ void command_alt_toggle(Client *c, const Seperator *sep) {
         return;
     }
 
-    if (sep->argnum < 1 || !sep->IsNumber(1)) {
+    if (sep->argnum < 1 || !sep->arg[1] || !sep->IsNumber(1)) {
         c->Message(Chat::White, "Usage: /alt toggle <ability_id>");
         return;
     }

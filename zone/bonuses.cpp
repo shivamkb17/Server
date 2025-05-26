@@ -615,11 +615,8 @@ void Mob::CalcAABonuses(StatBonuses *newbon)
 		if (rank->effects.empty())
 			continue;
 
-		if (IsClient()) {
-			Client* c = CastToClient();
-			if (c && !c->GetToggleAAStatus(ability_rank.first->id)) {
-				continue;
-			}
+		if (!HasEnabledAA(ability_rank.first->id)) {
+			continue;
 		}
 
 		ApplyAABonuses(*rank, newbon);

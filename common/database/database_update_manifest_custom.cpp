@@ -219,11 +219,31 @@ ON DUPLICATE KEY UPDATE
 		.match = "",
 		.sql = R"(
 	CREATE TABLE `character_aa_disabled` (
-	`aa_id` int(10) NOT NULL,
-	`character_id` int(10) NOT NULL,
-	`disabled` tinyint(4) NOT NULL,
-	PRIMARY KEY (`aa_id`,`character_id`),
-	KEY `idx_character_id` (`character_id`)
+		`aa_id` int(10) NOT NULL,
+		`character_id` int(10) NOT NULL,
+		`disabled` tinyint(4) NOT NULL,
+		PRIMARY KEY (`aa_id`,`character_id`),
+		KEY `idx_character_id` (`character_id`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+	)",
+		.content_schema_update = false,
+	},
+
+	// Add table for pet command states
+	ManifestEntry{
+		.version = 13,
+		.description = "2025_05_26_character_pet_commandstates_table",
+		.check = "SHOW TABLES LIKE 'character_pet_commandstates'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+	CREATE TABLE `character_pet_commandstates` (
+		`character_id` int(10) NOT NULL,
+		`pet_class` tinyint(4) NOT NULL,
+		`command_id` tinyint(4) NOT NULL,
+		`command_state` tinyint(4) NOT NULL,
+		PRIMARY KEY (`character_id`,`pet_class`,`command_id`),
+		KEY `idx_char_petclass` (`character_id`,`pet_class`)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 	)",
 		.content_schema_update = false,

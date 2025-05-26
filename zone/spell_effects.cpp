@@ -1320,30 +1320,40 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				{
 					return false;
 				}
-				else
+			else
 				{
 					MakePet(spell_id, spell.teleport_zone);
+
+					if (!IsClient()) {
+						break;
+					}
 
 					for (auto pet : GetAllPets()) {
 						if (pet->CastToNPC()->GetPetSpellID() == spell_id) {
 							NPC* pet_npc = pet->CastToNPC();
+							uint8 pet_class = pet_npc->GetPetOriginClass();
+							Client* c = CastToClient();
 
-							if (GetBucket(fmt::format("pet_settings.{}.taunt", GetClassIDName(pet_npc->GetPetOriginClass()))) == "on") {
+							if (!pet_npc || !c) {
+								break;
+							}
+
+							if (c->GetSavedPetCommand(pet_class, PET_TAUNT)) {
 								pet_npc->DoPetCommandTaunt(true);
 							}
-							if (GetBucket(fmt::format("pet_settings.{}.hold", GetClassIDName(pet_npc->GetPetOriginClass()))) == "on") {
+							if (c->GetSavedPetCommand(pet_class, PET_HOLD)) {
 								pet_npc->DoPetCommandHold(true);
 							}
-							if (GetBucket(fmt::format("pet_settings.{}.ghold", GetClassIDName(pet_npc->GetPetOriginClass()))) == "on") {
+							if (c->GetSavedPetCommand(pet_class, PET_GHOLD)) {
 								pet_npc->DoPetCommandGHold(true);
 							}
-							if (GetBucket(fmt::format("pet_settings.{}.focus", GetClassIDName(pet_npc->GetPetOriginClass()))) == "on") {
+							if (c->GetSavedPetCommand(pet_class, PET_FOCUS)) {
 								pet_npc->DoPetCommandFocus(true);
 							}
-							if (GetBucket(fmt::format("pet_settings.{}.spellhold", GetClassIDName(pet_npc->GetPetOriginClass()))) == "on") {
+							if (c->GetSavedPetCommand(pet_class, PET_SPELLHOLD)) {
 								pet_npc->DoPetCommandSpellhold(true);
 							}
-							if (GetBucket(fmt::format("pet_settings.{}.assist", GetClassIDName(pet_npc->GetPetOriginClass()))) == "on") {
+							if (c->GetSavedPetCommand(pet_class, CUSTOM_PET_ASSIST)) {
 								pet_npc->DoPetCommandAssist(true);
 							}
 

@@ -44,6 +44,7 @@ Copyright (C) 2001-2016 EQEMu Development Team (http://eqemulator.net)
 #include "../common/repositories/aa_ranks_repository.h"
 #include "../common/repositories/aa_rank_effects_repository.h"
 #include "../common/repositories/aa_rank_prereqs_repository.h"
+#include "../common/repositories/character_pet_commandstates_repository.h"
 
 extern WorldServer worldserver;
 extern QueryServ* QServ;
@@ -185,22 +186,25 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 		if (IsClient()) {
 			Client* c = CastToClient();
 
-			auto assist_val = c->GetBucket("pet_settings.swarm.assist");
-			if (assist_val.empty()) {
-				c->SetBucket("pet_settings.swarm.assist", "on");
-			}
-
-			if (assist_val.empty() || assist_val == "on") {
-				swarm_pet_npc->DoPetCommandAssist(true);
-			}
-			if (c->GetBucket("pet_settings.swarm.focus") == "on") {
-				swarm_pet_npc->DoPetCommandFocus(true);
-			}
-			if (c->GetBucket("pet_settings.swarm.ghold") == "on") {
-				swarm_pet_npc->DoPetCommandGHold(true);
-			}
-			if (c->GetBucket("pet_settings.swarm.hold") == "on") {
-				swarm_pet_npc->DoPetCommandHold(true);
+			if (c) {
+				if (c->GetSavedPetCommand(Class::None, CUSTOM_PET_ASSIST)) {
+					swarm_pet_npc->DoPetCommand(CUSTOM_PET_ASSIST_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_TAUNT)) {
+					swarm_pet_npc->DoPetCommand(PET_TAUNT_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_HOLD)) {
+					swarm_pet_npc->DoPetCommand(PET_HOLD_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_GHOLD)) {
+					swarm_pet_npc->DoPetCommand(PET_GHOLD_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_FOCUS)) {
+					swarm_pet_npc->DoPetCommand(PET_FOCUS_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_SPELLHOLD)) {
+					swarm_pet_npc->DoPetCommand(PET_SPELLHOLD_ON);
+				}
 			}
 		}
 
@@ -534,22 +538,25 @@ void Mob::WakeTheDead(uint16 spell_id, Corpse *corpse_to_use, Mob *tar, uint32 d
 		if (IsClient()) {
 			Client* c = CastToClient();
 
-			auto assist_val = c->GetBucket("pet_settings.swarm.assist");
-			if (assist_val.empty()) {
-				c->SetBucket("pet_settings.swarm.assist", "on");
-			}
-
-			if (assist_val.empty() || assist_val == "on") {
-				swarm_pet_npc->DoPetCommandAssist(true);
-			}
-			if (c->GetBucket("pet_settings.swarm.focus") == "on") {
-				swarm_pet_npc->DoPetCommandFocus(true);
-			}
-			if (c->GetBucket("pet_settings.swarm.ghold") == "on") {
-				swarm_pet_npc->DoPetCommandGHold(true);
-			}
-			if (c->GetBucket("pet_settings.swarm.hold") == "on") {
-				swarm_pet_npc->DoPetCommandHold(true);
+			if (c) {
+				if (c->GetSavedPetCommand(Class::None, CUSTOM_PET_ASSIST)) {
+					swarm_pet_npc->DoPetCommand(CUSTOM_PET_ASSIST_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_TAUNT)) {
+					swarm_pet_npc->DoPetCommand(PET_TAUNT_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_HOLD)) {
+					swarm_pet_npc->DoPetCommand(PET_HOLD_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_GHOLD)) {
+					swarm_pet_npc->DoPetCommand(PET_GHOLD_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_FOCUS)) {
+					swarm_pet_npc->DoPetCommand(PET_FOCUS_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_SPELLHOLD)) {
+					swarm_pet_npc->DoPetCommand(PET_SPELLHOLD_ON);
+				}
 			}
 		}
 

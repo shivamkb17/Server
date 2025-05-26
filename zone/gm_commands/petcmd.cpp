@@ -188,7 +188,7 @@ private:
         if (!unsupported.empty()) {
             std::string msg = "The following commands are not supported by swarm pets: " +
                              Strings::Join(unsupported, ", ");
-            c->Message(Chat::White, msg.c_str());
+            c->Message(Chat::PetResponse, msg.c_str());
             return false;
         }
 
@@ -222,24 +222,25 @@ private:
         }
     }
 
-    static void handleSwarmToggle(Client* c, const std::string& setting_name, int cmd, int base, int on, int off) {
-        std::string bucket_key = "pet_settings.swarm." + setting_name;
+	static void handleSwarmToggle(Client* c, const std::string& setting_name, int cmd, int base, int on, int off) {
+		if (!c || setting_name.empty()) {
+			LogErrorDetail("Failed to parse swarm pet command.");
+			return;
+		}
 
-        if (cmd == base) {
-            // Toggle current setting
-            std::string current = c->GetBucket(bucket_key);
-            std::string new_setting = (current == "on") ? "off" : "on";
-            c->SetBucket(bucket_key, new_setting);
-            c->Message(Chat::White, fmt::format("Swarm pet {} setting: {}", setting_name,
-                      (new_setting == "on") ? "ON" : "OFF").c_str());
-        } else if (cmd == on) {
-            c->SetBucket(bucket_key, "on");
-            c->Message(Chat::White, fmt::format("Swarm pet {} setting: ON", setting_name).c_str());
-        } else if (cmd == off) {
-            c->SetBucket(bucket_key, "off");
-            c->Message(Chat::White, fmt::format("Swarm pet {} setting: OFF", setting_name).c_str());
-        }
-    }
+		bool cur_value = c->GetSavedPetCommand(Class::None, base);
+
+		if (cmd == base) {
+			std::string new_setting = cur_value ? "on" : "off";
+			c->Message(Chat::PetResponse, fmt::format("Swarm pet {} setting: {}", setting_name, (new_setting == "on") ? "ON" : "OFF").c_str());
+		} else if (cmd == on) {
+			c->SetSavedPetCommand(Class::None, base, true);
+			c->Message(Chat::PetResponse, fmt::format("Swarm pet {} setting: ON", setting_name).c_str());
+		} else if (cmd == off) {
+			c->SetSavedPetCommand(Class::None, base, false);
+			c->Message(Chat::PetResponse, fmt::format("Swarm pet {} setting: OFF", setting_name).c_str());
+		}
+	}
 
 public:
     static bool execute(const PetCommandParser::ParsedCommand& parsed_cmd, Client* c) {
@@ -275,7 +276,7 @@ public:
             if (!immediate_commands.empty()) {
                 auto swarm_pets = c->GetAllSwarmPets();
                 if (swarm_pets.empty()) {
-                    c->Message(Chat::White, "You don't have any swarm pets under your control.");
+                    c->Message(Chat::PetResponse, "You don't have any swarm pets under your control.");
                     return false;
                 }
 
@@ -293,7 +294,7 @@ public:
         if (parsed_cmd.target_all_classes || !parsed_cmd.class_targets.empty()) {
             auto pets = c->GetAllPets();
             if (pets.empty()) {
-                c->Message(Chat::White, "You don't have any pets under your control.");
+                c->Message(Chat::PetResponse, "You don't have any pets under your control.");
                 return false;
             }
 
@@ -393,7 +394,7 @@ void command_petcmd(Client *c, const Seperator *sep) {
     }
 
     if (command_string.empty()) {
-        c->Message(Chat::White, usage.c_str());
+        c->Message(Chat::PetResponse, usage.c_str());
         return;
     }
 
@@ -401,6 +402,6 @@ void command_petcmd(Client *c, const Seperator *sep) {
     auto parsed_command = PetCommandParser::parse(command_string);
 
     if (!PetCommandExecutor::execute(parsed_command, c)) {
-        c->Message(Chat::White, usage.c_str());
+        c->Message(Chat::PetResponse, usage.c_str());
     }
 }

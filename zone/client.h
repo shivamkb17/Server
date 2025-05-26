@@ -77,6 +77,7 @@ namespace EQ
 #include "../common/repositories/character_evolving_items_repository.h"
 #include "../common/repositories/player_titlesets_repository.h"
 #include "../common/repositories/thj_waypoints_repository.h"
+#include "../common/repositories/character_pet_commandstates_repository.h"
 
 #include "bot_structs.h"
 
@@ -1131,7 +1132,7 @@ public:
 	int SetDynamicAATimer(int aa_id);
 	void ClearDynamicAATimers();
 
-	std::unordered_map<int, int> aa_timers_cache; // Cache to store AA timers as key-value pairs (aa_id -> timerID)
+	std::unordered_map<int, int> aa_timers_cache;
 
 	//New AA Methods
 	void SendAlternateAdvancementRank(int aa_id, int level);
@@ -2311,7 +2312,12 @@ public:
 	Timer m_stun_immune_timer;
 	Timer m_silence_immune_timer;
 
+	bool GetSavedPetCommand(uint8 class_id, uint8 command_id);
+	void SetSavedPetCommand(uint8 class_id, uint8 command_id, bool new_state);
+
 private:
+
+	std::unordered_map<uint8, CharacterPetCommandstatesRepository::PetCommandStates> m_pet_command_cache;
 
 	PlayerProfile_Struct m_pp;
 	ExtendedProfile_Struct m_epp;
@@ -2531,6 +2537,8 @@ private:
 	std::vector<uint32_t> m_dynamic_zone_ids;
 
 	std::vector<uint32_t> m_completed_shared_tasks;
+
+
 
 public:
 	enum BotOwnerOption : size_t {

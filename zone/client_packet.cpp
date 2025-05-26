@@ -1813,22 +1813,24 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 						pet->SetHP(pet_info.HP);
 						pet->SetMana(pet_info.Mana);
 
-						if (GetBucket(fmt::format("pet_settings.{}.taunt", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+						uint8 pet_class = pet->GetPetOriginClass();
+
+						if (GetSavedPetCommand(pet_class, PET_TAUNT)) {
 							pet->DoPetCommandTaunt(true);
 						}
-						if (GetBucket(fmt::format("pet_settings.{}.hold", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+						if (GetSavedPetCommand(pet_class, PET_HOLD)) {
 							pet->DoPetCommandHold(true);
 						}
-						if (GetBucket(fmt::format("pet_settings.{}.ghold", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+						if (GetSavedPetCommand(pet_class, PET_GHOLD)) {
 							pet->DoPetCommandGHold(true);
 						}
-						if (GetBucket(fmt::format("pet_settings.{}.focus", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+						if (GetSavedPetCommand(pet_class, PET_FOCUS)) {
 							pet->DoPetCommandFocus(true);
 						}
-						if (GetBucket(fmt::format("pet_settings.{}.spellhold", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+						if (GetSavedPetCommand(pet_class, PET_SPELLHOLD)) {
 							pet->DoPetCommandSpellhold(true);
 						}
-						if (GetBucket(fmt::format("pet_settings.{}.assist", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+						if (GetSavedPetCommand(pet_class, CUSTOM_PET_ASSIST)) {
 							pet->DoPetCommandAssist(true);
 						}
 					}

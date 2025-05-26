@@ -2569,25 +2569,25 @@ Client* NPC::DoPetCommandChecks(int pet_command_id) {
 }
 
 void NPC::DoPetCommandAssist(bool enabled) {
-	Client* owner = DoPetCommandChecks(0);
+   Client* owner = DoPetCommandChecks(0);
 
-	if (owner) {
-		owner->SetBucket(fmt::format("pet_settings.{}.assist", GetClassIDName(GetPetOriginClass())), enabled ? "on" : "off");
-	}
+   if (owner) {
+   	owner->SetSavedPetCommand(GetPetOriginClass(), CUSTOM_PET_ASSIST, enabled);
+   }
 
-	if (!owner && GetSwarmOwner()) {
-		owner = entity_list.GetClientByID(GetSwarmOwner());
-	}
+   if (!owner && GetSwarmOwner()) {
+   	owner = entity_list.GetClientByID(GetSwarmOwner());
+   }
 
-	if (!owner) { return; }
+   if (!owner) { return; }
 
-	if (enabled) {
-		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'As you command, Master. I will assist you in battle.", GetCleanName()).c_str());
-	} else {
-		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'As you command, Master. I will no longer assist you in battle.", GetCleanName()).c_str());
-	}
+   if (enabled) {
+   	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'As you command, Master. I will assist you in battle.", GetCleanName()).c_str());
+   } else {
+   	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'As you command, Master. I will no longer assist you in battle.", GetCleanName()).c_str());
+   }
 
-	SetPetAssisting(enabled);
+   SetPetAssisting(enabled);
 }
 
 void NPC::DoPetCommandAttack(Mob* target, bool force) {
@@ -3189,27 +3189,27 @@ void NPC::DoPetCommandFollowMe() {
 }
 
 void NPC::DoPetCommandTaunt(bool enabled) {
-	Client* owner = DoPetCommandChecks(PET_GETLOST);
-	if (!owner) { return; }
+   Client* owner = DoPetCommandChecks(PET_GETLOST);
+   if (!owner) { return; }
 
-	if (owner) {
-		owner->SetBucket(fmt::format("pet_settings.{}.taunt", GetClassIDName(GetPetOriginClass())), enabled ? "on" : "off");
-	}
+   if (owner) {
+   	owner->SetSavedPetCommand(GetPetOriginClass(), PET_TAUNT, enabled);
+   }
 
-	SetTaunting(enabled);
+   SetTaunting(enabled);
 
-	if (owner->focused_pet_id == GetID()) {
-		LogDebug("Attempting to set button state");
-		owner->SetPetCommandState(PET_BUTTON_TAUNT, enabled);
-	} else {
-		LogDebug("Not eligible for button state update");
-	}
+   if (owner->focused_pet_id == GetID()) {
+   	LogDebug("Attempting to set button state");
+   	owner->SetPetCommandState(PET_BUTTON_TAUNT, enabled);
+   } else {
+   	LogDebug("Not eligible for button state update");
+   }
 
-	if (IsTaunting()) {
-		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Taunting attackers as ordered, Master.", GetCleanName()).c_str());
-	} else {
-		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'No longer taunting attackers, Master.", GetCleanName()).c_str());
-	}
+   if (IsTaunting()) {
+   	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Taunting attackers as ordered, Master.", GetCleanName()).c_str());
+   } else {
+   	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'No longer taunting attackers, Master.", GetCleanName()).c_str());
+   }
 }
 
 void NPC::DoPetCommandGuardMe() {
@@ -3253,91 +3253,91 @@ void NPC::DoPetCommandSit(bool enabled) {
 }
 
 void NPC::DoPetCommandHold(bool enabled) {
-	Client* owner = DoPetCommandChecks(PET_GETLOST);
+   Client* owner = DoPetCommandChecks(PET_GETLOST);
 
-	if (owner) {
-		owner->SetBucket(fmt::format("pet_settings.{}.hold", GetClassIDName(GetPetOriginClass())), enabled ? "on" : "off");
-	}
+   if (owner) {
+   	owner->SetSavedPetCommand(GetPetOriginClass(), PET_HOLD, enabled);
+   }
 
-	if (!owner && GetSwarmOwner()) {
-		owner = entity_list.GetClientByID(GetSwarmOwner());
-	}
+   if (!owner && GetSwarmOwner()) {
+   	owner = entity_list.GetClientByID(GetSwarmOwner());
+   }
 
-	if (!owner) { return; }
+   if (!owner) { return; }
 
-	SetHeld(enabled);
+   SetHeld(enabled);
 
-	if (enabled) {
-		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Waiting for your order to attack, Master.", GetCleanName()).c_str());
-	} else {
-		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Attacking at will, Master.", GetCleanName()).c_str());
-	}
+   if (enabled) {
+   	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Waiting for your order to attack, Master.", GetCleanName()).c_str());
+   } else {
+   	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Attacking at will, Master.", GetCleanName()).c_str());
+   }
 }
 
 void NPC::DoPetCommandGHold(bool enabled) {
-	Client* owner = DoPetCommandChecks(PET_GETLOST);
+   Client* owner = DoPetCommandChecks(PET_GETLOST);
 
-	if (owner) {
-		owner->SetBucket(fmt::format("pet_settings.{}.ghold", GetClassIDName(GetPetOriginClass())), enabled ? "on" : "off");
-	}
+   if (owner) {
+   	owner->SetSavedPetCommand(GetPetOriginClass(), PET_GHOLD, enabled);
+   }
 
-	if (!owner && GetSwarmOwner()) {
-		owner = entity_list.GetClientByID(GetSwarmOwner());
-	}
+   if (!owner && GetSwarmOwner()) {
+   	owner = entity_list.GetClientByID(GetSwarmOwner());
+   }
 
-	if (!owner) { return; }
+   if (!owner) { return; }
 
-	SetGHeld(enabled);
+   SetGHeld(enabled);
 
-	if (enabled) {
-		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Waiting for your order to attack any new targets, Master.", GetCleanName()).c_str());
-	} else {
-		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Attacking at will, Master.", GetCleanName()).c_str());
-	}
+   if (enabled) {
+   	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Waiting for your order to attack any new targets, Master.", GetCleanName()).c_str());
+   } else {
+   	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Attacking at will, Master.", GetCleanName()).c_str());
+   }
 }
 
 void NPC::DoPetCommandSpellhold(bool enabled) {
-	Client* owner = DoPetCommandChecks(PET_GETLOST);
+   Client* owner = DoPetCommandChecks(PET_GETLOST);
 
-	if (owner) {
-		owner->SetBucket(fmt::format("pet_settings.{}.spellhold", GetClassIDName(GetPetOriginClass())), enabled ? "on" : "off");
-	}
+   if (owner) {
+   	owner->SetSavedPetCommand(GetPetOriginClass(), PET_SPELLHOLD, enabled);
+   }
 
-	if (!owner && GetSwarmOwner()) {
-		owner = entity_list.GetClientByID(GetSwarmOwner());
-	}
+   if (!owner && GetSwarmOwner()) {
+   	owner = entity_list.GetClientByID(GetSwarmOwner());
+   }
 
-	if (!owner) { return; }
+   if (!owner) { return; }
 
-	SetNoCast(enabled);
+   SetNoCast(enabled);
 
-	if (enabled) {
-		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'No longer casting spells, Master.", GetCleanName()).c_str());
-	} else {
-		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Casting spells at will, Master.", GetCleanName()).c_str());
-	}
+   if (enabled) {
+   	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'No longer casting spells, Master.", GetCleanName()).c_str());
+   } else {
+   	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Casting spells at will, Master.", GetCleanName()).c_str());
+   }
 }
 
 void NPC::DoPetCommandFocus(bool enabled) {
-	Client* owner = DoPetCommandChecks(PET_GETLOST);
+   Client* owner = DoPetCommandChecks(PET_GETLOST);
 
-	if (owner) {
-		owner->SetBucket(fmt::format("pet_settings.{}.focus", GetClassIDName(GetPetOriginClass())), enabled ? "on" : "off");
-	}
+   if (owner) {
+   	owner->SetSavedPetCommand(GetPetOriginClass(), PET_FOCUS, enabled);
+   }
 
-	if (!owner && GetSwarmOwner()) {
-		owner = entity_list.GetClientByID(GetSwarmOwner());
-	}
+   if (!owner && GetSwarmOwner()) {
+   	owner = entity_list.GetClientByID(GetSwarmOwner());
+   }
 
-	if (!owner) { return; }
+   if (!owner) { return; }
 
-	SetFocused(enabled);
+   SetFocused(enabled);
 
-	if (enabled) {
-		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Focusing on a single target, Master.", GetCleanName()).c_str());
-	} else {
-		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'No longer focusing on a single target, Master.", GetCleanName()).c_str());
-	}
+   if (enabled) {
+   	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Focusing on a single target, Master.", GetCleanName()).c_str());
+   } else {
+   	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'No longer focusing on a single target, Master.", GetCleanName()).c_str());
+   }
 }
 
 void NPC::DoPetCommandFeign() {
@@ -5424,7 +5424,7 @@ void NPC::DoNpcToNpcAggroScan()
 
 int NPC::GetPetOriginClass() {
 	if (!GetPetSpellID()) {
-		return -1;
+		return Class::None;
 	}
 
 	for (int i = Class::Warrior; i <= Class::Berserker; i++) {
@@ -5433,7 +5433,7 @@ int NPC::GetPetOriginClass() {
 		}
 	}
 
-	return -1;
+	return Class::None;
 }
 
 bool NPC::FacesTarget()

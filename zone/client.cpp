@@ -7770,6 +7770,51 @@ void Client::UpdateLDoNWinLoss(uint32 theme_id, bool win, bool remove) {
 }
 
 
+bool Client::GetSavedPetCommand(uint8 class_id, uint8 command_id)
+{
+    auto it = m_pet_command_cache.find(class_id);
+    if (it == m_pet_command_cache.end()) {
+        auto states = CharacterPetCommandstatesRepository::GetAllCommandStates(database, CharacterID(), class_id);
+        m_pet_command_cache[class_id] = states;
+        it = m_pet_command_cache.find(class_id);
+    }
+
+    const auto& states = it->second;
+
+    switch (command_id) {
+        case CUSTOM_PET_ASSIST: return states.assist;
+        case PET_HOLD: return states.hold;
+        case PET_GHOLD: return states.ghold;
+        case PET_FOCUS: return states.focus;
+        case PET_SPELLHOLD: return states.spellhold;
+        case PET_TAUNT: return states.taunt;
+        default: return false;
+    }
+}
+
+void Client::SetSavedPetCommand(uint8 class_id, uint8 command_id, bool new_state)
+{
+    auto it = m_pet_command_cache.find(class_id);
+    if (it == m_pet_command_cache.end()) {
+        auto states = CharacterPetCommandstatesRepository::GetAllCommandStates(database, CharacterID(), class_id);
+        m_pet_command_cache[class_id] = states;
+        it = m_pet_command_cache.find(class_id);
+    }
+
+    auto& states = it->second;
+
+    switch (command_id) {
+        case CUSTOM_PET_ASSIST: states.assist = new_state; break;
+        case PET_HOLD: states.hold = new_state; break;
+        case PET_GHOLD: states.ghold = new_state; break;
+        case PET_FOCUS: states.focus = new_state; break;
+        case PET_SPELLHOLD: states.spellhold = new_state; break;
+        case PET_TAUNT: states.taunt = new_state; break;
+    }
+
+    CharacterPetCommandstatesRepository::SetCommandState(database, CharacterID(), class_id, command_id, new_state ? 1 : 0);
+}
+
 void Client::SuspendMinion(int value)
 {
 	ValidatePetList();
@@ -7837,22 +7882,24 @@ void Client::SuspendMinion(int value)
 				}
 			}
 
-			if (GetBucket(fmt::format("pet_settings.{}.taunt", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+			uint8 pet_class = pet->GetPetOriginClass();
+
+			if (GetSavedPetCommand(pet_class, PET_TAUNT)) {
 				pet->DoPetCommandTaunt(true);
 			}
-			if (GetBucket(fmt::format("pet_settings.{}.hold", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+			if (GetSavedPetCommand(pet_class, PET_HOLD)) {
 				pet->DoPetCommandHold(true);
 			}
-			if (GetBucket(fmt::format("pet_settings.{}.ghold", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+			if (GetSavedPetCommand(pet_class, PET_GHOLD)) {
 				pet->DoPetCommandGHold(true);
 			}
-			if (GetBucket(fmt::format("pet_settings.{}.focus", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+			if (GetSavedPetCommand(pet_class, PET_FOCUS)) {
 				pet->DoPetCommandFocus(true);
 			}
-			if (GetBucket(fmt::format("pet_settings.{}.spellhold", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+			if (GetSavedPetCommand(pet_class, PET_SPELLHOLD)) {
 				pet->DoPetCommandSpellhold(true);
 			}
-			if (GetBucket(fmt::format("pet_settings.{}.assist", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+			if (GetSavedPetCommand(pet_class, CUSTOM_PET_ASSIST)) {
 				pet->DoPetCommandAssist(true);
 			}
 
@@ -8761,22 +8808,25 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 		if (IsClient()) {
 			Client* c = CastToClient();
 
-			auto assist_val = c->GetBucket("pet_settings.swarm.assist");
-			if (assist_val.empty()) {
-				c->SetBucket("pet_settings.swarm.assist", "on");
-			}
-
-			if (assist_val.empty() || assist_val == "on") {
-				swarm_pet_npc->DoPetCommandAssist(true);
-			}
-			if (c->GetBucket("pet_settings.swarm.focus") == "on") {
-				swarm_pet_npc->DoPetCommandFocus(true);
-			}
-			if (c->GetBucket("pet_settings.swarm.ghold") == "on") {
-				swarm_pet_npc->DoPetCommandGHold(true);
-			}
-			if (c->GetBucket("pet_settings.swarm.hold") == "on") {
-				swarm_pet_npc->DoPetCommandHold(true);
+			if (c) {
+				if (c->GetSavedPetCommand(Class::None, CUSTOM_PET_ASSIST)) {
+					swarm_pet_npc->DoPetCommand(CUSTOM_PET_ASSIST_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_TAUNT)) {
+					swarm_pet_npc->DoPetCommand(PET_TAUNT_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_HOLD)) {
+					swarm_pet_npc->DoPetCommand(PET_HOLD_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_GHOLD)) {
+					swarm_pet_npc->DoPetCommand(PET_GHOLD_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_FOCUS)) {
+					swarm_pet_npc->DoPetCommand(PET_FOCUS_ON);
+				}
+				if (c->GetSavedPetCommand(Class::None, PET_SPELLHOLD)) {
+					swarm_pet_npc->DoPetCommand(PET_SPELLHOLD_ON);
+				}
 			}
 		}
 

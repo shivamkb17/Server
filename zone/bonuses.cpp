@@ -619,6 +619,7 @@ void Mob::CalcAABonuses(StatBonuses *newbon)
 		if (IsClient()) {
 			Client* c = CastToClient();
 			if (!c->GetToggleAAStatus(ability_rank.first->id)) {
+				LogDebug("Skipping AA [{}]", ability_rank.first->id);
 				continue;
 			}
 		}

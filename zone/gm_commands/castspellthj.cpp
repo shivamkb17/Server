@@ -44,7 +44,7 @@ void command_castspellthj(Client *c, const Seperator *sep)
 
     // Try numeric ID first
     if (std::all_of(spell_string.begin(), spell_string.end(), ::isdigit)) {
-        spell_id = static_cast<uint16>(std::stoi(spell_string));
+        spell_id = static_cast<uint16>(Strings::ToUnsignedInt(spell_string));
         spell_book_slot = c->FindSpellBookSlotBySpellID(spell_id);
     } else {
         // Try by name
@@ -82,12 +82,15 @@ void command_castspellthj(Client *c, const Seperator *sep)
         target_id = c->GetID();
     }
 
+	Mob* target_mob = entity_list.GetMob(target_id);
+	std::string target_name = target_mob ? target_mob->GetCleanName() : "Unknown";
+
     c->Message(
         Chat::Spells,
         fmt::format(
             "Casting {} on {} from your Spellbook.",
             GetSpellName(spell_id),
-            entity_list.GetMob(target_id)->GetCleanName()
+            target_name
         ).c_str()
     );
 

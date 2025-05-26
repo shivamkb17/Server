@@ -6824,7 +6824,7 @@ void Mob::TryTriggerOnCastFocusEffect(focusType type, uint16 spell_id, bool chec
 
 			if (IsClient()) {
 				Client* c = CastToClient();
-				if (!c->GetToggleAAStatus(ability_rank.first->id)) {
+				if (c && !c->GetToggleAAStatus(ability_rank.first->id)) {
 					continue;
 				}
 			}
@@ -7004,7 +7004,7 @@ uint16 Mob::GetSympatheticFocusEffect(focusType type, uint16 spell_id) {
 
 			if (IsClient()) {
 				Client* c = CastToClient();
-				if (!c->GetToggleAAStatus(ability_rank.first->id)) {
+				if (c && !c->GetToggleAAStatus(ability_rank.first->id)) {
 					continue;
 				}
 			}
@@ -7337,7 +7337,7 @@ int64 Mob::GetFocusEffect(focusType type, uint16 spell_id, Mob *caster, bool fro
 
 			if (IsClient()) {
 				Client* c = CastToClient();
-				if (!c->GetToggleAAStatus(ability_rank.first->id)) {
+				if (c && !c->GetToggleAAStatus(ability_rank.first->id)) {
 					continue;
 				}
 			}
@@ -10580,7 +10580,7 @@ bool Mob::PassLimitToSkill(EQ::skills::SkillType skill, int32 spell_id, int proc
 
 			if (IsClient()) {
 				Client* c = CastToClient();
-				if (!c->GetToggleAAStatus(ability_rank.first->id)) {
+				if (c && !c->GetToggleAAStatus(ability_rank.first->id)) {
 					continue;
 				}
 			}

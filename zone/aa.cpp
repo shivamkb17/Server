@@ -1164,8 +1164,6 @@ void Client::SendAlternateAdvancementTimers() {
 	safe_delete(outapp);
 }
 
-std::unordered_map<int, bool> m_aa_status_cache;
-
 void Client::GetAllToggleAAStatus() {
 	m_aa_status_cache.clear();
 

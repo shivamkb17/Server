@@ -617,7 +617,7 @@ void Mob::CalcAABonuses(StatBonuses *newbon)
 
 		if (IsClient()) {
 			Client* c = CastToClient();
-			if (!c->GetToggleAAStatus(ability_rank.first->id)) {
+			if (c && !c->GetToggleAAStatus(ability_rank.first->id)) {
 				continue;
 			}
 		}

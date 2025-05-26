@@ -1,13 +1,13 @@
-#ifndef EQEMU_CHARACTER_PET_COMMANDSTATES_REPOSITORY_H
-#define EQEMU_CHARACTER_PET_COMMANDSTATES_REPOSITORY_H
+#ifndef EQEMU_CHARACTER_PET_COMMAND_STATES_REPOSITORY_H
+#define EQEMU_CHARACTER_PET_COMMAND_STATES_REPOSITORY_H
 
 #include "../database.h"
 #include "../strings.h"
 #include "../../zone/common.h"
 #include "../classes.h"
-#include "base/base_character_pet_commandstates_repository.h"
+#include "base/base_character_pet_command_states_repository.h"
 
-class CharacterPetCommandstatesRepository: public BaseCharacterPetCommandstatesRepository {
+class CharacterPetCommandStatesRepository: public BaseCharacterPetCommandStatesRepository {
 public:
 
 	struct PetCommandStates {
@@ -64,7 +64,7 @@ public:
 
 	static void SetCommandState(Database& db, int32_t character_id, int8_t pet_class, int8_t command_id, int8_t state)
 	{
-		CharacterPetCommandstates entry;
+		CharacterPetCommandStates entry;
 		entry.character_id = character_id;
 		entry.pet_class = pet_class;
 		entry.command_id = command_id;
@@ -78,7 +78,7 @@ public:
 		return GetCommandState(db, character_id, pet_class, command_id);
 	}
 
-	static std::vector<CharacterPetCommandstates> GetForCharacterAndPetClass(Database& db, int32_t character_id, int8_t pet_class)
+	static std::vector<CharacterPetCommandStates> GetForCharacterAndPetClass(Database& db, int32_t character_id, int8_t pet_class)
 	{
 		return GetWhere(db, fmt::format(
 			"character_id = {} AND pet_class = {}",
@@ -88,4 +88,4 @@ public:
 
 };
 
-#endif //EQEMU_CHARACTER_PET_COMMANDSTATES_REPOSITORY_H
+#endif //EQEMU_CHARACTER_PET_COMMAND_STATES_REPOSITORY_H

@@ -9,16 +9,16 @@
  * @docs https://docs.eqemu.io/developer/repositories
  */
 
-#ifndef EQEMU_BASE_CHARACTER_PET_COMMANDSTATES_REPOSITORY_H
-#define EQEMU_BASE_CHARACTER_PET_COMMANDSTATES_REPOSITORY_H
+#ifndef EQEMU_BASE_CHARACTER_PET_COMMAND_STATES_REPOSITORY_H
+#define EQEMU_BASE_CHARACTER_PET_COMMAND_STATES_REPOSITORY_H
 
 #include "../../database.h"
 #include "../../strings.h"
 #include <ctime>
 
-class BaseCharacterPetCommandstatesRepository {
+class BaseCharacterPetCommandStatesRepository {
 public:
-	struct CharacterPetCommandstates {
+	struct CharacterPetCommandStates {
 		int32_t character_id;
 		int8_t  pet_class;
 		int8_t  command_id;
@@ -62,7 +62,7 @@ public:
 
 	static std::string TableName()
 	{
-		return std::string("character_pet_commandstates");
+		return std::string("character_pet_command_states");
 	}
 
 	static std::string BaseSelect()
@@ -83,9 +83,9 @@ public:
 		);
 	}
 
-	static CharacterPetCommandstates NewEntity()
+	static CharacterPetCommandStates NewEntity()
 	{
-		CharacterPetCommandstates e{};
+		CharacterPetCommandStates e{};
 
 		e.character_id  = 0;
 		e.pet_class     = 0;
@@ -95,23 +95,23 @@ public:
 		return e;
 	}
 
-	static CharacterPetCommandstates GetCharacterPetCommandstates(
-		const std::vector<CharacterPetCommandstates> &character_pet_commandstatess,
-		int character_pet_commandstates_id
+	static CharacterPetCommandStates GetCharacterPetCommandStates(
+		const std::vector<CharacterPetCommandStates> &character_pet_command_statess,
+		int character_pet_command_states_id
 	)
 	{
-		for (auto &character_pet_commandstates : character_pet_commandstatess) {
-			if (character_pet_commandstates.character_id == character_pet_commandstates_id) {
-				return character_pet_commandstates;
+		for (auto &character_pet_command_states : character_pet_command_statess) {
+			if (character_pet_command_states.character_id == character_pet_command_states_id) {
+				return character_pet_command_states;
 			}
 		}
 
 		return NewEntity();
 	}
 
-	static CharacterPetCommandstates FindOne(
+	static CharacterPetCommandStates FindOne(
 		Database& db,
-		int character_pet_commandstates_id
+		int character_pet_command_states_id
 	)
 	{
 		auto results = db.QueryDatabase(
@@ -119,13 +119,13 @@ public:
 				"{} WHERE {} = {} LIMIT 1",
 				BaseSelect(),
 				PrimaryKey(),
-				character_pet_commandstates_id
+				character_pet_command_states_id
 			)
 		);
 
 		auto row = results.begin();
 		if (results.RowCount() == 1) {
-			CharacterPetCommandstates e{};
+			CharacterPetCommandStates e{};
 
 			e.character_id  = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
 			e.pet_class     = row[1] ? static_cast<int8_t>(atoi(row[1])) : 0;
@@ -140,7 +140,7 @@ public:
 
 	static int DeleteOne(
 		Database& db,
-		int character_pet_commandstates_id
+		int character_pet_command_states_id
 	)
 	{
 		auto results = db.QueryDatabase(
@@ -148,7 +148,7 @@ public:
 				"DELETE FROM {} WHERE {} = {}",
 				TableName(),
 				PrimaryKey(),
-				character_pet_commandstates_id
+				character_pet_command_states_id
 			)
 		);
 
@@ -157,7 +157,7 @@ public:
 
 	static int UpdateOne(
 		Database& db,
-		const CharacterPetCommandstates &e
+		const CharacterPetCommandStates &e
 	)
 	{
 		std::vector<std::string> v;
@@ -182,9 +182,9 @@ public:
 		return (results.Success() ? results.RowsAffected() : 0);
 	}
 
-	static CharacterPetCommandstates InsertOne(
+	static CharacterPetCommandStates InsertOne(
 		Database& db,
-		CharacterPetCommandstates e
+		CharacterPetCommandStates e
 	)
 	{
 		std::vector<std::string> v;
@@ -214,7 +214,7 @@ public:
 
 	static int InsertMany(
 		Database& db,
-		const std::vector<CharacterPetCommandstates> &entries
+		const std::vector<CharacterPetCommandStates> &entries
 	)
 	{
 		std::vector<std::string> insert_chunks;
@@ -243,9 +243,9 @@ public:
 		return (results.Success() ? results.RowsAffected() : 0);
 	}
 
-	static std::vector<CharacterPetCommandstates> All(Database& db)
+	static std::vector<CharacterPetCommandStates> All(Database& db)
 	{
-		std::vector<CharacterPetCommandstates> all_entries;
+		std::vector<CharacterPetCommandStates> all_entries;
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -257,7 +257,7 @@ public:
 		all_entries.reserve(results.RowCount());
 
 		for (auto row = results.begin(); row != results.end(); ++row) {
-			CharacterPetCommandstates e{};
+			CharacterPetCommandStates e{};
 
 			e.character_id  = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
 			e.pet_class     = row[1] ? static_cast<int8_t>(atoi(row[1])) : 0;
@@ -270,9 +270,9 @@ public:
 		return all_entries;
 	}
 
-	static std::vector<CharacterPetCommandstates> GetWhere(Database& db, const std::string &where_filter)
+	static std::vector<CharacterPetCommandStates> GetWhere(Database& db, const std::string &where_filter)
 	{
-		std::vector<CharacterPetCommandstates> all_entries;
+		std::vector<CharacterPetCommandStates> all_entries;
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -285,7 +285,7 @@ public:
 		all_entries.reserve(results.RowCount());
 
 		for (auto row = results.begin(); row != results.end(); ++row) {
-			CharacterPetCommandstates e{};
+			CharacterPetCommandStates e{};
 
 			e.character_id  = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
 			e.pet_class     = row[1] ? static_cast<int8_t>(atoi(row[1])) : 0;
@@ -360,7 +360,7 @@ public:
 
 	static int ReplaceOne(
 		Database& db,
-		const CharacterPetCommandstates &e
+		const CharacterPetCommandStates &e
 	)
 	{
 		std::vector<std::string> v;
@@ -383,7 +383,7 @@ public:
 
 	static int ReplaceMany(
 		Database& db,
-		const std::vector<CharacterPetCommandstates> &entries
+		const std::vector<CharacterPetCommandStates> &entries
 	)
 	{
 		std::vector<std::string> insert_chunks;
@@ -413,4 +413,4 @@ public:
 	}
 };
 
-#endif //EQEMU_BASE_CHARACTER_PET_COMMANDSTATES_REPOSITORY_H
+#endif //EQEMU_BASE_CHARACTER_PET_COMMAND_STATES_REPOSITORY_H

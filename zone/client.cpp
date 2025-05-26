@@ -7774,7 +7774,7 @@ bool Client::GetSavedPetCommand(uint8 class_id, uint8 command_id)
 {
     auto it = m_pet_command_cache.find(class_id);
     if (it == m_pet_command_cache.end()) {
-        auto states = CharacterPetCommandstatesRepository::GetAllCommandStates(database, CharacterID(), class_id);
+        auto states = CharacterPetCommandStatesRepository::GetAllCommandStates(database, CharacterID(), class_id);
         m_pet_command_cache[class_id] = states;
         it = m_pet_command_cache.find(class_id);
     }
@@ -7796,7 +7796,7 @@ void Client::SetSavedPetCommand(uint8 class_id, uint8 command_id, bool new_state
 {
     auto it = m_pet_command_cache.find(class_id);
     if (it == m_pet_command_cache.end()) {
-        auto states = CharacterPetCommandstatesRepository::GetAllCommandStates(database, CharacterID(), class_id);
+        auto states = CharacterPetCommandStatesRepository::GetAllCommandStates(database, CharacterID(), class_id);
         m_pet_command_cache[class_id] = states;
         it = m_pet_command_cache.find(class_id);
     }
@@ -7812,7 +7812,7 @@ void Client::SetSavedPetCommand(uint8 class_id, uint8 command_id, bool new_state
         case PET_TAUNT: states.taunt = new_state; break;
     }
 
-    CharacterPetCommandstatesRepository::SetCommandState(database, CharacterID(), class_id, command_id, new_state ? 1 : 0);
+    CharacterPetCommandStatesRepository::SetCommandState(database, CharacterID(), class_id, command_id, new_state ? 1 : 0);
 }
 
 void Client::SuspendMinion(int value)

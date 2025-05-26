@@ -232,12 +232,12 @@ ON DUPLICATE KEY UPDATE
 	// Add table for pet command states
 	ManifestEntry{
 		.version = 13,
-		.description = "2025_05_26_character_pet_commandstates_table",
-		.check = "SHOW TABLES LIKE 'character_pet_commandstates'",
+		.description = "2025_05_26_character_pet_command_states_table",
+		.check = "SHOW TABLES LIKE 'character_pet_command_states'",
 		.condition = "empty",
 		.match = "",
 		.sql = R"(
-	CREATE TABLE `character_pet_commandstates` (
+	CREATE TABLE `character_pet_command_states` (
 	`character_id` int(10) NOT NULL,
 	`pet_class` tinyint(4) NOT NULL,
 	`command_id` tinyint(4) NOT NULL,

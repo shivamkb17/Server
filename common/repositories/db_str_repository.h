@@ -67,108 +67,108 @@ public:
 
 	static std::vector<std::string> GetDBStrFileLinesMulticlass(Database& db, Database& content_db)
 	{
-		std::vector<std::string> lines;
+	std::vector<std::string> lines;
 
-		// Class bitmask to class name map
-		const std::vector<std::pair<int, std::string>> class_map = {
-			{1, "WAR"}, {2, "CLR"}, {4, "PAL"}, {8, "RNG"}, {16, "SHD"}, {32, "DRU"},
-			{64, "MNK"}, {128, "BRD"}, {256, "ROG"}, {512, "SHM"}, {1024, "NEC"},
-			{2048, "WIZ"}, {4096, "MAG"}, {8192, "ENC"}, {16384, "BST"}, {32768, "BER"}
+	// Class bitmask to class name map
+	const std::vector<std::pair<int, std::string>> class_map = {
+		{1, "WAR"}, {2, "CLR"}, {4, "PAL"}, {8, "RNG"}, {16, "SHD"}, {32, "DRU"},
+		{64, "MNK"}, {128, "BRD"}, {256, "ROG"}, {512, "SHM"}, {1024, "NEC"},
+		{2048, "WIZ"}, {4096, "MAG"}, {8192, "ENC"}, {16384, "BST"}, {32768, "BER"}
+	};
+
+	// Query the base table
+	auto results = db.QueryDatabase(
+		fmt::format(
+			"SELECT CONCAT(CONCAT_WS('^', {}), '^0') FROM {} ORDER BY `id`, `type` ASC",
+			ColumnsRaw(),
+			TableName()
+		)
+	);
+
+	// Preload all desc_sid -> aa_ability.classes
+	std::unordered_map<std::string, int> descsid_to_classes;
+	auto class_results = content_db.QueryDatabase(
+		"SELECT aa_ranks.desc_sid, aa_ability.classes FROM aa_ability "
+		"JOIN aa_ranks ON aa_ability.first_rank_id = aa_ranks.id "
+		"WHERE aa_ranks.level_req <= 70"
+	);
+	for (auto row : class_results) {
+		descsid_to_classes[row[0]] = Strings::ToInt(row[1]);
+	}
+
+	// Preload all desc_sid -> activation info
+	struct ActivationInfo {
+		int recast_time;
+		int spell_id;
+		int ability_id;
+	};
+	std::unordered_map<std::string, ActivationInfo> descsid_to_activation;
+	auto activation_results = content_db.QueryDatabase(
+		"SELECT aa_ranks.desc_sid, aa_ranks.recast_time, aa_ranks.spell, aa_ability.id FROM aa_ability "
+		"JOIN aa_ranks ON aa_ability.first_rank_id = aa_ranks.id "
+		"WHERE aa_ranks.level_req <= 70"
+	);
+	for (auto row : activation_results) {
+		descsid_to_activation[row[0]] = {
+			Strings::ToInt(row[1]),
+			Strings::ToInt(row[2]),
+			Strings::ToInt(row[3])
 		};
+	}
 
-		// Query the base table
-		auto results = db.QueryDatabase(
-			fmt::format(
-				"SELECT CONCAT(CONCAT_WS('^', {}), '^0') FROM {} ORDER BY `id`, `type` ASC",
-				ColumnsRaw(),
-				TableName()
-			)
-		);
+	// Process each line from the base query
+	for (auto row : results) {
+		std::string line = row[0];
+		std::stringstream ss(line);
+		std::string item;
+		std::vector<std::string> columns;
 
-		// Preload all desc_sid -> aa_ability.classes
-		std::unordered_map<std::string, int> descsid_to_classes;
-		auto class_results = content_db.QueryDatabase(
-			"SELECT aa_ranks.desc_sid, aa_ability.classes FROM aa_ability "
-			"JOIN aa_ranks ON aa_ability.first_rank_id = aa_ranks.id "
-			"WHERE aa_ranks.level_req <= 70"
-		);
-		for (const auto& row : class_results) {
-			descsid_to_classes[row[0]] = std::stoi(row[1]);
+		while (std::getline(ss, item, '^')) {
+			columns.push_back(item);
 		}
 
-		// Preload all desc_sid -> activation info
-		struct ActivationInfo {
-			int recast_time;
-			int spell_id;
-			int ability_id;
-		};
-		std::unordered_map<std::string, ActivationInfo> descsid_to_activation;
-		auto activation_results = content_db.QueryDatabase(
-			"SELECT aa_ranks.desc_sid, aa_ranks.recast_time, aa_ranks.spell, aa_ability.id FROM aa_ability "
-			"JOIN aa_ranks ON aa_ability.first_rank_id = aa_ranks.id "
-			"WHERE aa_ranks.level_req <= 70"
-		);
-		for (const auto& row : activation_results) {
-			descsid_to_activation[row[0]] = {
-				std::stoi(row[1]),
-				std::stoi(row[2]),
-				std::stoi(row[3])
-			};
-		}
+		if (columns.size() > 2 && columns[1] == "4") {
+			const std::string& desc_sid = columns[0];
 
-		// Process each line from the base query
-		for (const auto& row : results) {
-			std::string line = row[0];
-			std::stringstream ss(line);
-			std::string item;
-			std::vector<std::string> columns;
+			auto class_it = descsid_to_classes.find(desc_sid);
+			auto act_it = descsid_to_activation.find(desc_sid);
 
-			while (std::getline(ss, item, '^')) {
-				columns.push_back(item);
-			}
+			if (class_it != descsid_to_classes.end()) {
+				int aa_classes = class_it->second;
 
-			if (columns.size() > 2 && columns[1] == "4") {
-				const std::string& desc_sid = columns[0];
-
-				auto class_it = descsid_to_classes.find(desc_sid);
-				auto act_it = descsid_to_activation.find(desc_sid);
-
-				if (class_it != descsid_to_classes.end()) {
-					int aa_classes = class_it->second;
-
-					std::string activation_info;
-					if (act_it != descsid_to_activation.end()) {
-						const auto& act = act_it->second;
-						if (act.recast_time > 0 && act.spell_id > -1) {
-							activation_info = " [/alt activate " + std::to_string(act.ability_id) + "]";
-						} else {
-							activation_info = " [/alt toggle " + std::to_string(act.ability_id) + "]";
-						}
-					}
-
-					if (aa_classes != 65535) {
-						std::vector<std::string> class_tags;
-						for (const auto& [bit, name] : class_map) {
-							if (aa_classes & bit)
-								class_tags.push_back(name);
-						}
-						std::string tag = "(" + Strings::Join(class_tags, " ") + ")" + activation_info;
-						columns[2] = tag + "<br>" + columns[2];
+				std::string activation_info;
+				if (act_it != descsid_to_activation.end()) {
+					const auto& act = act_it->second;
+					if (act.recast_time > 0 && act.spell_id > -1) {
+						activation_info = " [/alt activate " + std::to_string(act.ability_id) + "]";
 					} else {
-						columns[2] = "(ALL)" + activation_info + "<br>" + columns[2];
+						activation_info = " [/alt toggle " + std::to_string(act.ability_id) + "]";
 					}
 				}
-			}
 
-			std::string modified_line;
-			for (size_t i = 0; i < columns.size(); ++i) {
-				if (i > 0) modified_line += '^';
-				modified_line += columns[i];
+				if (aa_classes != 65535) {
+					std::vector<std::string> class_tags;
+					for (const auto& [bit, name] : class_map) {
+						if (aa_classes & bit)
+							class_tags.push_back(name);
+					}
+					std::string tag = "(" + Strings::Join(class_tags, " ") + ")" + activation_info;
+					columns[2] = tag + "<br>" + columns[2];
+				} else {
+					columns[2] = "(ALL)" + activation_info + "<br>" + columns[2];
+				}
 			}
-			lines.emplace_back(modified_line);
 		}
 
-		return lines;
+		std::string modified_line;
+		for (size_t i = 0; i < columns.size(); ++i) {
+			if (i > 0) modified_line += '^';
+			modified_line += columns[i];
+		}
+		lines.emplace_back(modified_line);
+	}
+
+	return lines;
 	}
 
 };

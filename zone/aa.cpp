@@ -44,7 +44,7 @@ Copyright (C) 2001-2016 EQEMu Development Team (http://eqemulator.net)
 #include "../common/repositories/aa_ranks_repository.h"
 #include "../common/repositories/aa_rank_effects_repository.h"
 #include "../common/repositories/aa_rank_prereqs_repository.h"
-#include "../common/repositories/character_pet_commandstates_repository.h"
+#include "../common/repositories/character_pet_command_states_repository.h"
 
 extern WorldServer worldserver;
 extern QueryServ* QServ;

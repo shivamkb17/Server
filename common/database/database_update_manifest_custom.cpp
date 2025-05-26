@@ -196,59 +196,58 @@ ON DUPLICATE KEY UPDATE
 		.content_schema_update = true,
 	},
 
-	// Alter character_pet_name to change class_id from TINYINT to INT
-	ManifestEntry{
-		.version = 11,
-		.description = "2025_05_20_modify_character_pet_name_class_id",
-		.check = "SHOW COLUMNS FROM `character_pet_name` WHERE `Field` = 'class_id' AND `Type` LIKE 'tinyint%'",
-		.condition = "not_empty",
-		.match = "",
-		.sql = R"(
-			ALTER TABLE `character_pet_name`
-			MODIFY COLUMN `class_id` INT NOT NULL DEFAULT 0
-			)",
-		.content_schema_update = false,
-	},
+// Alter character_pet_name to change class_id from TINYINT to INT
+ManifestEntry{
+	.version = 11,
+	.description = "2025_05_20_modify_character_pet_name_class_id",
+	.check = "SHOW COLUMNS FROM `character_pet_name` WHERE `Field` = 'class_id' AND `Type` LIKE 'tinyint%'",
+	.condition = "not_empty",
+	.match = "",
+	.sql = R"(
+ALTER TABLE `character_pet_name`
+MODIFY COLUMN `class_id` INT NOT NULL DEFAULT 0
+)",
+	.content_schema_update = false,
+},
 
-	// Add character_aa_disabled table
-	ManifestEntry{
-		.version = 12,
-		.description = "2025_05_20_thj_character_aa_disabled",
-		.check = "SHOW TABLES LIKE 'character_aa_disabled'",
-		.condition = "empty",
-		.match = "",
-		.sql = R"(
-	CREATE TABLE `character_aa_disabled` (
-		`aa_id` int(10) NOT NULL,
-		`character_id` int(10) NOT NULL,
-		`disabled` tinyint(4) NOT NULL,
-		PRIMARY KEY (`aa_id`,`character_id`),
-		KEY `idx_character_id` (`character_id`)
-	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-	)",
-		.content_schema_update = false,
-	},
+// Add character_aa_disabled table
+ManifestEntry{
+	.version = 12,
+	.description = "2025_05_20_thj_character_aa_disabled",
+	.check = "SHOW TABLES LIKE 'character_aa_disabled'",
+	.condition = "empty",
+	.match = "",
+	.sql = R"(
+CREATE TABLE `character_aa_disabled` (
+	`aa_id` int(10) NOT NULL,
+	`character_id` int(10) NOT NULL,
+	`disabled` tinyint(4) NOT NULL,
+	PRIMARY KEY (`aa_id`,`character_id`),
+	KEY `idx_character_id` (`character_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
+	.content_schema_update = false,
+},
 
-	// Add table for pet command states
-	ManifestEntry{
-		.version = 13,
-		.description = "2025_05_26_character_pet_commandstates_table",
-		.check = "SHOW TABLES LIKE 'character_pet_commandstates'",
-		.condition = "empty",
-		.match = "",
-		.sql = R"(
-	CREATE TABLE `character_pet_commandstates` (
-		`character_id` int(10) NOT NULL,
-		`pet_class` tinyint(4) NOT NULL,
-		`command_id` tinyint(4) NOT NULL,
-		`command_state` tinyint(4) NOT NULL,
-		PRIMARY KEY (`character_id`,`pet_class`,`command_id`),
-		KEY `idx_char_petclass` (`character_id`,`pet_class`)
-	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-	)",
-		.content_schema_update = false,
-	},
-
+// Add table for pet command states
+ManifestEntry{
+	.version = 13,
+	.description = "2025_05_26_character_pet_command_states_table",
+	.check = "SHOW TABLES LIKE 'character_pet_command_states'",
+	.condition = "empty",
+	.match = "",
+	.sql = R"(
+CREATE TABLE `character_pet_command_states` (
+	`character_id` int(10) NOT NULL,
+	`pet_class` tinyint(4) NOT NULL,
+	`command_id` tinyint(4) NOT NULL,
+	`command_state` tinyint(4) NOT NULL,
+	PRIMARY KEY (`character_id`,`pet_class`,`command_id`),
+	KEY `idx_char_petclass` (`character_id`,`pet_class`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
+	.content_schema_update = false,
+},
 	// Used for testing
 	//	ManifestEntry{
 	//		.version = 9229,

@@ -77,7 +77,7 @@ namespace EQ
 #include "../common/repositories/character_evolving_items_repository.h"
 #include "../common/repositories/player_titlesets_repository.h"
 #include "../common/repositories/thj_waypoints_repository.h"
-#include "../common/repositories/character_pet_commandstates_repository.h"
+#include "../common/repositories/character_pet_command_states_repository.h"
 
 #include "bot_structs.h"
 
@@ -2321,7 +2321,7 @@ public:
 
 private:
 
-	std::unordered_map<uint8, CharacterPetCommandstatesRepository::PetCommandStates> m_pet_command_cache;
+	std::unordered_map<uint8, CharacterPetCommandStatesRepository::PetCommandStates> m_pet_command_cache;
 
 	PlayerProfile_Struct m_pp;
 	ExtendedProfile_Struct m_epp;

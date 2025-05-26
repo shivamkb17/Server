@@ -44,6 +44,7 @@ Copyright (C) 2001-2016 EQEMu Development Team (http://eqemulator.net)
 #include "../common/repositories/aa_ranks_repository.h"
 #include "../common/repositories/aa_rank_effects_repository.h"
 #include "../common/repositories/aa_rank_prereqs_repository.h"
+#include "../common/repositories/character_aa_disabled_repository.h"
 
 extern WorldServer worldserver;
 extern QueryServ* QServ;
@@ -945,6 +946,7 @@ Mob *SwarmPet::GetOwner()
 void Client::SendAlternateAdvancementTable() {
 	LogDebug("Sending AA Table");
 	GetDynamicAATimers();
+	GetAllToggleAAStatus();
 
 	for(auto &aa : zone->aa_abilities) {
 		uint32 charges = 0;
@@ -1162,18 +1164,60 @@ void Client::SendAlternateAdvancementTimers() {
 	safe_delete(outapp);
 }
 
-void Client::GetAllToggleAAStatus() {
-	// Is this actually required?
-}
+std::unordered_map<int, bool> m_aa_status_cache;
 
-void Client::SetToggleAAStatus(int ability_id, bool status) {
-	SetBucket(fmt::format("disabled_aa.{}", ability_id), (status ? "enabled" : "disabled"));
-	CalcBonuses();
+void Client::GetAllToggleAAStatus() {
+	m_aa_status_cache.clear();
+
+	auto entries = CharacterAaDisabledRepository::GetWhere(
+		database,
+		fmt::format("character_id = {}", CharacterID())
+	);
+
+	for (const auto& entry : entries) {
+		m_aa_status_cache[entry.aa_id] = (entry.disabled == 0);
+	}
 }
 
 bool Client::GetToggleAAStatus(int ability_id) {
-    std::string bucket_value = GetBucket(fmt::format("disabled_aa.{}", ability_id));
-    return (bucket_value != "disabled");
+	auto it = m_aa_status_cache.find(ability_id);
+	if (it != m_aa_status_cache.end()) {
+		return it->second;
+	}
+
+	return true;
+}
+
+void Client::SetToggleAAStatus(int ability_id, bool status) {
+	m_aa_status_cache[ability_id] = status;
+
+	int8_t disabled_value = status ? 0 : 1;
+
+	auto existing_entries = CharacterAaDisabledRepository::GetWhere(
+		database,
+		fmt::format("aa_id = {} AND character_id = {}", ability_id, CharacterID())
+	);
+
+	if (!existing_entries.empty()) {
+		if (status) {
+			CharacterAaDisabledRepository::DeleteWhere(
+				database,
+				fmt::format("aa_id = {} AND character_id = {}", ability_id, CharacterID())
+			);
+		} else {
+			auto entry = existing_entries[0];
+			entry.disabled = disabled_value;
+			CharacterAaDisabledRepository::UpdateOne(database, entry);
+		}
+	} else if (!status) {
+		auto entry = CharacterAaDisabledRepository::NewEntity();
+		entry.aa_id = ability_id;
+		entry.character_id = CharacterID();
+		entry.disabled = disabled_value;
+		CharacterAaDisabledRepository::InsertOne(database, entry);
+	}
+
+	CalcBonuses();
 }
 
 void Client::GetDynamicAATimers() {

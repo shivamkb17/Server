@@ -7882,26 +7882,7 @@ void Client::SuspendMinion(int value)
 				}
 			}
 
-			uint8 pet_class = pet->GetPetOriginClass();
-
-			if (GetSavedPetCommand(pet_class, PET_TAUNT)) {
-				pet->DoPetCommandTaunt(true);
-			}
-			if (GetSavedPetCommand(pet_class, PET_HOLD)) {
-				pet->DoPetCommandHold(true);
-			}
-			if (GetSavedPetCommand(pet_class, PET_GHOLD)) {
-				pet->DoPetCommandGHold(true);
-			}
-			if (GetSavedPetCommand(pet_class, PET_FOCUS)) {
-				pet->DoPetCommandFocus(true);
-			}
-			if (GetSavedPetCommand(pet_class, PET_SPELLHOLD)) {
-				pet->DoPetCommandSpellhold(true);
-			}
-			if (GetSavedPetCommand(pet_class, CUSTOM_PET_ASSIST)) {
-				pet->DoPetCommandAssist(true);
-			}
+			pet->ConfigureInitialCommands();
 
 			memset(&m_suspendedminion, 0, sizeof(PetInfo));
 		}
@@ -8806,28 +8787,7 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 
 		// custom orders
 		if (IsClient()) {
-			Client* c = CastToClient();
-
-			if (c) {
-				if (c->GetSavedPetCommand(Class::None, CUSTOM_PET_ASSIST)) {
-					swarm_pet_npc->DoPetCommand(CUSTOM_PET_ASSIST_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_TAUNT)) {
-					swarm_pet_npc->DoPetCommand(PET_TAUNT_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_HOLD)) {
-					swarm_pet_npc->DoPetCommand(PET_HOLD_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_GHOLD)) {
-					swarm_pet_npc->DoPetCommand(PET_GHOLD_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_FOCUS)) {
-					swarm_pet_npc->DoPetCommand(PET_FOCUS_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_SPELLHOLD)) {
-					swarm_pet_npc->DoPetCommand(PET_SPELLHOLD_ON);
-				}
-			}
+			swarm_pet_npc->ConfigureInitialCommands();
 		}
 
 		LogDebug("My HP: [{}]/[{}] My Mana: [{}]/[{}]", swarm_pet_npc->GetHP(), swarm_pet_npc->GetMaxHP(), swarm_pet_npc->GetMana(), swarm_pet_npc->GetMaxMana());

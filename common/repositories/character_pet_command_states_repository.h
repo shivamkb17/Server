@@ -33,14 +33,14 @@ public:
 			character_id, pet_class
 		));
 
-		for (const auto& entry : results) {
-			switch (entry.command_id) {
-				case CUSTOM_PET_ASSIST: states.assist = (entry.command_state == 1); break;
-				case PET_HOLD: states.hold = (entry.command_state == 1); break;
-				case PET_GHOLD: states.ghold = (entry.command_state == 1); break;
-				case PET_FOCUS: states.focus = (entry.command_state == 1); break;
-				case PET_SPELLHOLD: states.spellhold = (entry.command_state == 1); break;
-				case PET_TAUNT: states.taunt = (entry.command_state == 1); break;
+		for (const auto& e : results) {
+			switch (e.command_id) {
+				case CUSTOM_PET_ASSIST: states.assist = (e.command_state == 1); break;
+				case PET_HOLD: states.hold = (e.command_state == 1); break;
+				case PET_GHOLD: states.ghold = (e.command_state == 1); break;
+				case PET_FOCUS: states.focus = (e.command_state == 1); break;
+				case PET_SPELLHOLD: states.spellhold = (e.command_state == 1); break;
+				case PET_TAUNT: states.taunt = (e.command_state == 1); break;
 			}
 		}
 
@@ -64,13 +64,13 @@ public:
 
 	static void SetCommandState(Database& db, int32_t character_id, int8_t pet_class, int8_t command_id, int8_t state)
 	{
-		CharacterPetCommandStates entry;
-		entry.character_id = character_id;
-		entry.pet_class = pet_class;
-		entry.command_id = command_id;
-		entry.command_state = state;
+		CharacterPetCommandStates e;
+		e.character_id = character_id;
+		e.pet_class = pet_class;
+		e.command_id = command_id;
+		e.command_state = state;
 
-		ReplaceOne(db, entry);
+		ReplaceOne(db, e);
 	}
 
 	static bool IsCommandEnabled(Database& db, int32_t character_id, int8_t pet_class, int8_t command_id)

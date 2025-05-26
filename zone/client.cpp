@@ -7774,33 +7774,33 @@ void Client::SuspendMinion(int value)
 {
 	ValidatePetList();
 	auto pet_mob = GetPetByID(focused_pet_id);
-	NPC* CurrentPet = nullptr;
+	NPC* pet = nullptr;
 	if (pet_mob) {
-		CurrentPet = pet_mob->CastToNPC();
+		pet = pet_mob->CastToNPC();
 	}
 
-	if (CurrentPet && CurrentPet->IsCharmed()) {
+	if (pet && pet->IsCharmed()) {
 		MessageString(Chat::SpellFailure, ONLY_SUMMONED_PETS);
 		return;
 	}
 
 	auto store_minion = [&]() {
-		m_suspendedminion.SpellID 	= CurrentPet->GetPetSpellID();
-		m_suspendedminion.HP 	  	= CurrentPet->GetHP();
-		m_suspendedminion.Mana    	= CurrentPet->GetMana();
-		m_suspendedminion.petpower 	= CurrentPet->GetPetPower();
-		m_suspendedminion.size 		= CurrentPet->GetSize();
+		m_suspendedminion.SpellID 	= pet->GetPetSpellID();
+		m_suspendedminion.HP 	  	= pet->GetHP();
+		m_suspendedminion.Mana    	= pet->GetMana();
+		m_suspendedminion.petpower 	= pet->GetPetPower();
+		m_suspendedminion.size 		= pet->GetSize();
 
 		if (value >= 1) {
-			CurrentPet->GetPetState(m_suspendedminion.Buffs, m_suspendedminion.Items, m_suspendedminion.Name);
+			pet->GetPetState(m_suspendedminion.Buffs, m_suspendedminion.Items, m_suspendedminion.Name);
 		} else {
-			strn0cpy(m_suspendedminion.Name, CurrentPet->GetName(), sizeof(m_suspendedminion.Name));
+			strn0cpy(m_suspendedminion.Name, pet->GetName(), sizeof(m_suspendedminion.Name));
 		}
 
-		RemovePet(CurrentPet);
-		CurrentPet->Depop(false);
+		RemovePet(pet);
+		pet->Depop(false);
 
-		MessageString(Chat::Magenta, SUSPEND_MINION_SUSPEND, CurrentPet->GetCleanName());
+		MessageString(Chat::Magenta, SUSPEND_MINION_SUSPEND, pet->GetCleanName());
 	};
 
 	auto deploy_minion = [&]() {
@@ -7809,32 +7809,51 @@ void Client::SuspendMinion(int value)
 		ValidatePetList();
 		auto pet_mob = GetPet(petids.size() - 1);
 		if (pet_mob) {
-			CurrentPet = pet_mob->CastToNPC();
+			pet = pet_mob->CastToNPC();
 		}
 
-		if (CurrentPet) {
-			CurrentPet->SetPetState(m_suspendedminion.Buffs, m_suspendedminion.Items);
-			CurrentPet->SendPetBuffsToClient();
-			CurrentPet->CalcBonuses();
-			CurrentPet->SetHP(m_suspendedminion.HP);
-			CurrentPet->SetMana(m_suspendedminion.Mana);
-			CurrentPet->SetTaunting(m_suspendedminion.taunting);
+		if (pet) {
+			pet->SetPetState(m_suspendedminion.Buffs, m_suspendedminion.Items);
+			pet->SendPetBuffsToClient();
+			pet->CalcBonuses();
+			pet->SetHP(m_suspendedminion.HP);
+			pet->SetMana(m_suspendedminion.Mana);
+			pet->SetTaunting(m_suspendedminion.taunting);
 
-			MessageString(Chat::Magenta, SUSPEND_MINION_UNSUSPEND, CurrentPet->GetCleanName());
+			MessageString(Chat::Magenta, SUSPEND_MINION_UNSUSPEND, pet->GetCleanName());
 
-			CurrentPet->ApplyGlobalBuffs();
+			pet->ApplyGlobalBuffs();
 
-			auto pet_buffs = CurrentPet->GetBuffs();
-			for (int slot_id = 0; slot_id < CurrentPet->GetMaxBuffSlots(); slot_id++) {
+			auto pet_buffs = pet->GetBuffs();
+			for (int slot_id = 0; slot_id < pet->GetMaxBuffSlots(); slot_id++) {
 				if (!IsValidSpell(pet_buffs[slot_id].spellid)) {
 					continue;
 				}
 
 				if (IsEffectInSpell(pet_buffs[slot_id].spellid, SE_Illusion)) {
 					int buff_id = pet_buffs[slot_id].spellid;
-					CurrentPet->BuffFadeBySlot(slot_id);
-					CurrentPet->ApplySpellBuff(buff_id);
+					pet->BuffFadeBySlot(slot_id);
+					pet->ApplySpellBuff(buff_id);
 				}
+			}
+
+			if (GetBucket(fmt::format("pet_settings.{}.taunt", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+				pet->DoPetCommandTaunt(true);
+			}
+			if (GetBucket(fmt::format("pet_settings.{}.hold", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+				pet->DoPetCommandHold(true);
+			}
+			if (GetBucket(fmt::format("pet_settings.{}.ghold", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+				pet->DoPetCommandGHold(true);
+			}
+			if (GetBucket(fmt::format("pet_settings.{}.focus", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+				pet->DoPetCommandFocus(true);
+			}
+			if (GetBucket(fmt::format("pet_settings.{}.spellhold", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+				pet->DoPetCommandSpellhold(true);
+			}
+			if (GetBucket(fmt::format("pet_settings.{}.assist", GetClassIDName(pet->GetPetOriginClass()))) == "on") {
+				pet->DoPetCommandAssist(true);
 			}
 
 			memset(&m_suspendedminion, 0, sizeof(PetInfo));
@@ -7845,8 +7864,8 @@ void Client::SuspendMinion(int value)
 	bool total_pet_limit 	= GetAllPets().size() <= RuleI(Custom, AbsolutePetLimit);
 	bool pet_slot_allowed 	= IsPetAllowed(m_suspendedminion.SpellID);
 
-	bool valid_pet_to_store = CurrentPet && CurrentPet->GetPetSpellID();
-	bool pet_not_engaged 	= CurrentPet && !CurrentPet->IsEngaged();
+	bool valid_pet_to_store = pet && pet->GetPetSpellID();
+	bool pet_not_engaged 	= pet && !pet->IsEngaged();
 
 	if (valid_stored_pet) {
 		if (!total_pet_limit) {
@@ -8730,75 +8749,6 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 
 		swarm_pet_npc->SetEntityVariable("class_bitmask", std::to_string(GetClassesBits()));
 
-		/* Moved this functionality to scripts.
-		auto memmed_spells = GetMemmedSpells();
-		for (int i = memmed_spells.size() - 1; i >= 0; i--)
-		{
-			int spell = memmed_spells[i];
-			if (!IsValidSpell(spell))
-			{
-				continue;
-			}
-
-			if (IsBeneficialSpell(spell))
-			{
-				continue;
-			}
-
-			if (spells[spell].aoe_range > 1 || spells[spell].aoe_max_targets > 1)
-			{
-				continue;
-			}
-
-			int spell_type = 0;
-			int recast_time = (spells[spell].recast_time + spells[spell].recovery_time) / 1000;
-
-			if (IsDamageSpell(spell))
-			{
-				spell_type = SpellType_Nuke;
-			}
-			if (IsLifetapSpell(spell))
-			{
-				spell_type = SpellType_Lifetap;
-			}
-			if (IsSlowSpell(spell))
-			{
-				spell_type = SpellType_Slow;
-			}
-			if (IsDebuffSpell(spell))
-			{
-				spell_type = SpellType_Debuff;
-			}
-			if (IsEffectInSpell(spell, SE_CurrentHP) && spells[spell].buff_duration > 0)
-			{
-				spell_type = SpellType_DOT;
-			}
-			if (!spell_type && IsEffectInSpell(SE_MovementSpeed, spell))
-			{
-				spell_type = SpellType_Snare;
-			}
-			if (IsEffectInSpell(SE_CancelMagic, spell))
-			{
-				spell_type = SpellType_Dispel;
-			}
-
-			if (spells[spell].buff_duration > 0) {
-				recast_time = 999;
-			}
-
-			if (spell_type && spell)
-			{
-				swarm_pet_npc->AddSpellToNPCList(0, spell, spell_type, -1, recast_time, 0, 0, 0);
-			}
-		}
-
-		for (int spell : swarm_pet_npc->GetNPCSpellList()) {
-			if (IsCharmSpell(spell) || IsFearSpell(spell) || IsBlindSpell(spell)) {
-				swarm_pet_npc->RemoveSpellFromNPCList(spell);
-			}
-		}
-		*/
-
 		// Create the NPC
 		entity_list.AddNPC(swarm_pet_npc);
 
@@ -8806,6 +8756,29 @@ void Client::Doppelganger(uint16 spell_id, Mob *target, const char *name_overrid
 
 		swarm_pet_npc->SetHP(swarm_pet_npc->GetMaxHP());
 		swarm_pet_npc->SetMana(swarm_pet_npc->GetMaxMana());
+
+		// custom orders
+		if (IsClient()) {
+			Client* c = CastToClient();
+
+			auto assist_val = c->GetBucket("pet_settings.swarm.assist");
+			if (assist_val.empty()) {
+				c->SetBucket("pet_settings.swarm.assist", "on");
+			}
+
+			if (assist_val.empty() || assist_val == "on") {
+				swarm_pet_npc->DoPetCommandAssist(true);
+			}
+			if (c->GetBucket("pet_settings.swarm.focus") == "on") {
+				swarm_pet_npc->DoPetCommandFocus(true);
+			}
+			if (c->GetBucket("pet_settings.swarm.ghold") == "on") {
+				swarm_pet_npc->DoPetCommandGHold(true);
+			}
+			if (c->GetBucket("pet_settings.swarm.hold") == "on") {
+				swarm_pet_npc->DoPetCommandHold(true);
+			}
+		}
 
 		LogDebug("My HP: [{}]/[{}] My Mana: [{}]/[{}]", swarm_pet_npc->GetHP(), swarm_pet_npc->GetMaxHP(), swarm_pet_npc->GetMana(), swarm_pet_npc->GetMaxMana());
 

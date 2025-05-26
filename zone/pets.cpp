@@ -1258,6 +1258,17 @@ std::vector<Mob*> Mob::GetAllPets() {
     return pets;
 }
 
+std::vector<Mob*> Mob::GetAllSwarmPets() {
+	std::vector<Mob*> swarm_list;
+	for (auto entity : entity_list.GetNPCList()) {
+		if (entity.second && entity.second->GetSwarmOwner() == GetID() && !entity.second->GetSwarmInfo()->m_familiar) {
+			swarm_list.push_back(entity.second);
+		}
+	}
+
+	return swarm_list;
+}
+
 Mob* Mob::GetPetByID(uint16 id) {
 	ValidatePetList();
     // Iterate through the list of pet IDs

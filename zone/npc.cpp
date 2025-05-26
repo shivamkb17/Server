@@ -579,13 +579,17 @@ void NPC::SetTarget(Mob* mob) {
     // Handle taunting and pet assistance
     if (owner && IsTaunting()) {
         for (auto pet : owner->GetAllPets()) {
-            LogDebug("1 Attempting to assist pet {}", pet->GetName());
-            if (pet == this) { continue; }
-            LogDebug("2 Attempting to assist pet {}", pet->GetName());
-            if (pet && pet->IsNPC() && pet->IsPetAssisting() && !pet->CastToNPC()->IsTaunting()) {
+            if (pet->CastToNPC()->IsTaunting()) { continue; }
+            if (pet && pet->IsPetAssisting()) {
                 pet->CastToNPC()->DoPetCommandAssistOnTarget(mob);
             }
         }
+
+		for (auto swarm_member : owner->GetAllSwarmPets()) {
+			if (swarm_member && swarm_member->IsPetAssisting()) {
+				swarm_member->CastToNPC()->DoPetCommandAssistOnTarget(mob);
+			}
+		}
     }
 
     // Handle client focused pet updates
@@ -620,11 +624,11 @@ bool NPC::Process()
 	}
 
 	SpellProcess();
-
 	if (GetSwarmInfo()) {
 		if (swarm_timer.Check()) {
 			DepopSwarmPets();
 		} else {
+			/*
 			Mob* owner = entity_list.GetMob(GetSwarmOwner());
 			if (owner && owner->IsClient()) {
 				if (RuleB(Spells, SwarmPetFullAggro)) {
@@ -637,6 +641,7 @@ bool NPC::Process()
 					}
 				}
 			}
+			*/
 		}
 	}
 
@@ -2566,6 +2571,14 @@ Client* NPC::DoPetCommandChecks(int pet_command_id) {
 void NPC::DoPetCommandAssist(bool enabled) {
 	Client* owner = DoPetCommandChecks(0);
 
+	if (owner) {
+		owner->SetBucket(fmt::format("pet_settings.{}.assist", GetClassIDName(GetPetOriginClass())), enabled ? "on" : "off");
+	}
+
+	if (!owner && GetSwarmOwner()) {
+		owner = entity_list.GetClientByID(GetSwarmOwner());
+	}
+
 	if (!owner) { return; }
 
 	if (enabled) {
@@ -2579,8 +2592,12 @@ void NPC::DoPetCommandAssist(bool enabled) {
 
 void NPC::DoPetCommandAttack(Mob* target, bool force) {
 	if (!target) { return; }
+	if (target->GetOwnerOrSelf()->IsClient()) { return; }
 
 	Client* owner = DoPetCommandChecks(force ? PET_ATTACK : PET_QATTACK);
+	if (!owner && GetSwarmOwner()) {
+		owner = entity_list.GetClientByID(GetSwarmOwner());
+	}
 
 	if (!owner) { return; }
 
@@ -2636,27 +2653,16 @@ void NPC::DoPetCommandAttack(Mob* target, bool force) {
 
 void NPC::DoPetCommandAssistOnTarget(Mob* target) {
 	if (!target) { return; }
+	if (target->GetOwnerOrSelf()->IsClient()) { return; }
 
 	Client* owner = DoPetCommandChecks(PET_ATTACK);
+	if (!owner && GetSwarmOwner()) {
+		owner = entity_list.GetClientByID(GetSwarmOwner());
+	}
 
 	if (!owner) { return; }
 
 	if (GetTarget() && target->GetID() == GetTarget()->GetID()) {
-		return;
-	}
-
-	if (RuleB(Pets, PetsRequireLoS) && !DoLosChecks(target)) {
-		//owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'I beg forgiveness, Master. That is not a legal target.", GetCleanName()).c_str());
-		return;
-	}
-
-	if (!IsAttackAllowed(target)) {
-		//owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'I beg forgiveness, Master. That is not a legal target.", GetCleanName()).c_str());
-		return;
-	}
-
-	if (DistanceSquared(GetPosition(), target->GetPosition()) >= RuleR(Aggro, PetAttackRange)) {
-		//owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'I beg forgiveness, Master. That target is too far away.", GetCleanName()).c_str());
 		return;
 	}
 
@@ -2699,6 +2705,10 @@ void NPC::DoPetCommandAssistOnTarget(Mob* target) {
 void NPC::DoPetCommandBackOff() {
 
 	Client* owner = DoPetCommandChecks(PET_BACKOFF);
+	if (!owner && GetSwarmOwner()) {
+		owner = entity_list.GetClientByID(GetSwarmOwner());
+	}
+
 	if (!owner) { return; }
 
 	owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'As you command, Master, calming down.", GetCleanName()).c_str());
@@ -3182,7 +3192,18 @@ void NPC::DoPetCommandTaunt(bool enabled) {
 	Client* owner = DoPetCommandChecks(PET_GETLOST);
 	if (!owner) { return; }
 
+	if (owner) {
+		owner->SetBucket(fmt::format("pet_settings.{}.taunt", GetClassIDName(GetPetOriginClass())), enabled ? "on" : "off");
+	}
+
 	SetTaunting(enabled);
+
+	if (owner->focused_pet_id == GetID()) {
+		LogDebug("Attempting to set button state");
+		owner->SetPetCommandState(PET_BUTTON_TAUNT, enabled);
+	} else {
+		LogDebug("Not eligible for button state update");
+	}
 
 	if (IsTaunting()) {
 		owner->Message(Chat::PetResponse, fmt::format("{} tells you, 'Taunting attackers as ordered, Master.", GetCleanName()).c_str());
@@ -3233,6 +3254,15 @@ void NPC::DoPetCommandSit(bool enabled) {
 
 void NPC::DoPetCommandHold(bool enabled) {
 	Client* owner = DoPetCommandChecks(PET_GETLOST);
+
+	if (owner) {
+		owner->SetBucket(fmt::format("pet_settings.{}.hold", GetClassIDName(GetPetOriginClass())), enabled ? "on" : "off");
+	}
+
+	if (!owner && GetSwarmOwner()) {
+		owner = entity_list.GetClientByID(GetSwarmOwner());
+	}
+
 	if (!owner) { return; }
 
 	SetHeld(enabled);
@@ -3246,6 +3276,15 @@ void NPC::DoPetCommandHold(bool enabled) {
 
 void NPC::DoPetCommandGHold(bool enabled) {
 	Client* owner = DoPetCommandChecks(PET_GETLOST);
+
+	if (owner) {
+		owner->SetBucket(fmt::format("pet_settings.{}.ghold", GetClassIDName(GetPetOriginClass())), enabled ? "on" : "off");
+	}
+
+	if (!owner && GetSwarmOwner()) {
+		owner = entity_list.GetClientByID(GetSwarmOwner());
+	}
+
 	if (!owner) { return; }
 
 	SetGHeld(enabled);
@@ -3259,6 +3298,15 @@ void NPC::DoPetCommandGHold(bool enabled) {
 
 void NPC::DoPetCommandSpellhold(bool enabled) {
 	Client* owner = DoPetCommandChecks(PET_GETLOST);
+
+	if (owner) {
+		owner->SetBucket(fmt::format("pet_settings.{}.spellhold", GetClassIDName(GetPetOriginClass())), enabled ? "on" : "off");
+	}
+
+	if (!owner && GetSwarmOwner()) {
+		owner = entity_list.GetClientByID(GetSwarmOwner());
+	}
+
 	if (!owner) { return; }
 
 	SetNoCast(enabled);
@@ -3272,6 +3320,15 @@ void NPC::DoPetCommandSpellhold(bool enabled) {
 
 void NPC::DoPetCommandFocus(bool enabled) {
 	Client* owner = DoPetCommandChecks(PET_GETLOST);
+
+	if (owner) {
+		owner->SetBucket(fmt::format("pet_settings.{}.focus", GetClassIDName(GetPetOriginClass())), enabled ? "on" : "off");
+	}
+
+	if (!owner && GetSwarmOwner()) {
+		owner = entity_list.GetClientByID(GetSwarmOwner());
+	}
+
 	if (!owner) { return; }
 
 	SetFocused(enabled);
@@ -3314,6 +3371,10 @@ void NPC::DoPetCommandFeign() {
 
 void NPC::DoPetCommandStop(bool enabled) {
 	Client* owner = DoPetCommandChecks(PET_GETLOST);
+	if (!owner && GetSwarmOwner()) {
+		owner = entity_list.GetClientByID(GetSwarmOwner());
+	}
+
 	if (!owner) { return; }
 
 	SetPetStop(enabled);
@@ -3325,6 +3386,10 @@ void NPC::DoPetCommandStop(bool enabled) {
 
 void NPC::DoPetCommandRegroup(bool enabled) {
 	Client* owner = DoPetCommandChecks(PET_GETLOST);
+	if (!owner && GetSwarmOwner()) {
+		owner = entity_list.GetClientByID(GetSwarmOwner());
+	}
+
 	if (!owner) { return; }
 
 	SetPetRegroup(enabled);

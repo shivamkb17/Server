@@ -6822,6 +6822,13 @@ void Mob::TryTriggerOnCastFocusEffect(focusType type, uint16 spell_id, bool chec
 				continue;
 			}
 
+			if (IsClient()) {
+				Client* c = CastToClient();
+				if (!c->GetToggleAAStatus(ability_rank.first->id)) {
+					continue;
+				}
+			}
+
 			if(!is_allowed("aa", ability->id)) {
 				continue;
 			}
@@ -6994,6 +7001,14 @@ uint16 Mob::GetSympatheticFocusEffect(focusType type, uint16 spell_id) {
 			if (rank->effects.empty()) {
 				continue;
 			}
+
+			if (IsClient()) {
+				Client* c = CastToClient();
+				if (!c->GetToggleAAStatus(ability_rank.first->id)) {
+					continue;
+				}
+			}
+
 			proc_spellid = CalcAAFocus(type, *rank, spell_id);
 			if (IsValidSpell(proc_spellid)) {
 				ProcChance = GetSympatheticProcChances(spell_id, rank->effects[0].base_value);
@@ -7318,6 +7333,13 @@ int64 Mob::GetFocusEffect(focusType type, uint16 spell_id, Mob *caster, bool fro
 
 			if (rank->effects.empty()) {
 				continue;
+			}
+
+			if (IsClient()) {
+				Client* c = CastToClient();
+				if (!c->GetToggleAAStatus(ability_rank.first->id)) {
+					continue;
+				}
 			}
 
 			Total3 = CalcAAFocus(type, *rank, spell_id);
@@ -10554,6 +10576,13 @@ bool Mob::PassLimitToSkill(EQ::skills::SkillType skill, int32 spell_id, int proc
 
 			if (!ability) {
 				continue;
+			}
+
+			if (IsClient()) {
+				Client* c = CastToClient();
+				if (!c->GetToggleAAStatus(ability_rank.first->id)) {
+					continue;
+				}
 			}
 
 			for (auto &effect : rank->effects) {

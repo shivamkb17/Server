@@ -6387,6 +6387,13 @@ void Mob::TrySkillProc(Mob *on, EQ::skills::SkillType skill, uint16 ReuseTime, b
 						continue;
 					}
 
+					if (IsClient()) {
+						Client* c = CastToClient();
+						if (!c->GetToggleAAStatus(ability_rank.first->id)) {
+							continue;
+						}
+					}
+
 					for (auto &effect : rank->effects) {
 						effect_id = effect.effect_id;
 						base_value = effect.base_value;

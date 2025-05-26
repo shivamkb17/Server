@@ -222,7 +222,8 @@ ON DUPLICATE KEY UPDATE
 	`aa_id` int(10) NOT NULL,
 	`character_id` int(10) NOT NULL,
 	`disabled` tinyint(4) NOT NULL,
-	PRIMARY KEY (`aa_id`,`character_id`)
+	PRIMARY KEY (`aa_id`,`character_id`),
+	KEY `idx_character_id` (`character_id`)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 	)",
 		.content_schema_update = false,

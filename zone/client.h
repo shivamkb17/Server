@@ -2536,6 +2536,8 @@ private:
 
 	std::vector<uint32_t> m_completed_shared_tasks;
 
+	std::unordered_map<int, bool> m_aa_status_cache;
+
 public:
 	enum BotOwnerOption : size_t {
 		booDeathMarquee,

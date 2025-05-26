@@ -7,7 +7,7 @@ void command_alt_toggle(Client *c, const Seperator *sep) {
     }
 
     if (sep->argnum < 1 || !sep->IsNumber(1)) {
-        c->Message(Chat::White, "Usage: #alt_toggle <ability_id> [toggle|enable|disable]");
+        c->Message(Chat::White, "Usage: /alt toggle <ability_id>");
         return;
     }
 
@@ -19,43 +19,9 @@ void command_alt_toggle(Client *c, const Seperator *sep) {
         return;
     }
 
-    std::string ability_name = aa_ability.name;
-
-    bool new_status;
-    std::string action = "toggle";
-
-    if (sep->argnum >= 2) {
-        std::string command = Strings::ToLower(sep->arg[2]);
-
-        if (command == "enable" || command == "on" || command == "1") {
-            new_status = true;
-            action = "enable";
-        }
-        else if (command == "disable" || command == "off" || command == "0") {
-            new_status = false;
-            action = "disable";
-        }
-        else if (command == "toggle") {
-            // Get current status and flip it
-            new_status = !c->GetToggleAAStatus(ability_id);
-            action = "toggle";
-        }
-        else {
-            c->Message(Chat::White, "Invalid action. Use: toggle, enable, or disable");
-            return;
-        }
-    }
-    else {
-        new_status = !c->GetToggleAAStatus(ability_id);
-    }
-
+    bool new_status = !c->GetToggleAAStatus(ability_id);
     c->SetToggleAAStatus(ability_id, new_status);
 
-    std::string status_text = new_status ? "enabled" : "disabled";
-    if (action == "toggle") {
-        c->Message(Chat::White, fmt::format("Toggled AA '{}' ({}) to: {}", ability_name, ability_id, status_text).c_str());
-    }
-    else {
-        c->Message(Chat::White, fmt::format("AA '{}' ({}) {}", ability_name, ability_id, status_text).c_str());
-    }
+    c->Message(Chat::White, fmt::format("Toggled AA '{}' ({}) to: {}",
+        aa_ability.name, ability_id, new_status ? "enabled" : "disabled").c_str());
 }

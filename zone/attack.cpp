@@ -6389,7 +6389,7 @@ void Mob::TrySkillProc(Mob *on, EQ::skills::SkillType skill, uint16 ReuseTime, b
 
 					if (IsClient()) {
 						Client* c = CastToClient();
-						if (!c->GetToggleAAStatus(ability_rank.first->id)) {
+						if (c && !c->GetToggleAAStatus(ability_rank.first->id)) {
 							continue;
 						}
 					}

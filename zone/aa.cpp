@@ -184,28 +184,7 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 
 		// custom orders
 		if (IsClient()) {
-			Client* c = CastToClient();
-
-			if (c) {
-				if (c->GetSavedPetCommand(Class::None, CUSTOM_PET_ASSIST)) {
-					swarm_pet_npc->DoPetCommand(CUSTOM_PET_ASSIST_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_TAUNT)) {
-					swarm_pet_npc->DoPetCommand(PET_TAUNT_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_HOLD)) {
-					swarm_pet_npc->DoPetCommand(PET_HOLD_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_GHOLD)) {
-					swarm_pet_npc->DoPetCommand(PET_GHOLD_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_FOCUS)) {
-					swarm_pet_npc->DoPetCommand(PET_FOCUS_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_SPELLHOLD)) {
-					swarm_pet_npc->DoPetCommand(PET_SPELLHOLD_ON);
-				}
-			}
+			swarm_pet_npc->ConfigureInitialCommands();
 		}
 
 		summon_count--;
@@ -536,28 +515,7 @@ void Mob::WakeTheDead(uint16 spell_id, Corpse *corpse_to_use, Mob *tar, uint32 d
 		entity_list.AddNPC(swarm_pet_npc, true, true);
 
 		if (IsClient()) {
-			Client* c = CastToClient();
-
-			if (c) {
-				if (c->GetSavedPetCommand(Class::None, CUSTOM_PET_ASSIST)) {
-					swarm_pet_npc->DoPetCommand(CUSTOM_PET_ASSIST_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_TAUNT)) {
-					swarm_pet_npc->DoPetCommand(PET_TAUNT_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_HOLD)) {
-					swarm_pet_npc->DoPetCommand(PET_HOLD_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_GHOLD)) {
-					swarm_pet_npc->DoPetCommand(PET_GHOLD_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_FOCUS)) {
-					swarm_pet_npc->DoPetCommand(PET_FOCUS_ON);
-				}
-				if (c->GetSavedPetCommand(Class::None, PET_SPELLHOLD)) {
-					swarm_pet_npc->DoPetCommand(PET_SPELLHOLD_ON);
-				}
-			}
+			swarm_pet_npc->ConfigureInitialCommands();
 		}
 
 		summon_count--;

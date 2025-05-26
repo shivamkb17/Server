@@ -1812,27 +1812,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 						pet->CalcBonuses();
 						pet->SetHP(pet_info.HP);
 						pet->SetMana(pet_info.Mana);
-
-						uint8 pet_class = pet->GetPetOriginClass();
-
-						if (GetSavedPetCommand(pet_class, PET_TAUNT)) {
-							pet->DoPetCommandTaunt(true);
-						}
-						if (GetSavedPetCommand(pet_class, PET_HOLD)) {
-							pet->DoPetCommandHold(true);
-						}
-						if (GetSavedPetCommand(pet_class, PET_GHOLD)) {
-							pet->DoPetCommandGHold(true);
-						}
-						if (GetSavedPetCommand(pet_class, PET_FOCUS)) {
-							pet->DoPetCommandFocus(true);
-						}
-						if (GetSavedPetCommand(pet_class, PET_SPELLHOLD)) {
-							pet->DoPetCommandSpellhold(true);
-						}
-						if (GetSavedPetCommand(pet_class, CUSTOM_PET_ASSIST)) {
-							pet->DoPetCommandAssist(true);
-						}
+						pet->ConfigureInitialCommands();
 					}
 
 					DoPetBagResync(pet->GetPetOriginClass());

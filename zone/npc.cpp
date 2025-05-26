@@ -2568,6 +2568,35 @@ Client* NPC::DoPetCommandChecks(int pet_command_id) {
 	return GetOwner()->CastToClient();
 }
 
+void NPC::ConfigureInitialCommands() {
+	Client* owner = DoPetCommandChecks(0);
+	int class_id = GetPetOriginClass();
+
+	if (!owner && GetSwarmOwner()) {
+		owner = entity_list.GetClientByID(GetSwarmOwner());
+		class_id == Class::None;
+	}
+
+	if (!owner) {
+		return; // Not a pet
+	}
+
+	static const std::pair<uint8, uint8> pet_commands[] = {
+		{ CUSTOM_PET_ASSIST,    CUSTOM_PET_ASSIST_ON },
+		{ PET_TAUNT,            PET_TAUNT_ON },
+		{ PET_HOLD,             PET_HOLD_ON },
+		{ PET_GHOLD,            PET_GHOLD_ON },
+		{ PET_FOCUS,            PET_FOCUS_ON },
+		{ PET_SPELLHOLD,        PET_SPELLHOLD_ON }
+	};
+
+	for (const auto& [cmd, cmd_on] : pet_commands) {
+		if (owner->GetSavedPetCommand(class_id, cmd)) {
+			DoPetCommand(cmd_on);
+		}
+	}
+}
+
 void NPC::DoPetCommandAssist(bool enabled) {
    Client* owner = DoPetCommandChecks(0);
 

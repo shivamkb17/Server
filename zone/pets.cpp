@@ -1260,9 +1260,9 @@ std::vector<Mob*> Mob::GetAllPets() {
 
 std::vector<Mob*> Mob::GetAllSwarmPets() {
 	std::vector<Mob*> swarm_list;
-	for (auto entity : entity_list.GetNPCList()) {
-		if (entity.second && entity.second->GetSwarmOwner() == GetID() && !entity.second->GetSwarmInfo()->m_familiar) {
-			swarm_list.push_back(entity.second);
+	for (auto e : entity_list.GetNPCList()) {
+		if (e.second && e.second->GetSwarmOwner() == GetID() && !e.second->GetSwarmInfo()->m_familiar) {
+			swarm_list.push_back(e.second);
 		}
 	}
 

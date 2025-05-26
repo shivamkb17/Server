@@ -1338,25 +1338,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 								break;
 							}
 
-							if (c->GetSavedPetCommand(pet_class, PET_TAUNT)) {
-								pet_npc->DoPetCommandTaunt(true);
-							}
-							if (c->GetSavedPetCommand(pet_class, PET_HOLD)) {
-								pet_npc->DoPetCommandHold(true);
-							}
-							if (c->GetSavedPetCommand(pet_class, PET_GHOLD)) {
-								pet_npc->DoPetCommandGHold(true);
-							}
-							if (c->GetSavedPetCommand(pet_class, PET_FOCUS)) {
-								pet_npc->DoPetCommandFocus(true);
-							}
-							if (c->GetSavedPetCommand(pet_class, PET_SPELLHOLD)) {
-								pet_npc->DoPetCommandSpellhold(true);
-							}
-							if (c->GetSavedPetCommand(pet_class, CUSTOM_PET_ASSIST)) {
-								pet_npc->DoPetCommandAssist(true);
-							}
-
+							pet_npc->ConfigureInitialCommands();
 							pet_npc->ApplyGlobalBuffs();
 						}
 					}

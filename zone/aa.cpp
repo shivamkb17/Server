@@ -1242,86 +1242,70 @@ void Client::SetToggleAAStatus(int ability_id, bool status) {
 }
 
 void Client::GetDynamicAATimers() {
-	LogDebug("Getting dynamic AA timers.");
-    auto results = CharacterDynamicAaTimersRepository::GetByCharacterId(database, CharacterID());
+    LogDebug("Getting dynamic AA timers.");
+    m_aa_timers_cache.clear();
+    auto r = CharacterDynamicAaTimersRepository::GetByCharacterId(database, CharacterID());
 
-    aa_timers_cache.clear();
-
-    for (const auto& timer_entry : results) {
-        aa_timers_cache[timer_entry.aa_id] = timer_entry.timer_id;
-        LogDebugDetail("Cached AA ID: [{}] -> TimerID: [{}]", timer_entry.aa_id, timer_entry.timer_id);
+    for (const auto& e : r) {
+        m_aa_timers_cache[e.aa_id] = e.timer_id;
+        LogDebugDetail("Cached AA ID: [{}] -> timer_id: [{}]", e.aa_id, e.timer_id);
     }
 }
 
 int Client::GetDynamicAATimer(int aa_id) {
-	if (aa_timers_cache.empty()) {
-		LogDebugDetail("Cache Miss, repopulating cache.");
-		GetDynamicAATimers();
-	}
-
-    auto it = aa_timers_cache.find(aa_id);
-    if (it != aa_timers_cache.end()) {
-        return it->second;
+    if (m_aa_timers_cache.empty()) {
+        LogDebugDetail("Cache Miss, repopulating cache.");
+        GetDynamicAATimers();
     }
 
-	LogDebugDetail("Not in DB, assigning new timer.");
+    auto a = m_aa_timers_cache.find(aa_id);
+    if (a != m_aa_timers_cache.end())
+        return a->second;
+
+    LogDebugDetail("Not in DB, assigning new timer.");
     return SetDynamicAATimer(aa_id);
 }
 
 int Client::SetDynamicAATimer(int aa_id) {
-    for (int timerID = 1; timerID <= (pTimerAAEnd - pTimerAAStart); ++timerID) {
-        if (std::none_of(aa_timers_cache.begin(), aa_timers_cache.end(),
-                        [timerID](const auto& pair) { return pair.second == timerID; })) {
+    for (int t = 1; t <= (pTimerAAEnd - pTimerAAStart); ++t) {
+        if (std::any_of(m_aa_timers_cache.begin(), m_aa_timers_cache.end(),
+                        [t](const auto& p) { return p.second == t; }))
+            continue;
 
-            auto entry = CharacterDynamicAaTimersRepository::NewEntity();
-            entry.character_id = CharacterID();
-            entry.aa_id = aa_id;
-            entry.timer_id = timerID;
+        auto e = CharacterDynamicAaTimersRepository::NewEntity();
+        e.character_id = CharacterID();
+        e.aa_id = aa_id;
+        e.timer_id = t;
 
-            auto result = CharacterDynamicAaTimersRepository::InsertOne(database, entry);
+        auto r = CharacterDynamicAaTimersRepository::InsertOne(database, e);
+        int id = 0;
 
-            if (result.character_id != 0) {
-                // Success - update cache and return
-                aa_timers_cache[aa_id] = timerID;
-                LogDebugDetail("Set TimerID: [{}] for AA ID: [{}]", timerID, aa_id);
+        if (r.character_id != 0) {
+            id = t;
+            LogDebugDetail("Set timer_id: [{}] for AA ID: [{}]", id, aa_id);
+        } else {
+            auto x = CharacterDynamicAaTimersRepository::GetWhere(
+                database,
+                fmt::format("character_id = {} AND aa_id = {}", CharacterID(), aa_id)
+            );
 
-				if (timerID >= 100) {
-					LogError("WARNING: Out-of-Range AA Timer ID [{}] assigned to character [{}] ([{}]) for AA [{}] -> Classes [{}]",
-							timerID,
-							GetCleanName(),
-							CharacterID(),
-							aa_id,
-							GetClassesBits());
-				}
-
-                return timerID;
-            } else {
-                // Insert failed - probably already exists, just fetch it
-                auto existing = CharacterDynamicAaTimersRepository::GetWhere(
-                    database,
-                    fmt::format("character_id = {} AND aa_id = {}", CharacterID(), aa_id)
-                );
-
-                if (!existing.empty()) {
-                    aa_timers_cache[aa_id] = existing[0].timer_id;
-                    LogDebug("Found existing timer for AA ID [{}]: [{}]", aa_id, existing[0].timer_id);
-
-					if (timerID >= 100) {
-						LogError("WARNING: Out-of-Range AA Timer ID [{}] assigned to character [{}] ([{}]) for AA [{}] -> Classes [{}]",
-								timerID,
-								GetCleanName(),
-								CharacterID(),
-								aa_id,
-								GetClassesBits());
-					}
-
-                    return existing[0].timer_id;
-                }
-
+            if (x.empty()) {
                 LogError("Insert failed and couldn't find existing timer for AA ID [{}]", aa_id);
                 return 0;
             }
+
+            id = x[0].timer_id;
+            LogDebug("Found existing timer for AA ID [{}]: [{}]", aa_id, id);
         }
+
+        m_aa_timers_cache[aa_id] = id;
+
+        if (id >= 100) {
+            LogError("WARNING: Out-of-Range AA Timer ID [{}] assigned to character [{}] ([{}]) for AA [{}] -> Classes [{}]",
+                     id, GetCleanName(), CharacterID(), aa_id, GetClassesBits());
+        }
+
+        return id;
     }
 
     LogError("Unable to assign AA Timer ID - no available slots!");
@@ -1330,13 +1314,13 @@ int Client::SetDynamicAATimer(int aa_id) {
 
 void Client::ClearDynamicAATimers() {
     ResetAlternateAdvancementTimers();
-
-    aa_timers_cache.clear();
+    m_aa_timers_cache.clear();
 
     CharacterDynamicAaTimersRepository::DeleteByCharacterId(database, CharacterID());
 
     LogDebug("Cleared all dynamic AA timers");
 }
+
 
 void Client::ResetAlternateAdvancementTimer(int ability) {
 	AA::Rank *rank = zone->GetAlternateAdvancementRank(casting_spell_aa_id);

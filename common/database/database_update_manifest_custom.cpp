@@ -270,6 +270,25 @@ CREATE TABLE `character_dynamic_aa_timers` (
 		.content_schema_update = false,
 	},
 
+	// Add account_titlesets table
+	ManifestEntry{
+	.version = 15,
+	.description = "2025_05_28_account_titlesets_table",
+	.check = "SHOW TABLES LIKE 'account_titlesets'",
+	.condition = "empty",
+	.match = "",
+	.sql = R"(
+CREATE TABLE `account_titlesets` (
+`account_id` int(10) NOT NULL,
+`title_set_id` int(10) NOT NULL,
+PRIMARY KEY (`account_id`, `title_set_id`),
+KEY `account_id` (`account_id`),
+KEY `title_set_id` (`title_set_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
+	.content_schema_update = false,
+	},
+
 	// Used for testing
 	//	ManifestEntry{
 	//		.version = 9229,

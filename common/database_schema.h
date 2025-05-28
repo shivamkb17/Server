@@ -111,6 +111,7 @@ namespace DatabaseSchema {
 			"account_rewards",
 			"account_kill_counts",
 			"account_alt_currency",
+			"account_titlesets",
 			"adventure_details",
 			"adventure_stats",
 			"buyer",

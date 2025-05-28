@@ -2,6 +2,7 @@
 #include "../common/strings.h"
 #include "../common/misc_functions.h"
 #include "../common/repositories/player_titlesets_repository.h"
+#include "../common/repositories/account_titlesets_repository.h"
 
 #include "client.h"
 #include "mob.h"
@@ -16,7 +17,7 @@ TitleManager::TitleManager() {
 
 bool TitleManager::LoadTitles()
 {
-	titles.clear();
+	m_titles.clear();
 
 	const auto& l = TitlesRepository::All(database);
 
@@ -25,7 +26,7 @@ bool TitleManager::LoadTitles()
 	}
 
 	for (const auto& e : l) {
-		titles.push_back(e);
+		m_titles.push_back(e);
 	}
 
 	LogInfo("Loaded [{}] Title{}", Strings::Commify(l.size()), l.size() != 1 ? "s" : "");
@@ -64,14 +65,14 @@ std::string TitleManager::GetPrefix(int title_id)
 	}
 
 	auto e = std::find_if(
-		titles.begin(),
-		titles.end(),
+		m_titles.begin(),
+		m_titles.end(),
 		[title_id](const auto& t) {
 			return t.id == title_id;
 		}
 	);
 
-	return e != titles.end() ? e->prefix : "";
+	return e != m_titles.end() ? e->prefix : "";
 }
 
 std::string TitleManager::GetSuffix(int title_id)
@@ -81,14 +82,14 @@ std::string TitleManager::GetSuffix(int title_id)
 	}
 
 	auto e = std::find_if(
-		titles.begin(),
-		titles.end(),
+		m_titles.begin(),
+		m_titles.end(),
 		[title_id](const auto& t) {
 			return t.id == title_id;
 		}
 	);
 
-	return e != titles.end() ? e->suffix : "";
+	return e != m_titles.end() ? e->suffix : "";
 }
 
 bool TitleManager::HasTitle(Client* c, uint32 title_id)
@@ -108,26 +109,26 @@ bool TitleManager::HasTitle(Client* c, uint32 title_id)
 	);
 }
 
-std::vector<TitlesRepository::Titles> TitleManager::GetEligibleTitles(Client* c)
-{
+std::vector<TitlesRepository::Titles> TitleManager::GetEligibleTitles(Client* c) {
 	std::vector<TitlesRepository::Titles> eligible_titles = {};
 	if (!c) {
 		return eligible_titles;
 	}
 
-	const auto& player_title_sets = PlayerTitlesetsRepository::GetWhere(
-		database,
-		fmt::format(
-			"`char_id` = {}",
-			c->CharacterID()
-		)
-	);
+	const auto& player_titlesets  = PlayerTitlesetsRepository::GetTitlesetsByCharacter(database, c->CharacterID());
+	const auto& account_titlesets = AccountTitlesetsRepository::GetTitlesetsByAccount(database, c->AccountID());
 
-	// Sets to track unique prefixes and suffixes
-	std::set<std::string> used_prefixes;
-	std::set<std::string> used_suffixes;
+	std::unordered_set<uint32> all_titlesets;
 
-	for (auto t : titles) {
+	for (const auto& p : player_titlesets) {
+		all_titlesets.insert(p);
+	}
+
+	for (const auto& a : account_titlesets) {
+		all_titlesets.insert(a);
+	}
+
+	for (auto t : m_titles) {
 		if (t.char_id >= 0 && c->CharacterID() != static_cast<uint32>(t.char_id)) {
 			continue;
 		}
@@ -173,51 +174,51 @@ std::vector<TitlesRepository::Titles> TitleManager::GetEligibleTitles(Client* c)
 			continue;
 		}
 
-		if (
-			t.title_set > 0 &&
-			!std::any_of(
-				player_title_sets.begin(),
-				player_title_sets.end(),
-				[t](const auto& e) {
-					return e.title_set == t.title_set;
-				}
-			)
-		) {
+		if (t.title_set > 0 && !all_titlesets.count(t.title_set)) {
 			continue;
 		}
 
-		// Check prefix uniqueness - clear it if already used
+		eligible_titles.emplace_back(t);
+	}
+
+	return DeduplicateTitles(eligible_titles);
+}
+
+std::vector<TitlesRepository::Titles> TitleManager::DeduplicateTitles(std::vector<TitlesRepository::Titles> titles) {
+	std::vector<TitlesRepository::Titles> deduplicated_titles;
+	std::unordered_set<std::string> used_prefixes;
+	std::unordered_set<std::string> used_suffixes;
+
+	for (auto t : titles) {
 		if (!t.prefix.empty()) {
-			if (used_prefixes.find(t.prefix) != used_prefixes.end()) {
+			if (used_prefixes.count(t.prefix)) {
 				t.prefix = "";
 			} else {
 				used_prefixes.insert(t.prefix);
 			}
 		}
 
-		// Check suffix uniqueness - clear it if already used
 		if (!t.suffix.empty()) {
-			if (used_suffixes.find(t.suffix) != used_suffixes.end()) {
+			if (used_suffixes.count(t.suffix)) {
 				t.suffix = "";
 			} else {
 				used_suffixes.insert(t.suffix);
 			}
 		}
 
-		// Only add if at least one field is non-empty
 		if (!t.prefix.empty() || !t.suffix.empty()) {
-			eligible_titles.emplace_back(t);
+			deduplicated_titles.emplace_back(t);
 		}
 	}
 
-	return eligible_titles;
+	return deduplicated_titles;
 }
 
 bool TitleManager::IsNewAATitleAvailable(int aa_points, int class_id)
 {
 	return std::any_of(
-		titles.begin(),
-		titles.end(),
+		m_titles.begin(),
+		m_titles.end(),
 		[class_id, aa_points](const auto& t) {
 			return (
 				(t.class_ == -1 || t.class_ == class_id) &&
@@ -230,8 +231,8 @@ bool TitleManager::IsNewAATitleAvailable(int aa_points, int class_id)
 bool TitleManager::IsNewTradeSkillTitleAvailable(int skill_id, int skill_value)
 {
 	return std::any_of(
-		titles.begin(),
-		titles.end(),
+		m_titles.begin(),
+		m_titles.end(),
 		[skill_id, skill_value](const auto& t) {
 			return t.skill_id == skill_id && t.min_skill_value == skill_value;
 		}
@@ -402,4 +403,50 @@ void Client::RemoveTitle(int title_set)
 			CharacterID()
 		)
 	);
+}
+
+void Client::ReloadAccountTitlesets() {
+	m_account_title_sets.clear();
+	auto t = AccountTitlesetsRepository::GetTitlesetsByAccount(database, AccountID());
+
+	for (const auto& titleset_id : t) {
+		m_account_title_sets.insert(titleset_id);
+	}
+}
+
+const std::unordered_set<uint32>& Client::GetAccountTitlesets() {
+	if (m_account_title_sets.empty()) {
+		ReloadAccountTitlesets();
+	}
+	return m_account_title_sets;
+}
+
+bool Client::EnableAccountTitle(uint32 titleset_id) {
+	if (!titleset_id || CheckAccountTitle(titleset_id)) {
+		return false;
+	}
+
+	if (AccountTitlesetsRepository::AddTitlesetToAccount(database, AccountID(), titleset_id)) {
+		m_account_title_sets.insert(titleset_id);
+	}
+
+	return true;
+}
+
+bool Client::CheckAccountTitle(uint32 titleset_id) {
+	if (!titleset_id) {
+		return false;
+	}
+
+	return GetAccountTitlesets().count(titleset_id);
+}
+
+void Client::RemoveAccountTitle(uint32 titleset_id) {
+	if (!titleset_id || !CheckAccountTitle(titleset_id)) {
+		return;
+	}
+
+	if (AccountTitlesetsRepository::RemoveTitlesetFromAccount(database, AccountID(), titleset_id)) {
+		m_account_title_sets.erase(titleset_id);
+	}
 }

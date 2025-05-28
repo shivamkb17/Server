@@ -8,42 +8,57 @@
 class PlayerTitlesetsRepository: public BasePlayerTitlesetsRepository {
 public:
 
-    /**
-     * This file was auto generated and can be modified and extended upon
-     *
-     * Base repository methods are automatically
-     * generated in the "base" version of this repository. The base repository
-     * is immutable and to be left untouched, while methods in this class
-     * are used as extension methods for more specific persistence-layer
-     * accessors or mutators.
-     *
-     * Base Methods (Subject to be expanded upon in time)
-     *
-     * Note: Not all tables are designed appropriately to fit functionality with all base methods
-     *
-     * InsertOne
-     * UpdateOne
-     * DeleteOne
-     * FindOne
-     * GetWhere(std::string where_filter)
-     * DeleteWhere(std::string where_filter)
-     * InsertMany
-     * All
-     *
-     * Example custom methods in a repository
-     *
-     * PlayerTitlesetsRepository::GetByZoneAndVersion(int zone_id, int zone_version)
-     * PlayerTitlesetsRepository::GetWhereNeverExpires()
-     * PlayerTitlesetsRepository::GetWhereXAndY()
-     * PlayerTitlesetsRepository::DeleteWhereXAndY()
-     *
-     * Most of the above could be covered by base methods, but if you as a developer
-     * find yourself re-using logic for other parts of the code, its best to just make a
-     * method that can be re-used easily elsewhere especially if it can use a base repository
-     * method and encapsulate filters there
-     */
+	static std::vector<uint32> GetTitlesetsByCharacter(Database& d, uint32 char_id)
+	{
+		std::vector<uint32> titlesets;
 
-	// Custom extended repository methods here
+		auto r = GetWhere(d, fmt::format("`char_id` = {}", char_id));
+
+		for (const auto& e : r) {
+			titlesets.push_back(e.title_set);
+		}
+
+		return titlesets;
+	}
+
+	static bool HasTitleset(Database& d, uint32 char_id, uint32 title_set)
+	{
+		auto r = GetWhere(
+			d,
+			fmt::format("`char_id` = {} AND `title_set` = {}", char_id, title_set)
+		);
+
+		return !r.empty();
+	}
+
+	static bool AddTitleset(Database& d, uint32 char_id, uint32 title_set)
+	{
+		if (HasTitleset(d, char_id, title_set)) {
+			return true;
+		}
+
+		auto e = NewEntity();
+		e.char_id = char_id;
+		e.title_set = title_set;
+
+		auto r = InsertOne(d, e);
+		return (r.id > 0);
+	}
+
+	static bool RemoveTitleset(Database& d, uint32 char_id, uint32 title_set)
+	{
+		int a = DeleteWhere(
+			d,
+			fmt::format("`char_id` = {} AND `title_set` = {}", char_id, title_set)
+		);
+
+		return (a > 0);
+	}
+
+	static int RemoveAllTitlesets(Database& d, uint32 char_id)
+	{
+		return DeleteWhere(d, fmt::format("`char_id` = {}", char_id));
+	}
 
 };
 

@@ -18,15 +18,16 @@ public:
 	std::string GetPrefix(int title_id);
 	std::string GetSuffix(int title_id);
 	std::vector<TitlesRepository::Titles> GetEligibleTitles(Client* c);
+	std::vector<TitlesRepository::Titles> DeduplicateTitles(std::vector<TitlesRepository::Titles> titles);
 	bool IsNewAATitleAvailable(int aa_points, int class_id);
 	bool IsNewTradeSkillTitleAvailable(int t, int skill_value);
 	void CreateNewPlayerTitle(Client* c, std::string title);
 	void CreateNewPlayerSuffix(Client* c, std::string suffix);
 	bool HasTitle(Client* c, uint32 title_id);
-	inline const std::vector<TitlesRepository::Titles>& GetTitles() { return titles; }
+	inline const std::vector<TitlesRepository::Titles>& GetTitles() { return m_titles; }
 
 protected:
-	std::vector<TitlesRepository::Titles> titles;
+	std::vector<TitlesRepository::Titles> m_titles;
 };
 
 extern TitleManager title_manager;

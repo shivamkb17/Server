@@ -1414,6 +1414,12 @@ public:
 	const std::vector<PlayerTitlesetsRepository::PlayerTitlesets>& GetTitles() { return m_player_title_sets; };
 	void RemoveTitle(int title_set);
 
+	void ReloadAccountTitlesets();
+	const std::unordered_set<uint32>& GetAccountTitlesets();
+	bool EnableAccountTitle(uint32 titleset_id);
+	bool CheckAccountTitle(uint32 titleset_id);
+	void RemoveAccountTitle(uint32 titleset_id);
+
 	void EnteringMessages(Client* client);
 	void SendRules();
 
@@ -2468,6 +2474,7 @@ private:
 
 	std::vector<EXPModifier> m_exp_modifiers;
 	std::vector<PlayerTitlesetsRepository::PlayerTitlesets> m_player_title_sets;
+	std::unordered_set<uint32> m_account_title_sets;
 
 	//Anti Spam Stuff
 	Timer *KarmaUpdateTimer;

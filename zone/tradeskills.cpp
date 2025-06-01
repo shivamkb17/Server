@@ -434,60 +434,223 @@ void Object::HandleCombine(Client* user, const NewCombine_Struct* in_combine, Ob
 		return;
 	}
 
-	if (container->GetItem() && (container->GetItem()->ID == 4041 || container->GetItem()->ID == 9207)) {
-		auto first_item = container->GetItem(0);
-		if (first_item) {
-			int aug_id = first_item->GetID();
+	// Wyrdforge Crucible
+	if (container && container->GetItem() && (container->GetItem()->ID == 25863)) {
+		std::vector<uint32> item_ids;
+		bool has_all_items = true;
+		uint32 min_tier = UINT32_MAX;
+		uint32 max_tier = 0;
+		uint32 tier_counts[3] = {0, 0, 0};
 
-			// Check if all items in the container match the ID of the first item
-			bool all_same = true;
-			for (int i = 1; i < 4; ++i) {
-				auto item = container->GetItem(i);
-				if (!item || item->GetID() != aug_id) {
-					all_same = false;
-					return;
+		for (int i = 0; i < 4; ++i) {
+			auto item = container->GetItem(i);
+			if (!item) {
+				has_all_items = false;
+				break;
+			}
+
+			if (item->IsAugmentable()) {
+				for(int aug_index = EQ::invaug::SOCKET_BEGIN; aug_index < EQ::invaug::SOCKET_END; ++aug_index) {
+					if (item->GetAugmentItemID(aug_index) != 0) {
+						user->Message(Chat::Red, "You must remove augments from all component items before you can attempt this combine.");
+						return;
+					}
+				}
+			}
+
+			uint32 tier = item->GetID() / 1000000;
+			min_tier = std::min(min_tier, tier);
+			max_tier = std::max(max_tier, tier);
+			tier_counts[tier]++;
+
+			item_ids.push_back(item->GetID() % 1000000);
+		}
+
+		if (!has_all_items) {
+			user->Message(Chat::Red, "You must place exactly 4 items in the container.");
+			return;
+		}
+
+		uint32 lootdrop_id = LootdropEntriesRepository::GetSharedLootdropId(database, item_ids);
+
+		if (lootdrop_id > 0) {
+			std::vector<uint32> lootdrop_ids = {lootdrop_id};
+			zone->LoadLootDrops(lootdrop_ids);
+			const auto l = zone->GetLootdropEntries(lootdrop_id);
+			if (!l.empty()) {
+				float roll_t = 0.0f;
+				bool active_item_list = false;
+
+				for (const auto &e: l) {
+					const EQ::ItemData *d = database.GetItem(e.item_id);
+					if (d) {
+						roll_t += e.chance;
+						active_item_list = true;
+					}
 				}
 
-				if (item->IsAugmentable()) {
-					for(int aug_index = EQ::invaug::SOCKET_BEGIN; aug_index < EQ::invaug::SOCKET_END; ++aug_index) {
-						if (item->GetAugmentItemID(aug_index) != 0) {
-							all_same = false;
-							user->Message(Chat::Red, "You must remove augments from all component items before you can attempt this combine.");
-							return;
+				if (active_item_list) {
+					float roll = (float) zone->random.Real(0.0, roll_t);
+					for (const auto &e: l) {
+						const auto *d = database.GetItem(e.item_id);
+						if (d) {
+							if (roll < e.chance) {
+								container->Clear();
+								user->DeleteItemInInventory(in_combine->container_slot, 0, true);
+
+								uint32 base_item_id = e.item_id;
+								uint32 final_item_id = base_item_id + (min_tier * 1000000);
+
+								if (RuleB(Custom, DoItemUpgrades)) {
+									float tier1_multiplier = (tier_counts[1] + tier_counts[2]) / 4.0f;
+									float tier2_multiplier = tier_counts[2] / 4.0f;
+
+									uint32 tier_roll = zone->random.Real(0.0, 100.0);
+									float adjusted_tier2_rate = RuleR(Custom, Tier2ItemDropRate) * (1.0f + tier2_multiplier);
+									float adjusted_tier1_rate = RuleR(Custom, Tier1ItemDropRate) * (1.0f + tier1_multiplier);
+
+									if (tier_roll <= adjusted_tier2_rate && max_tier >= 2) {
+										uint32 tier2_item = base_item_id + 2000000;
+										if (database.GetItem(tier2_item)) {
+											final_item_id = tier2_item;
+										}
+									} else if (tier_roll <= adjusted_tier1_rate && max_tier >= 1) {
+										uint32 tier1_item = base_item_id + 1000000;
+										if (database.GetItem(tier1_item)) {
+											final_item_id = tier1_item;
+										}
+									}
+								}
+
+								user->SummonItem(final_item_id, d->MaxCharges);
+
+								auto outapp = new EQApplicationPacket(OP_TradeSkillCombine, 0);
+								user->QueuePacket(outapp);
+								safe_delete(outapp);
+								return;
+							}
+							else {
+								roll -= e.chance;
+							}
 						}
 					}
 				}
 			}
 
-			if (all_same && aug_id != 4041) {
-				auto new_item = database.GetItem(aug_id + 1000000);
-				EQ::SayLinkEngine linker;
-				linker.SetLinkType(EQ::saylink::SayLinkItemData);
+			user->Message(Chat::Red, "The combine failed to produce a result.");
+		} else {
+			user->Message(Chat::Red, "These items cannot be combined together.");
+		}
+		return;
+	}
 
-				if (new_item) {
-					if (user->CheckLoreConflict(new_item)) {
-						user->Message(Chat::Red, "This combine would result in a disallowed LORE item. Aborting...");
+	if (container && container->GetItem() && (container->GetItem()->ID == 25863)) {
+		std::vector<uint32> item_ids;
+		bool has_all_items = true;
+		uint32 min_tier = UINT32_MAX;
+		uint32 max_tier = 0;
+		std::map<uint32, uint32> tier_counts;
+
+		for (int i = 0; i < 4; ++i) {
+			auto item = container->GetItem(i);
+			if (!item) {
+				has_all_items = false;
+				break;
+			}
+
+			if (item->IsAugmentable()) {
+				for(int aug_index = EQ::invaug::SOCKET_BEGIN; aug_index < EQ::invaug::SOCKET_END; ++aug_index) {
+					if (item->GetAugmentItemID(aug_index) != 0) {
+						user->Message(Chat::Red, "You must remove augments from all component items before you can attempt this combine.");
 						return;
 					}
-
-					linker.SetItemData(first_item->GetItem());
-					auto cur_itm_lnk = linker.GenerateLink();
-
-					linker.SetItemData(new_item);
-					auto new_itm_lnk = linker.GenerateLink();
-
-					user->SummonItem(new_item->ID, new_item->MaxCharges);
-					container->Clear();
-					user->DeleteItemInInventory(in_combine->container_slot, 0, true);
-
-
-					auto outapp = new EQApplicationPacket(OP_TradeSkillCombine, 0);
-					user->QueuePacket(outapp);
-					safe_delete(outapp);
-					return;
 				}
 			}
+
+			uint32 tier = item->GetID() / 1000000;
+			min_tier = std::min(min_tier, tier);
+			max_tier = std::max(max_tier, tier);
+			tier_counts[tier]++;
+
+			item_ids.push_back(item->GetID() % 1000000);
 		}
+
+		if (!has_all_items) {
+			user->Message(Chat::Red, "You must place exactly 4 items in the container.");
+			return;
+		}
+
+		uint32 lootdrop_id = LootdropEntriesRepository::GetSharedLootdropId(database, item_ids);
+
+		if (lootdrop_id > 0) {
+			std::vector<uint32> lootdrop_ids = {lootdrop_id};
+			zone->LoadLootDrops(lootdrop_ids);
+			const auto l = zone->GetLootdropEntries(lootdrop_id);
+			if (!l.empty()) {
+				float roll_t = 0.0f;
+				bool active_item_list = false;
+
+				for (const auto &e: l) {
+					const EQ::ItemData *d = database.GetItem(e.item_id);
+					if (d) {
+						roll_t += e.chance;
+						active_item_list = true;
+					}
+				}
+
+				if (active_item_list) {
+					float roll = (float) zone->random.Real(0.0, roll_t);
+					for (const auto &e: l) {
+						const auto *d = database.GetItem(e.item_id);
+						if (d) {
+							if (roll < e.chance) {
+								container->Clear();
+								user->DeleteItemInInventory(in_combine->container_slot, 0, true);
+
+								uint32 base_item_id = e.item_id;
+								uint32 final_item_id = base_item_id + (min_tier * 1000000);
+
+								if (RuleB(Custom, DoItemUpgrades)) {
+									float tier1_multiplier = (tier_counts[1] + tier_counts[2]) / 4.0f;
+									float tier2_multiplier = tier_counts[2] / 4.0f;
+
+									uint32 tier_roll = zone->random.Real(0.0, 100.0);
+									float adjusted_tier2_rate = RuleR(Custom, Tier2ItemDropRate) * (1.0f + tier2_multiplier);
+									float adjusted_tier1_rate = RuleR(Custom, Tier1ItemDropRate) * (1.0f + tier1_multiplier);
+
+									if (tier_roll <= adjusted_tier2_rate && max_tier >= 2) {
+										uint32 tier2_item = base_item_id + 2000000;
+										if (database.GetItem(tier2_item)) {
+											final_item_id = tier2_item;
+										}
+									} else if (tier_roll <= adjusted_tier1_rate && max_tier >= 1) {
+										uint32 tier1_item = base_item_id + 1000000;
+										if (database.GetItem(tier1_item)) {
+											final_item_id = tier1_item;
+										}
+									}
+								}
+
+								user->SummonItem(final_item_id, d->MaxCharges);
+
+								auto outapp = new EQApplicationPacket(OP_TradeSkillCombine, 0);
+								user->QueuePacket(outapp);
+								safe_delete(outapp);
+								return;
+							}
+							else {
+								roll -= e.chance;
+							}
+						}
+					}
+				}
+			}
+
+			user->Message(Chat::Red, "The combine failed to produce a result.");
+		} else {
+			user->Message(Chat::Red, "These items cannot be combined together.");
+		}
+		return;
 	}
 
 	if (container->GetItem() && container->GetItem()->ID == 24150) {

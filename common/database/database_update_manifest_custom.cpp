@@ -270,6 +270,19 @@ CREATE TABLE `character_dynamic_aa_timers` (
 		.content_schema_update = false,
 	},
 
+	// Add index to lootdrop_entry for efficient item_id lookups
+	ManifestEntry{
+		.version = 15,
+		.description = "2025_05_31_add_item_lootdrop_index",
+		.check = "SHOW INDEX FROM `lootdrop_entries` WHERE `Key_name` = 'idx_item_lootdrop'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+	CREATE INDEX idx_item_lootdrop ON lootdrop_entries (item_id, lootdrop_id);
+	)",
+		.content_schema_update = true,
+	},
+
 	// Used for testing
 	//	ManifestEntry{
 	//		.version = 9229,

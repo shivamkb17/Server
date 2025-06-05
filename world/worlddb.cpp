@@ -591,7 +591,7 @@ bool WorldDatabase::GetStartZone(
 {
 	// SoF doesn't send the player_choice field in character creation, it now sends the real zoneID instead.
 	//
-	// For SoF, search for an entry in start_zones with a matching zone_id, class, race and deity.
+	// For SoF, search for an entry in start_zones with a matching zone_id, race and deity (class removed).
 	//
 	// For now, if no row matching row is found, send them to Crescent Reach, as that is probably the most likely
 	// reason for no match being found.
@@ -611,33 +611,34 @@ bool WorldDatabase::GetStartZone(
 	pp->binds[0].zone_id     = 0;
 	pp->binds[0].instance_id = 0;
 
-	// see if we have an entry for start_zone. We can support both titanium & SOF+ by having two entries per class/race/deity combo with different zone_ids
+	// see if we have an entry for start_zone. We can support both titanium & SOF+ by having two entries per race/deity combo with different zone_ids
 	std::string query;
 
 	if (is_titanium) {
 		// Titanium sends player choice (starting city) instead of a zone id
+		// Modified to only check race and deity, not class
 		query = StringFormat(
 			"SELECT x, y, z, heading, start_zone, bind_id, bind_x, bind_y, bind_z FROM start_zones WHERE player_choice = %i "
-			"AND player_class = %i AND player_deity = %i AND player_race = %i %s",
+			"AND player_deity = %i AND player_race = %i %s LIMIT 1",
 			p_char_create_struct->start_zone,
-			p_char_create_struct->class_,
 			p_char_create_struct->deity,
 			p_char_create_struct->race,
 			ContentFilterCriteria::apply().c_str()
 		);
-		LogInfo("Titanium Start zone query: [{}]\n", query.c_str());
+		LogInfo("Titanium Start zone query (no class filter): [{}]\n", query.c_str());
 	}
 	else {
+		// SOF+ sends actual zone ID
+		// Modified to only check race and deity, not class
 		query = StringFormat(
 			"SELECT x, y, z, heading, start_zone, bind_id, bind_x, bind_y, bind_z FROM start_zones WHERE zone_id = %i "
-			"AND player_class = %i AND player_deity = %i AND player_race = %i %s",
+			"AND player_deity = %i AND player_race = %i %s LIMIT 1",
 			p_char_create_struct->start_zone,
-			p_char_create_struct->class_,
 			p_char_create_struct->deity,
 			p_char_create_struct->race,
 			ContentFilterCriteria::apply().c_str()
 		);
-		LogInfo("SoF Start zone query: [{}]\n", query.c_str());
+		LogInfo("SoF Start zone query (no class filter): [{}]\n", query.c_str());
 	}
 
     auto results = QueryDatabase(query);
@@ -645,7 +646,7 @@ bool WorldDatabase::GetStartZone(
 		return false;
 	}
 
-	LogInfo("SoF Start zone query: [{}]\n", query.c_str());
+	LogInfo("Start zone query result count: [{}]\n", results.RowCount());
 
 	if (results.RowCount() == 0) {
 		printf("No start_zones entry in database, using defaults\n");

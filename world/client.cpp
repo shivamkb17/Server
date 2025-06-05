@@ -1910,6 +1910,21 @@ bool Client::OPCharCreate(char* name, CharCreate_Struct* cc) {
 	inv.SetInventoryVersion(EQ::versions::ConvertClientVersionBitToClientVersion(m_ClientVersionBit));
 	inv.SetGMInventory(false); // character cannot have gm flag at this point
 
+	// Extract mode flags from the upper 8 bits of tutorial
+	uint8_t modeBitmask = (cc->tutorial >> 24) & 0xFF;
+	bool solo_mode = (modeBitmask & 0x01) != 0;
+	bool selffound_mode = (modeBitmask & 0x02) != 0;
+	bool hardcore_mode = (modeBitmask & 0x04) != 0;
+
+	// Clear the upper 8 bits from tutorial, preserving the original tutorial data
+	cc->tutorial = cc->tutorial & 0x00FFFFFF;
+
+	// Log the extracted modes for debugging
+	LogInfo("Character creation mode flags: Solo=[{}], SelfFound=[{}], Hardcore=[{}]",
+	        solo_mode ? "true" : "false",
+	        selffound_mode ? "true" : "false",
+	        hardcore_mode ? "true" : "false");
+
 	time_t  bday = time(nullptr);
 	in_addr in;
 
@@ -2003,7 +2018,7 @@ bool Client::OPCharCreate(char* name, CharCreate_Struct* cc) {
 	pp.cur_hp           = 1000;
 	pp.hunger_level     = 6000;
 	pp.thirst_level     = 6000;
-	pp.classes          = GetPlayerClassBit(cc->class_);
+	pp.classes          = cc->class_;
 
 	/* Set default skills for everybody */
 	pp.skills[EQ::skills::SkillSwimming]     = RuleI(Skills, SwimmingStartValue);
@@ -2157,7 +2172,7 @@ bool CheckCharCreateInfoSoF(CharCreate_Struct *cc)
 	bool found = false;
 	int combos = character_create_race_class_combos.size();
 	for (int i = 0; i < combos; ++i) {
-		if (character_create_race_class_combos[i].Class == cc->class_ &&
+		if ((RuleB(Custom, MulticlassingEnabled) || character_create_race_class_combos[i].Class == cc->class_) &&
 				character_create_race_class_combos[i].Race == cc->race &&
 				character_create_race_class_combos[i].Deity == cc->deity &&
 				character_create_race_class_combos[i].Zone == cc->start_zone) {
@@ -2169,7 +2184,7 @@ bool CheckCharCreateInfoSoF(CharCreate_Struct *cc)
 
 	if (!found) {
 		LogInfo("Could not find class/race/deity/start_zone combination");
-		return false;
+		//return false;
 	}
 
 	uint32 allocs = character_create_allocations.size();

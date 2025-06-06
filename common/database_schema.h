@@ -113,6 +113,7 @@ namespace DatabaseSchema {
 			"account_kill_counts",
 			"account_character_sets",
 			"account_character_set_members",
+			"account_character_set_limits",
 			"account_alt_currency",
 			"adventure_details",
 			"adventure_stats",

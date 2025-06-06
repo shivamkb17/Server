@@ -270,40 +270,73 @@ CREATE TABLE `character_dynamic_aa_timers` (
 		.content_schema_update = false,
 	},
 
-		ManifestEntry{
+	// Create account_character_sets table
+	ManifestEntry{
 		.version = 15,
-		.description = "2025_05_23_account_character_sets_tables_and_migration",
+		.description = "2025_05_23_create_account_character_sets_table",
 		.check = "SHOW TABLES LIKE 'account_character_sets'",
 		.condition = "empty",
 		.match = "",
 		.sql = R"(
 CREATE TABLE `account_character_sets` (
-`set_id` int(11) NOT NULL AUTO_INCREMENT,
-`account_id` int(11) NOT NULL,
-`set_name` varchar(255) NOT NULL,
-`created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
-PRIMARY KEY (`set_id`),
-UNIQUE KEY `unique_account_set_name` (`account_id`, `set_name`),
-INDEX `idx_account_id` (`account_id`)
+	`set_id` int(11) NOT NULL AUTO_INCREMENT,
+	`account_id` int(11) NOT NULL,
+	`set_name` varchar(255) NOT NULL,
+	`created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (`set_id`),
+	UNIQUE KEY `unique_account_set_name` (`account_id`, `set_name`),
+	INDEX `idx_account_id` (`account_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
+		.content_schema_update = false,
+	},
 
+	// Create account_character_set_members table
+	ManifestEntry{
+		.version = 16,
+		.description = "2025_05_23_create_account_character_set_members_table",
+		.check = "SHOW TABLES LIKE 'account_character_set_members'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
 CREATE TABLE `account_character_set_members` (
-`set_id` int(11) NOT NULL,
-`character_id` int(11) NOT NULL,
-PRIMARY KEY (`set_id`, `character_id`),
-INDEX `idx_character_id` (`character_id`),
-INDEX `idx_set_id` (`set_id`)
+	`set_id` int(11) NOT NULL,
+	`character_id` int(11) NOT NULL,
+	PRIMARY KEY (`set_id`, `character_id`),
+	INDEX `idx_character_id` (`character_id`),
+	INDEX `idx_set_id` (`set_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
+		.content_schema_update = false,
+	},
 
-CREATE TABLE
-`account_character_set_limits` (
-`account_id` int(11) NOT NULL,
-`created_sets` int(11) NOT NULL,
-`extra_sets` int(11) NOT NULL,
-`default_set` int(11) NOT NULL,
-PRIMARY KEY (`account_id`)
+	// Create limits table
+	ManifestEntry{
+		.version = 17,
+		.description = "2025_05_23_create_account_character_set_limits_table",
+		.check = "SHOW TABLES LIKE 'account_character_set_limits'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+CREATE TABLE `account_character_set_limits` (
+	`account_id` int(11) NOT NULL,
+	`created_sets` int(11) NOT NULL,
+	`extra_sets` int(11) NOT NULL,
+	`default_set` int(11) NOT NULL,
+	PRIMARY KEY (`account_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+)",
+		.content_schema_update = false,
+	},
 
+	// Populate default character sets
+	ManifestEntry{
+		.version = 18,
+		.description = "2025_05_23_populate_default_character_sets",
+		.check = "SELECT COUNT(*) FROM account_character_sets WHERE set_name = 'Default'",
+		.condition = "eq",
+		.match = "0",
+		.sql = R"(
 INSERT INTO account_character_sets (account_id, set_name, created_at)
 SELECT DISTINCT
 	cd.account_id,
@@ -312,7 +345,18 @@ SELECT DISTINCT
 FROM character_data cd
 WHERE cd.deleted_at IS NULL
 AND cd.account_id IS NOT NULL;
+)",
+		.content_schema_update = false,
+	},
 
+	// Populate character set members
+	ManifestEntry{
+		.version = 19,
+		.description = "2025_05_23_populate_character_set_members",
+		.check = "SELECT COUNT(*) FROM account_character_set_members",
+		.condition = "eq",
+		.match = "0",
+		.sql = R"(
 INSERT INTO account_character_set_members (set_id, character_id)
 SELECT
 	acs.set_id,

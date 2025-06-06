@@ -333,9 +333,9 @@ CREATE TABLE `account_character_set_limits` (
 	ManifestEntry{
 		.version = 18,
 		.description = "2025_05_23_populate_default_character_sets",
-		.check = "SELECT COUNT(*) FROM account_character_sets WHERE set_name = 'Default'",
-		.condition = "eq",
-		.match = "0",
+		.check = "SHOW TABLES LIKE 'account_character_sets'",
+		.condition = "empty",
+		.match = "",
 		.sql = R"(
 INSERT INTO account_character_sets (account_id, set_name, created_at)
 SELECT DISTINCT
@@ -353,9 +353,9 @@ AND cd.account_id IS NOT NULL;
 	ManifestEntry{
 		.version = 19,
 		.description = "2025_05_23_populate_character_set_members",
-		.check = "SELECT COUNT(*) FROM account_character_set_members",
-		.condition = "eq",
-		.match = "0",
+		.check = "SHOW TABLES LIKE 'account_character_set_members'",
+		.condition = "empty",
+		.match = "",
 		.sql = R"(
 INSERT INTO account_character_set_members (set_id, character_id)
 SELECT

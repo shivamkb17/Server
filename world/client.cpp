@@ -130,7 +130,7 @@ Client::Client(EQStreamInterface *ieqs)
 	zone_waiting_for_bootup = 0;
 	enter_world_triggered = false;
 	StartInTutorial = false;
-	m_character_set = 0;
+	m_selected_character_set = 0;
 
 	m_ClientVersion = eqs->ClientVersion();
 	m_ClientVersionBit = EQ::versions::ConvertClientVersionToClientVersionBit(m_ClientVersion);
@@ -267,7 +267,7 @@ void Client::SendCharInfo(uint32 character_set)
 	if (!character_set)
 	{
 		character_set = AccountCharacterSetLimitsRepository::GetDefaultSetID(database, GetAccountID());
-		m_character_set = character_set;
+		m_selected_character_set = character_set;
 	}
 
 	EQApplicationPacket *sets_app = nullptr;
@@ -861,7 +861,7 @@ bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app)
 			StartInTutorial = true;
 		}
 
-		SendCharInfo(m_character_set);
+		SendCharInfo(m_selected_character_set);
 	}
 
 	return true;
@@ -1194,7 +1194,7 @@ bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app)
 	{
 		LogInfo("Delete character: [{}]", (const char *)app->pBuffer);
 		database.DeleteCharacter((char *)app->pBuffer);
-		SendCharInfo(m_character_set);
+		SendCharInfo(m_selected_character_set);
 	}
 
 	return true;
@@ -1209,11 +1209,11 @@ bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app) {
 
 	CharacterSetRequest_Struct *csr = (CharacterSetRequest_Struct *)app->pBuffer;
 	if (!csr->update_default) {
-		m_character_set = csr->requested_set;
-		SendCharInfo(m_character_set);
+		m_selected_character_set = csr->requested_set;
+		SendCharInfo(m_selected_character_set);
 		return true;
 	} else {
-		auto r = AccountCharacterSetLimitsRepository::UpdateDefaultSetID(database, GetAccountID(), csr->requested_set);
+		auto r = AccountCharacterSetLimitsRepository::SetDefaultSetID(database, GetAccountID(), csr->requested_set);
 
 		if (r)	{
 			LogCharacterSets("Account [{}] updated default character set to [{}]", GetAccountID(), csr->requested_set);
@@ -1264,23 +1264,23 @@ bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
 
 	// Delete
 	if (p->set_id && !strlen(p->name))	{
-		auto r = AccountCharacterSetsRepository::DeleteCharacterSetIfEmpty(database, m_character_set);
+		auto r = AccountCharacterSetsRepository::DeleteCharacterSetIfEmpty(database, m_selected_character_set);
 
 		if (!r) {
 			LogCharacterSetsDetail("Failed to delete Character Set ID [{}] Name [{}] for Account [{}].", p->set_id, p->name, GetAccountID());
 			return false;
 		}
 
-		SendCharInfo(m_character_set);
+		SendCharInfo(m_selected_character_set);
 		return true;
 	}
 
 	// Rename
 	if (p->set_id && strlen(p->name)) {
-		auto r = AccountCharacterSetsRepository::RenameCharacterSet(database, m_character_set, p->name);
+		auto r = AccountCharacterSetsRepository::RenameCharacterSet(database, m_selected_character_set, p->name);
 		if (r) {
-			LogCharacterSets("Renamed Character Set ID [{}] to [{}] for Account [{}]", m_character_set, p->name, GetAccountID());
-			SendCharInfo(m_character_set);
+			LogCharacterSets("Renamed Character Set ID [{}] to [{}] for Account [{}]", m_selected_character_set, p->name, GetAccountID());
+			SendCharInfo(m_selected_character_set);
 			return true;
 		}
 		return false;
@@ -1307,7 +1307,7 @@ bool Client::HandleCharacterSetMoveRequest(const EQApplicationPacket *app)
 		AccountCharacterSetMembersRepository::RemoveCharacterFromSet(database, p->set_id, character_id);
 	}
 
-	SendCharInfo(m_character_set);
+	SendCharInfo(m_selected_character_set);
 
 	return true;
 }
@@ -2211,8 +2211,8 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 	if (success)
 	{
 		int char_id = database.GetCharacterID(pp.name);
-		AccountCharacterSetMembersRepository::AddCharacterToSet(database, m_character_set, char_id);
-		LogDebug("Assigned character_id: [{}] to character_set [{}]", char_id, m_character_set);
+		AccountCharacterSetMembersRepository::AddCharacterToSet(database, m_selected_character_set, char_id);
+		LogDebug("Assigned character_id: [{}] to character_set [{}]", char_id, m_selected_character_set);
 	}
 
 	LogInfo("Character creation {} for [{}]", success ? "succeeded" : "failed", pp.name);

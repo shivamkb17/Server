@@ -89,7 +89,8 @@ private:
 	uint32	zone_waiting_for_bootup;
 	bool	enter_world_triggered;
 
-	uint32  m_character_set;
+	uint32  m_selected_character_set;
+	uint32  m_default_character_set;
 
 	bool StartInTutorial;
 	EQ::versions::ClientVersion m_ClientVersion;

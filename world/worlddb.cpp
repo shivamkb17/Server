@@ -516,6 +516,20 @@ void WorldDatabase::GetCharacterSets(uint32 account_id, EQApplicationPacket **ou
 
 	l->selected_set = selected_set;
 	l->default_set = AccountCharacterSetLimitsRepository::GetDefaultSetID(database, account_id);
+
+	if (!l->default_set) {
+		auto d = AccountCharacterSetsRepository::CreateCharacterSet(database, account_id, "Default");
+		auto characters = CharacterDataRepository::GetAllCharactersForAccount(database, account_id);
+
+		for (auto character : characters) {
+			AccountCharacterSetMembersRepository::AddCharacterToSet(database, d.set_id, character.id);
+		}
+
+		l->default_set = d.set_id;
+
+		AccountCharacterSetLimitsRepository::SetDefaultSetID(database, account_id, d.set_id);
+	}
+
 	l->set_count = std::min(sets.size(), static_cast<size_t>(64));
 	l->character_count = characters.size();
 	l->max_sets = AccountCharacterSetLimitsRepository::GetMaxSets(database, account_id);

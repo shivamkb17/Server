@@ -31,7 +31,7 @@ public:
 		return baseMaxSets + e.extra_sets;
 	}
 
-	static bool UpdateDefaultSetID(Database &db, int32_t account_id, int32_t default_set_id) {
+	static bool SetDefaultSetID(Database &db, int32_t account_id, int32_t default_set_id) {
 		auto e = FindOne(db, account_id);
 		e.account_id = account_id;
 		e.default_set = default_set_id;
@@ -44,10 +44,10 @@ public:
 		return true;
 	}
 
-	static int GetDefaultSetID(Database &db, int32_t account_id) {
-		auto e = FindOne(db, account_id);
-		return e.default_set;
-	}
+    static int GetDefaultSetID(Database &db, int32_t account_id) {
+        auto e = FindOne(db, account_id);
+        return e.default_set;
+    }
 };
 
 #endif // EQEMU_ACCOUNT_CHARACTER_SET_LIMITS_REPOSITORY_H

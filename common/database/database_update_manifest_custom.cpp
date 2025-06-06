@@ -270,6 +270,27 @@ CREATE TABLE `character_dynamic_aa_timers` (
 		.content_schema_update = false,
 	},
 
+	ManifestEntry{
+		.version = 15,
+		.description = "2025_06_05_character_data_extra_table",
+		.check = "SHOW TABLES LIKE 'character_data_extra'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+CREATE TABLE `character_data_extra` (
+`character_id` int(10) NOT NULL,
+`play_mode_solo` tinyint(4) NOT NULL,
+`play_mode_self_found` tinyint(4) NOT NULL,
+`play_mode_hardcore` tinyint(4) NOT NULL,
+PRIMARY KEY (`character_id`),
+KEY `play_mode_solo` (`play_mode_solo`),
+KEY `play_mode_self_found` (`play_mode_self_found`),
+KEY `play_mode_hardcore` (`play_mode_hardcore`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
+		.content_schema_update = false,
+	},
+
 	// Create account_character_sets table
 	ManifestEntry{
 		.version = 15,
@@ -329,6 +350,27 @@ CREATE TABLE `account_character_set_limits` (
 	PRIMARY KEY (`account_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 	)",
+		.content_schema_update = false,
+	},
+
+	ManifestEntry{
+		.version = 18,
+		.description = "2025_06_05_character_data_extra_table",
+		.check = "SHOW TABLES LIKE 'character_data_extra'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+CREATE TABLE `character_data_extra` (
+`character_id` int(10) NOT NULL,
+`play_mode_solo` tinyint(4) NOT NULL,
+`play_mode_self_found` tinyint(4) NOT NULL,
+`play_mode_hardcore` tinyint(4) NOT NULL,
+PRIMARY KEY (`character_id`),
+KEY `play_mode_solo` (`play_mode_solo`),
+KEY `play_mode_self_found` (`play_mode_self_found`),
+KEY `play_mode_hardcore` (`play_mode_hardcore`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
 		.content_schema_update = false,
 	},
 

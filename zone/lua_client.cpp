@@ -20,6 +20,16 @@
 
 struct InventoryWhere { };
 
+
+bool Lua_Client::SetCharacterSetCap(int new_cap) {
+	Lua_Safe_Call_Bool();
+	return self->SetCharacterSetCap(new_cap);
+}
+int Lua_Client::GetCharacterSetCap() {
+	Lua_Safe_Call_Int();
+	return self->GetCharacterSetCap();
+}
+
 void Lua_Client::SendSound() {
 	Lua_Safe_Call_Void();
 	self->SendSound();
@@ -3929,6 +3939,7 @@ luabind::scope lua_register_client() {
 	.def("GetClassesBitmask", (int(Lua_Client::*)(void))&Lua_Client::GetClassesBitmask)
 	.def("AddExtraClass", (bool(Lua_Client::*)(int))&Lua_Client::AddExtraClass)
 	.def("RemoveExtraClass", (bool(Lua_Client::*)(int))&Lua_Client::RemoveExtraClass)
+	.def("GetMaxCharacterSets", (int(Lua_Client::*)(void))&Lua_Client::GetCharacterSetCap)
 	.def("GetClientMaxLevel", (int(Lua_Client::*)(void))&Lua_Client::GetClientMaxLevel)
 	.def("GetClientVersion", (int(Lua_Client::*)(void))&Lua_Client::GetClientVersion)
 	.def("GetClientVersionBit", (uint32(Lua_Client::*)(void))&Lua_Client::GetClientVersionBit)
@@ -4225,6 +4236,7 @@ luabind::scope lua_register_client() {
 	.def("SetAccountBucket", (void(Lua_Client::*)(std::string,std::string,std::string))&Lua_Client::SetAccountBucket)
 	.def("SetBucket", (void(Lua_Client::*)(std::string,std::string))&Lua_Client::SetBucket)
 	.def("SetBucket", (void(Lua_Client::*)(std::string,std::string,std::string))&Lua_Client::SetBucket)
+	.def("SetMaxCharacterSets", (bool(Lua_Client::*)(int))&Lua_Client::SetCharacterSetCap)
 	.def("SetClientMaxLevel", (void(Lua_Client::*)(int))&Lua_Client::SetClientMaxLevel)
 	.def("SetConsumption", (void(Lua_Client::*)(int, int))&Lua_Client::SetConsumption)
 	.def("SetDeity", (void(Lua_Client::*)(int))&Lua_Client::SetDeity)

@@ -30,12 +30,14 @@ public:
         int32_t character_id
     )
     {
-        auto existing = GetWhere(
-            db,
-            fmt::format("set_id = {} AND character_id = {}", set_id, character_id)
-        );
 
-        if (!existing.empty()) {
+		auto e = GetWhere(
+			db,
+			fmt::format("set_id = {} AND character_id = {}", set_id, character_id)
+		);
+		auto m = GetCharacterIdsInSet(db, set_id);
+
+        if (!e.empty() || m.size() >= 12) {
             return false;
         }
 
@@ -85,17 +87,36 @@ public:
         int32_t character_id
     )
     {
-        auto members = GetWhere(
-            db,
-            fmt::format("character_id = {} LIMIT 1", character_id)
+		auto m = GetWhere(
+			db,
+			fmt::format("character_id = {} LIMIT 1", character_id)
         );
 
-        if (members.empty()) {
+        if (m.empty()) {
             return 0;
         }
 
-        return members[0].set_id;
+        return m[0].set_id;
     }
+
+static std::vector<uint32> GetCharacterSetIds(
+    Database& db,
+    int32_t character_id
+)
+{
+    auto m = GetWhere(
+        db,
+        fmt::format("character_id = {} ORDER BY set_id", character_id)
+    );
+
+    std::vector<uint32> set_ids;
+    for (auto& member : m) {
+        set_ids.push_back(member.set_id);
+    }
+
+    return set_ids;
+}
+
 
     static int ClearCharacterSet(
         Database& db,

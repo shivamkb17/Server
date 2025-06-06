@@ -37,6 +37,7 @@
 #include "../common/repositories/data_buckets_repository.h"
 #include "../common/repositories/account_character_sets_repository.h"
 #include "../common/repositories/account_character_set_members_repository.h"
+#include "../common/repositories/account_character_set_limits_repository.h"
 
 WorldDatabase database;
 WorldDatabase content_db;
@@ -104,7 +105,7 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **o
 
 		std::vector<int32_t> setless_character_ids;
 		for (auto &character : all_characters) {
-			if (AccountCharacterSetMembersRepository::GetCharacterSetId(database, character.id) == 0) {
+			if (AccountCharacterSetMembersRepository::GetCharacterSetIds(database, character.id).empty()) {
 				setless_character_ids.push_back(character.id);
 			}
 		}
@@ -189,6 +190,7 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **o
 	std::vector<DataBucketsRepository::DataBuckets> buckets = {};
 	if (RuleB(Custom, MulticlassingEnabled)) {
 		buckets = DataBucketsRepository::GetWhere(database, "`key` = 'GestaltClasses' AND character_id IN (" + Strings::Join(character_ids, ",") + ")");
+
 	}
 
 	std::vector<DataBucketsRepository::DataBuckets> attackmode_buckets = {};
@@ -550,42 +552,137 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **o
 	}
 }
 
+
+
 void WorldDatabase::GetCharacterSets(uint32 account_id, EQApplicationPacket **out_app, uint32 selected_set)
 {
+	AccountCharacterSetsRepository::AccountCharacterSets defaultSet;
 	auto character_sets = AccountCharacterSetsRepository::GetAccountCharacterSets(database, account_id);
+	if (character_sets.empty())
+	{
+		defaultSet = AccountCharacterSetsRepository::GetOrCreateDefaultSet(database, account_id);
+		character_sets.push_back(defaultSet);
+	}
+	// We need to make sure our account set limits are set first, so we can ensure the account has a valid character set limit.
+	int createdSetCount = AccountCharacterSetsRepository::GetAccountCharacterSets(database, account_id).size();
+	auto accountSetInfo = AccountCharacterSetLimitsRepository::GetWhere(database, fmt::format("`account_id` = {}", account_id));
 
-	if (character_sets.empty()) {
-		// Create default set if none exist
-		auto default_set = AccountCharacterSetsRepository::GetOrCreateDefaultSet(database, account_id);
-		character_sets.push_back(default_set);
+	if (accountSetInfo.empty()) {
+		LogInfo("Account [{}] has no character set limits defined, using base max sets ", account_id);
+
+		if (AccountCharacterSetLimitsRepository::UpdateOrCreateAccountCharacterSetLimits(
+				database,
+				account_id,
+				createdSetCount,
+				0,
+				defaultSet.set_id))
+		{
+			LogInfo("Account [{}] character set limits created with base max sets", account_id);
+			accountSetInfo = AccountCharacterSetLimitsRepository::GetWhere(database, fmt::format("`account_id` = {}", account_id));
+		}
+		else
+		{
+			LogError("Failed to create character set limits for account [{}]", account_id);
+		}
 	}
 
 
 
-	size_t packet_size = sizeof(CharacterSetList_Struct) + (sizeof(CharacterSetListEntry_Struct) * character_sets.size());
+	auto characters = CharacterDataRepository::GetWhere(
+		database,
+		fmt::format("`account_id` = {} AND `deleted_at` IS NULL ORDER BY `name`", account_id));
+
+	// Build assignment list
+	std::vector<std::pair<uint32, uint32>> assignments;
+	for (const auto &character : characters)
+	{
+		auto set_ids = AccountCharacterSetMembersRepository::GetCharacterSetIds(database, character.id);
+		for (uint32 set_id : set_ids)
+		{
+			assignments.emplace_back(character.id, set_id);
+		}
+	}
+
+	// Class Info
+	std::unordered_map<uint32, uint32> character_classes;
+	if (RuleB(Custom, MulticlassingEnabled))
+	{
+		std::vector<uint32> character_ids;
+		character_ids.reserve(characters.size());
+		for (const auto &character : characters)
+		{
+			character_ids.push_back(character.id);
+		}
+
+		auto buckets = DataBucketsRepository::GetWhere(
+			database,
+			"`key` = 'GestaltClasses' AND character_id IN (" + Strings::Join(character_ids, ",") + ")");
+
+		for (const auto &bucket : buckets)
+		{
+			character_classes[bucket.character_id] = static_cast<uint32>(Strings::ToInt(bucket.value));
+		}
+	}
+
+	// Calculate packet size
+	size_t packet_size = sizeof(CharacterSetList_Struct) +
+						 (sizeof(CharacterSetEntry_Struct) * character_sets.size()) +
+						 sizeof(uint32) + // assignment count
+						 (sizeof(CharacterAssignment_Struct) * assignments.size());
+
 	*out_app = new EQApplicationPacket(OP_SendCharacterSets, packet_size);
-
 	unsigned char *buff_ptr = (*out_app)->pBuffer;
-	auto *csl = (CharacterSetList_Struct *) buff_ptr;
 
+	// Pack character sets
+	auto *csl = reinterpret_cast<CharacterSetList_Struct *>(buff_ptr);
 	csl->selected_set = selected_set;
+	csl->default_set = AccountCharacterSetLimitsRepository::GetDefaultSetId(database, account_id);
 	csl->count = character_sets.size();
-
+	csl->max_sets = AccountCharacterSetLimitsRepository::GetMaxSets(database, account_id);
 	buff_ptr += sizeof(CharacterSetList_Struct);
 
-	for (size_t i = 0; i < character_sets.size(); ++i) {
-		auto *entry = (CharacterSetListEntry_Struct *) buff_ptr;
+	for (const auto &set : character_sets)
+	{
+		auto *entry = reinterpret_cast<CharacterSetEntry_Struct *>(buff_ptr);
+		entry->set_id = set.set_id;
+		strncpy(entry->name, set.set_name.c_str(), sizeof(entry->name) - 1);
+		entry->name[sizeof(entry->name) - 1] = '\0';
 
-		entry->set_id = character_sets[i].set_id;
-		memset(entry->name, 0, sizeof(entry->name));
-		strncpy(entry->name, character_sets[i].set_name.c_str(), sizeof(entry->name) - 1);
-
-		LogDebug("Packed Set name [{}]", character_sets[i].set_name.c_str());
-
-		buff_ptr += sizeof(CharacterSetListEntry_Struct);
+		LogDebug("Packed Set name [{}]", set.set_name.c_str());
+		buff_ptr += sizeof(CharacterSetEntry_Struct);
 	}
 
-	LogDebug("Sending [{}] character sets for account [{}] selected set [{}]", character_sets.size(), account_id, selected_set);
+	// Pack assignment count
+	*reinterpret_cast<uint32 *>(buff_ptr) = assignments.size();
+	buff_ptr += sizeof(uint32);
+
+	// Create character lookup for efficiency
+	std::unordered_map<uint32, const decltype(characters)::value_type *> char_lookup;
+	for (const auto &character : characters)
+	{
+		char_lookup[character.id] = &character;
+	}
+
+	// Pack assignments
+	for (const auto &[char_id, set_id] : assignments)
+	{
+		const auto *character = char_lookup[char_id];
+		auto *assignment = reinterpret_cast<CharacterAssignment_Struct *>(buff_ptr);
+
+		assignment->character_id = char_id;
+		assignment->character_level = character->level;
+		assignment->character_classes = character_classes[char_id];
+		assignment->set_id = set_id;
+
+		strncpy(assignment->character_name, character->name.c_str(), sizeof(assignment->character_name) - 1);
+		assignment->character_name[sizeof(assignment->character_name) - 1] = '\0';
+
+		LogDebug("Packed Character assignment: char [{}] set [{}]", character->name, set_id);
+		buff_ptr += sizeof(CharacterAssignment_Struct);
+	}
+
+	LogDebug("Sending [{}] character sets and [{}] character assignments for account [{}] selected set [{}]",
+			 character_sets.size(), assignments.size(), account_id, selected_set);
 }
 
 AccountCharacterSetsRepository::AccountCharacterSets WorldDatabase::CreateCharacterSet(uint32 account_id, std::string set_name)

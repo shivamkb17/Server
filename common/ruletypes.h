@@ -1209,7 +1209,7 @@ RULE_REAL(Custom,	PetPlacementDistance ,					7.0,  	"Adjust pet formation positi
 RULE_REAL(Custom, 	NonDaggerBackstabMultiplier1H, 			0.75, 	"Multiple Backstabs conducted with not-1hp by this amount")
 RULE_REAL(Custom, 	NonDaggerBackstabMultiplier2H,			0.50, 	"Multiple Backstabs conducted with not-1hp 2h weapon by this amount")
 RULE_BOOL(Custom, 	MonkSkillAttacksAreH2HForProcs, 		true, 	"Read the name")
-
+RULE_INT(Custom,	MaximumBaseCharacterSets,				2,		"Maximum number of base character sets a player can have.")
 // Item Upgrades
 RULE_BOOL(Custom, 	DoItemUpgrades, 						true, "Retribution item upgrades")
 RULE_REAL(Custom, 	Tier2ItemDropRate, 						25, "Percentage chance that a drop will be upgraded to Tier 2. These percentages are independent of one another, but Tier2 is rolled first. Default value is twice as rare as Tier2.")

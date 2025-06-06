@@ -192,9 +192,10 @@ struct CharacterSelect_Struct
 struct CharacterSetRequest_Struct
 {
 	uint32 requested_set;
+	bool updateDefault;
 };
 
-struct CharacterSetListEntry_Struct
+struct CharacterSetEntry_Struct
 {
     uint32 set_id;
     char   name[64];
@@ -202,13 +203,25 @@ struct CharacterSetListEntry_Struct
 
 struct CharacterSetList_Struct
 {
-   uint32 selected_set;
-   uint32 count;
-   struct CharacterSetListEntry_Struct entries[];
+	uint32 selected_set;
+	uint32 default_set;
+	uint32 count;
+	uint32 max_sets;
+	CharacterSetEntry_Struct entries[];
+};
+
+struct CharacterAssignment_Struct
+{
+    uint32 character_id;
+    char character_name[64];
+    uint32 character_level;
+    uint32 character_classes;
+    uint32 set_id;
 };
 
 struct CharacterSetCreateRequest_Struct
 {
+	uint32 set_id;
 	char name[64];
 };
 
@@ -216,6 +229,14 @@ struct CharacterSetDeleteRequest_Struct
 {
 	uint32 set_id;
 };
+struct CharacterSetMoveRequest_Struct
+{
+	uint32 set_id;
+	char character_name[64];
+	bool AssignToSet; // true = assign to set, false = remove from set
+
+};
+
 
 /* End Character Sets */
 

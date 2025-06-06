@@ -30,6 +30,8 @@ public:
 		return reinterpret_cast<Client*>(GetLuaPtrData());
 	}
 
+	bool SetCharacterSetCap(int new_cap);
+	int GetCharacterSetCap();
 	void SendSound();
 	void Sit();
 	void Save();

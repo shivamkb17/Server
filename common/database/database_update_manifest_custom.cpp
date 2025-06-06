@@ -234,6 +234,15 @@ ON DUPLICATE KEY UPDATE
 	INDEX `idx_set_id` (`set_id`)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+	CREATE TABLE
+  	`account_character_set_limits` (
+    `account_id` int(11) NOT NULL,
+    `created_sets` int(11) NOT NULL,
+    `extra_sets` int(11) NOT NULL,
+    `default_set` int(11) NOT NULL,
+    PRIMARY KEY (`account_id`)
+  	) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
 	INSERT INTO account_character_sets (account_id, set_name, created_at)
 	SELECT DISTINCT
 		cd.account_id,

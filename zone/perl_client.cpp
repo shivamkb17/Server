@@ -9,6 +9,16 @@
 #include "titles.h"
 #include "dialogue_window.h"
 
+
+bool Perl_Client_SetCharacterSetCap(Client* self, int new_cap) // @categories Account and Character
+{
+	return self->SetCharacterSetCap(new_cap);
+}
+int Perl_Client_GetCharacterSetCap(Client* self) // @categories Account and Character
+{
+	return self->GetCharacterSetCap();
+}
+
 void Perl_Client_SendSound(Client* self) // @categories Script Utility
 {
 	self->SendSound();
@@ -3795,6 +3805,7 @@ void perl_register_client()
 	package.add("GetLearnableDisciplines", (perl::array(*)(Client*, uint8, uint8))&Perl_Client_GetLearnableDisciplines);
 	package.add("GetLearnedDisciplines", &Perl_Client_GetLearnedDisciplines);
 	package.add("GetLockoutExpeditionUUID", &Perl_Client_GetLockoutExpeditionUUID);
+	package.add("GetMaxCharacterSets", (int(*)(Client*))&Perl_Client_GetCharacterSetCap);
 	package.add("GetMaxEndurance", &Perl_Client_GetMaxEndurance);
 	package.add("GetMerc", &Perl_Client_GetMerc);
 	package.add("GetMemmedSpells", &Perl_Client_GetMemmedSpells);
@@ -4061,6 +4072,7 @@ void perl_register_client()
 	package.add("SetLanguageSkill", &Perl_Client_SetLanguageSkill);
 	package.add("SetLDoNPoints", &Perl_Client_SetLDoNPoints);
 	package.add("SetMaterial", &Perl_Client_SetMaterial);
+	package.add("SetMaxCharacterSets", (bool(*)(Client*, uint32))&Perl_Client_SetCharacterSetCap);
 	package.add("SetPEQZoneFlag", &Perl_Client_SetPEQZoneFlag);
 	package.add("SetPVP", &Perl_Client_SetPVP);
 	package.add("SetPrimaryWeaponOrnamentation", &Perl_Client_SetPrimaryWeaponOrnamentation);

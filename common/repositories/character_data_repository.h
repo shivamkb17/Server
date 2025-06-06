@@ -4,8 +4,7 @@
 #include "../database.h"
 #include "../strings.h"
 #include "base/base_character_data_repository.h"
-
-
+#include "account_character_set_members_repository.h"
 
 class CharacterDataRepository: public BaseCharacterDataRepository {
 public:
@@ -48,6 +47,22 @@ public:
 	// Custom extended repository methods here
 	static std::vector<CharacterData> GetAllCharactersForAccount(Database &db, uint32 account_id) {
 		return CharacterDataRepository::GetWhere(db, fmt::format("`account_id` = {} AND `deleted_at` IS NULL ORDER BY `name`", account_id));
+	}
+
+	static std::vector<CharacterData> GetCharactersForSet(Database &db, uint32 account_id, uint32 set_id) {
+		auto character_ids = AccountCharacterSetMembersRepository::GetCharacterIDsForSet(db, set_id);
+
+		if (character_ids.empty()) {
+			return {};
+		}
+
+		std::string id_list = Strings::Join(character_ids, ",");
+
+		return CharacterDataRepository::GetWhere(
+			db,
+			fmt::format("`account_id` = {} AND `id` IN ({}) AND `deleted_at` IS NULL ORDER BY `name`",
+					account_id, id_list)
+		);
 	}
 
 	static uint32 GetSecondsSinceLastLogin(Database &db, const std::string& name)

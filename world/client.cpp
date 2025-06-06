@@ -1208,7 +1208,7 @@ bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app) {
 	}
 
 	CharacterSetRequest_Struct *csr = (CharacterSetRequest_Struct *)app->pBuffer;
-	if (!csr->updateDefault) {
+	if (!csr->update_default) {
 		m_character_set = csr->requested_set;
 		SendCharInfo(m_character_set);
 		return true;

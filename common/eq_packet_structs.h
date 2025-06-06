@@ -192,7 +192,7 @@ struct CharacterSelect_Struct
 struct CharacterSetRequest_Struct
 {
 	uint32 requested_set;
-	bool updateDefault;
+	bool update_default;
 };
 
 struct CharacterSet_Struct

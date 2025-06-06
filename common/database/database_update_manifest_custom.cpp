@@ -320,7 +320,6 @@ CREATE TABLE `account_character_set_members` (
 		.sql = R"(
 CREATE TABLE `account_character_set_limits` (
 	`account_id` int(11) NOT NULL,
-	`created_sets` int(11) NOT NULL,
 	`extra_sets` int(11) NOT NULL,
 	`default_set` int(11) NOT NULL,
 	PRIMARY KEY (`account_id`)

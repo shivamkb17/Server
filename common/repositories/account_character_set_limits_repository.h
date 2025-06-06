@@ -44,29 +44,9 @@ public:
 		return true;
 	}
 
-	static int GetDefaultSetId(Database &db, int32_t account_id) {
+	static int GetDefaultSetID(Database &db, int32_t account_id) {
 		auto e = FindOne(db, account_id);
 		return e.default_set;
-	}
-
-	static bool UpdateOrCreateAccountCharacterSetLimits(
-		Database &db,
-		int32_t account_id,
-		int32_t created_sets,
-		int32_t extra_sets,
-		int32_t default_set) {
-		auto e = FindOne(db, account_id);
-		e.account_id = account_id;
-		e.created_sets = created_sets;
-		e.extra_sets = extra_sets;
-		e.default_set = default_set;
-		int rows_affected = ReplaceOne(db, e);
-		if (rows_affected == 0) {
-			LogError("Failed to update account character set limits for account ID: {}", account_id);
-			return false;
-		}
-		LogInfo("Updated account character set limits for account ID: {}", account_id);
-		return true;
 	}
 };
 

@@ -5,6 +5,7 @@
 #include "../strings.h"
 #include "base/base_account_character_sets_repository.h"
 #include "account_character_set_members_repository.h"
+#include "account_character_set_limits_repository.h"
 
 class AccountCharacterSetsRepository: public BaseAccountCharacterSetsRepository {
 public:
@@ -77,23 +78,6 @@ public:
         }
 
         return result;
-    }
-
-    static AccountCharacterSets GetOrCreateDefaultSet(
-        Database& db,
-        int32_t account_id
-    )
-    {
-        auto existing_sets = GetWhere(
-            db,
-            fmt::format("account_id = {} AND set_name = 'Default' LIMIT 1", account_id)
-        );
-
-        if (!existing_sets.empty()) {
-            return existing_sets[0];
-        }
-
-        return CreateCharacterSet(db, account_id, "Default");
     }
 
 };

@@ -46,6 +46,10 @@ public:
      */
 
 	// Custom extended repository methods here
+	static std::vector<CharacterData> GetAllCharactersForAccount(Database &db, uint32 account_id) {
+		return CharacterDataRepository::GetWhere(db, fmt::format("`account_id` = {} AND `deleted_at` IS NULL ORDER BY `name`", account_id));
+	}
+
 	static uint32 GetSecondsSinceLastLogin(Database &db, const std::string& name)
 	{
 		auto results = db.QueryDatabase(

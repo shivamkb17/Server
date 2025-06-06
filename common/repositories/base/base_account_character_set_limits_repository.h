@@ -20,7 +20,6 @@ class BaseAccountCharacterSetLimitsRepository {
 public:
 	struct AccountCharacterSetLimits {
 		int32_t account_id;
-		int32_t created_sets;
 		int32_t extra_sets;
 		int32_t default_set;
 	};
@@ -34,7 +33,6 @@ public:
 	{
 		return {
 			"account_id",
-			"created_sets",
 			"extra_sets",
 			"default_set",
 		};
@@ -44,7 +42,6 @@ public:
 	{
 		return {
 			"account_id",
-			"created_sets",
 			"extra_sets",
 			"default_set",
 		};
@@ -87,10 +84,9 @@ public:
 	{
 		AccountCharacterSetLimits e{};
 
-		e.account_id       = 0;
-		e.created_sets     = 0;
-		e.extra_sets = 0;
-		e.default_set      = 0;
+		e.account_id  = 0;
+		e.extra_sets  = 0;
+		e.default_set = 0;
 
 		return e;
 	}
@@ -127,10 +123,9 @@ public:
 		if (results.RowCount() == 1) {
 			AccountCharacterSetLimits e{};
 
-			e.account_id       = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.created_sets     = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
-			e.extra_sets = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
-			e.default_set      = row[3] ? static_cast<int32_t>(atoi(row[3])) : 0;
+			e.account_id  = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.extra_sets  = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.default_set = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
 
 			return e;
 		}
@@ -165,9 +160,8 @@ public:
 		auto columns = Columns();
 
 		v.push_back(columns[0] + " = " + std::to_string(e.account_id));
-		v.push_back(columns[1] + " = " + std::to_string(e.created_sets));
-		v.push_back(columns[2] + " = " + std::to_string(e.extra_sets));
-		v.push_back(columns[3] + " = " + std::to_string(e.default_set));
+		v.push_back(columns[1] + " = " + std::to_string(e.extra_sets));
+		v.push_back(columns[2] + " = " + std::to_string(e.default_set));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -190,7 +184,6 @@ public:
 		std::vector<std::string> v;
 
 		v.push_back(std::to_string(e.account_id));
-		v.push_back(std::to_string(e.created_sets));
 		v.push_back(std::to_string(e.extra_sets));
 		v.push_back(std::to_string(e.default_set));
 
@@ -223,7 +216,6 @@ public:
 			std::vector<std::string> v;
 
 			v.push_back(std::to_string(e.account_id));
-			v.push_back(std::to_string(e.created_sets));
 			v.push_back(std::to_string(e.extra_sets));
 			v.push_back(std::to_string(e.default_set));
 
@@ -259,10 +251,9 @@ public:
 		for (auto row = results.begin(); row != results.end(); ++row) {
 			AccountCharacterSetLimits e{};
 
-			e.account_id       = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.created_sets     = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
-			e.extra_sets = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
-			e.default_set      = row[3] ? static_cast<int32_t>(atoi(row[3])) : 0;
+			e.account_id  = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.extra_sets  = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.default_set = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -287,10 +278,9 @@ public:
 		for (auto row = results.begin(); row != results.end(); ++row) {
 			AccountCharacterSetLimits e{};
 
-			e.account_id       = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.created_sets     = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
-			e.extra_sets = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
-			e.default_set      = row[3] ? static_cast<int32_t>(atoi(row[3])) : 0;
+			e.account_id  = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.extra_sets  = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.default_set = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -366,7 +356,6 @@ public:
 		std::vector<std::string> v;
 
 		v.push_back(std::to_string(e.account_id));
-		v.push_back(std::to_string(e.created_sets));
 		v.push_back(std::to_string(e.extra_sets));
 		v.push_back(std::to_string(e.default_set));
 
@@ -392,7 +381,6 @@ public:
 			std::vector<std::string> v;
 
 			v.push_back(std::to_string(e.account_id));
-			v.push_back(std::to_string(e.created_sets));
 			v.push_back(std::to_string(e.extra_sets));
 			v.push_back(std::to_string(e.default_set));
 

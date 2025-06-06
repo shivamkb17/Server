@@ -8,17 +8,12 @@
 class AccountCharacterSetMembersRepository: public BaseAccountCharacterSetMembersRepository {
 public:
 
-    static std::vector<int32_t> GetCharacterIdsInSet(
-        Database& db,
-        int32_t set_id
-    )
-    {
-        auto members = GetWhere(db, fmt::format("set_id = {}", set_id));
-        std::vector<int32_t> character_ids;
-        character_ids.reserve(members.size());
+    static std::vector<uint32> GetCharacterIDsForSet(Database& db, uint32 set_id) {
+        auto m = GetWhere(db, fmt::format("set_id = {}", set_id));
+        std::vector<uint32> character_ids;
 
-        for (const auto& member : members) {
-            character_ids.push_back(member.character_id);
+        for (const auto& member : m) {
+            character_ids.emplace_back(member.character_id);
         }
 
         return character_ids;
@@ -35,7 +30,7 @@ public:
 			db,
 			fmt::format("set_id = {} AND character_id = {}", set_id, character_id)
 		);
-		auto m = GetCharacterIdsInSet(db, set_id);
+		auto m = GetCharacterIDsForSet(db, set_id);
 
         if (!e.empty() || m.size() >= 12) {
             return false;

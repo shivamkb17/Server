@@ -266,7 +266,7 @@ void Client::SendCharInfo(uint32 character_set)
 
 	if (!character_set)
 	{
-		character_set = AccountCharacterSetLimitsRepository::GetDefaultSetId(database, GetAccountID());
+		character_set = AccountCharacterSetLimitsRepository::GetDefaultSetID(database, GetAccountID());
 		m_character_set = character_set;
 	}
 
@@ -1239,28 +1239,38 @@ bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
 
 	// Create
 	if (!p->set_id)	{
-
-		if (set_info.created_sets >= max_sets) {
+		if (set_count >= max_sets) {
 			LogCharacterSets("Account [{}] has reached the maximum number of character sets [{}]", GetAccountID(), max_sets);
 			return false;
 		}
 
-		LogCharacterSets("Creating Set # {} for Account [{}] out of [{}] sets allowed", set_info.created_sets + 1, GetAccountID(), max_sets);
+		if (!strlen(p->name)) {
+			LogCharacterSets("Account [{}] attempted to create a character set with an empty name.", GetAccountID());
+			return false;
+		}
+
+		LogCharacterSets("Creating Set # {} for Account [{}] out of [{}] sets allowed", set_count + 1, GetAccountID(), max_sets);
 
 		auto r = database.CreateCharacterSet(GetAccountID(), p->name);
 
-		if (!r.set_name.empty()) {
-			AccountCharacterSetLimitsRepository::UpdateOrCreateAccountCharacterSetLimits(
-				database,
-				GetAccountID(),
-				set_count + 1,
-				set_info.extra_sets,
-				AccountCharacterSetLimitsRepository::GetDefaultSetId(database, GetAccountID())
-			);
-
-			SendCharInfo(r.set_id);
+		if (r.set_name.empty()) {
+			LogCharacterSets("Failed to create Character Set for Account [{}]", GetAccountID());
 		}
 
+		SendCharInfo(r.set_id);
+		return true;
+	}
+
+	// Delete
+	if (p->set_id && !strlen(p->name))	{
+		auto r = AccountCharacterSetsRepository::DeleteCharacterSetIfEmpty(database, m_character_set);
+
+		if (!r) {
+			LogCharacterSetsDetail("Failed to delete Character Set ID [{}] Name [{}] for Account [{}].", p->set_id, p->name, GetAccountID());
+			return false;
+		}
+
+		SendCharInfo(m_character_set);
 		return true;
 	}
 
@@ -1270,32 +1280,9 @@ bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
 		if (r) {
 			LogCharacterSets("Renamed Character Set ID [{}] to [{}] for Account [{}]", m_character_set, p->name, GetAccountID());
 			SendCharInfo(m_character_set);
+			return true;
 		}
-	}
-
-	// Delete
-	else if (p->set_id && !strlen(p->name))	{
-		auto r = AccountCharacterSetsRepository::DeleteCharacterSetIfEmpty(database, m_character_set);
-
-		if (!r) {
-			LogCharacterSetsDetail("Delete request recieved for non-existant Character Set ID [{}] Name [{}] for Account [{}].", p->set_id, p->name, GetAccountID());
-			return false;
-		}
-
-		if (AccountCharacterSetLimitsRepository::UpdateOrCreateAccountCharacterSetLimits(
-				database,
-				GetAccountID(),
-				set_count,
-				max_sets,
-				AccountCharacterSetLimitsRepository::GetDefaultSetId(database, GetAccountID())))
-		{
-			LogInfo("Account [{}] character set data updated ", GetAccountID());
-		}
-		else
-		{
-			LogError("Failed to update character set limits for account [{}]", GetAccountID());
-		}
-		SendCharInfo(m_character_set);
+		return false;
 	}
 
 	return true;

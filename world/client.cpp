@@ -266,7 +266,8 @@ void Client::SendCharInfo(uint32 character_set)
 
 	if (!character_set)
 	{
-		character_set = m_character_set;
+		character_set = AccountCharacterSetLimitsRepository::GetDefaultSetId(database, GetAccountID());
+		m_character_set = character_set;
 	}
 
 	EQApplicationPacket *sets_app = nullptr;
@@ -837,13 +838,10 @@ bool Client::HandleCharacterCreateRequestPacket(const EQApplicationPacket *app)
 
 bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app)
 {
-	if (GetAccountID() == 0)
-	{
+	if (GetAccountID() == 0) {
 		LogInfo("Account ID not set; unable to create character");
 		return false;
-	}
-	else if (app->size != sizeof(CharCreate_Struct))
-	{
+	} else if (app->size != sizeof(CharCreate_Struct)) {
 		LogInfo("Wrong size on OP_CharacterCreate. Got: [{}], Expected: [{}]", app->size, sizeof(CharCreate_Struct));
 		DumpPacket(app);
 		// the previous behavior was essentially returning true here
@@ -852,19 +850,18 @@ bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app)
 	}
 
 	CharCreate_Struct *cc = (CharCreate_Struct *)app->pBuffer;
-	if (OPCharCreate(char_name, cc) == false)
-	{
+	if (OPCharCreate(char_name, cc) == false) {
 		database.DeleteCharacter(char_name);
 		auto outapp = new EQApplicationPacket(OP_ApproveName, 1);
 		outapp->pBuffer[0] = 0;
 		QueuePacket(outapp);
 		safe_delete(outapp);
-	}
-	else
-	{
-		if (m_ClientVersionBit & EQ::versions::maskTitaniumAndEarlier)
+	} else {
+		if (m_ClientVersionBit & EQ::versions::maskTitaniumAndEarlier) {
 			StartInTutorial = true;
-		SendCharInfo();
+		}
+
+		SendCharInfo(m_character_set);
 	}
 
 	return true;
@@ -1203,111 +1200,78 @@ bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app)
 	return true;
 }
 
-bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app)
-{
+bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app) {
 
-	if (app->size != sizeof(CharacterSetRequest_Struct))
-	{
+	if (app->size != sizeof(CharacterSetRequest_Struct)) {
 		LogError("Error: Malformed OP_CharacterSetRequest");
 		return false;
 	}
 
 	CharacterSetRequest_Struct *csr = (CharacterSetRequest_Struct *)app->pBuffer;
-	if (!csr->updateDefault)
-	{
+	if (!csr->updateDefault) {
 		m_character_set = csr->requested_set;
 		SendCharInfo(m_character_set);
-	} else
-	{
-		// Update default set
-		auto result = AccountCharacterSetLimitsRepository::UpdateDefaultSetID(
-			database,
-			GetAccountID(),
-			csr->requested_set);
+	} else {
+		auto r = AccountCharacterSetLimitsRepository::UpdateDefaultSetID(database, GetAccountID(), csr->requested_set);
 
-		if (result)
-		{
-			m_character_set = csr->requested_set;
-
+		if (r)	{
 			LogInfo("Account [{}] updated default character set to [{}]", GetAccountID(), csr->requested_set);
-		}
-		else
-		{
+		} else {
 			LogError("Failed to update default character set for account [{}]", GetAccountID());
 			return false;
 		}
 	}
 
-
 	return true;
 }
 
-bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app)
-{
-	if (app->size != sizeof(CharacterSetCreateRequest_Struct))
-	{
+bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
+	if (app->size != sizeof(CharacterSetCreateRequest_Struct)) {
 		LogError("Error: Malformed OP_CharacterSetCreateRequest");
 		return false;
 	}
 
 	CharacterSetCreateRequest_Struct *p = (CharacterSetCreateRequest_Struct *)app->pBuffer;
+
 	// Create
-	if (p->set_id == 0)
-	{
-		int createdSetCount = AccountCharacterSetsRepository::GetAccountCharacterSets(database, GetAccountID()).size();
+	if (!p->set_id)	{
+		int set_count = AccountCharacterSetsRepository::GetAccountCharacterSets(database, GetAccountID()).size();
+		auto set_info = AccountCharacterSetLimitsRepository::FindOne(database, GetAccountID());
 
-		auto accountSetInfo = AccountCharacterSetLimitsRepository::GetWhere(
-			database,
-			fmt::format("`account_id` = {}", GetAccountID()));
+		int max_sets = RuleI(Custom, MaximumBaseCharacterSets) + set_info.extra_sets;
 
-		int extraSets;
-		if (accountSetInfo.empty())
-		{
-			extraSets = 0;
-		}
-		else
-		{
-			extraSets = accountSetInfo[0].extra_sets;
+		if (set_info.created_sets >= max_sets) {
+			LogInfo("Account [{}] has reached the maximum number of character sets [{}]", GetAccountID(), max_sets);
+			return false;
 		}
 
-		if (!accountSetInfo.empty())
-		{
-			int maxSets = RuleI(Custom, MaximumBaseCharacterSets) + extraSets;
-			if (accountSetInfo[0].created_sets >= maxSets)
-			{
-				LogInfo("Account [{}] has reached the maximum number of character sets [{}]", GetAccountID(), maxSets);
-				return false;
-			}
-			LogInfo("Creating Set # {} for Account [{}] out of [{}] sets allowed",
-					accountSetInfo[0].created_sets + 1,
-					GetAccountID(),
-					maxSets);
+		LogInfo("Creating Set # {} for Account [{}] out of [{}] sets allowed", set_info.created_sets + 1, GetAccountID(), max_sets);
 
-			auto result = database.CreateCharacterSet(GetAccountID(), p->name);
+		auto r = database.CreateCharacterSet(GetAccountID(), p->name);
 
-			if (!result.set_name.empty())
-			{
-				AccountCharacterSetLimitsRepository::UpdateOrCreateAccountCharacterSetLimits(
-					database,
-					GetAccountID(),
-					createdSetCount + 1,
-					extraSets,
-					AccountCharacterSetLimitsRepository::GetDefaultSetId(database, GetAccountID())
-				);
+		if (!r.set_name.empty()) {
+			AccountCharacterSetLimitsRepository::UpdateOrCreateAccountCharacterSetLimits(
+				database,
+				GetAccountID(),
+				set_count + 1,
+				set_info.extra_sets,
+				AccountCharacterSetLimitsRepository::GetDefaultSetId(database, GetAccountID())
+			);
 
-				SendCharInfo(result.set_id);
-			}
+			SendCharInfo(r.set_id);
 		}
+
+		return true;
 	}
-	else if (p->set_id != 0 && strlen(p->name) != 0)
-	{
-		// Rename
-		auto result = AccountCharacterSetsRepository::RenameCharacterSet(database, m_character_set, p->name);
-		if (result)
-		{
+
+	// Rename
+	if (p->set_id && strlen(p->name)) {
+		auto r = AccountCharacterSetsRepository::RenameCharacterSet(database, m_character_set, p->name);
+		if (r) {
 			SendCharInfo(m_character_set);
 		}
 	}
+
 	else if (p->set_id != 0 && strlen(p->name) == 0)
 	{
 		// Delete
@@ -1343,12 +1307,13 @@ bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app)
 			{
 				LogError("Failed to update character set limits for account [{}]", GetAccountID());
 			}
-			SendCharInfo(1);
+			SendCharInfo(m_character_set);
 		}
 	}
 
 	return true;
 }
+
 bool Client::HandleCharacterSetMoveRequest(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(CharacterSetMoveRequest_Struct))

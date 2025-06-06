@@ -328,46 +328,6 @@ CREATE TABLE `account_character_set_limits` (
 		.content_schema_update = false,
 	},
 
-	// Populate default character sets
-	ManifestEntry{
-		.version = 18,
-		.description = "2025_05_23_populate_default_character_sets",
-		.check = "SHOW TABLES LIKE 'account_character_sets'",
-		.condition = "empty",
-		.match = "",
-		.sql = R"(
-INSERT INTO account_character_sets (account_id, set_name, created_at)
-SELECT DISTINCT
-	cd.account_id,
-	'Default' as set_name,
-	NOW() as created_at
-FROM character_data cd
-WHERE cd.deleted_at IS NULL
-AND cd.account_id IS NOT NULL;
-)",
-		.content_schema_update = false,
-	},
-
-	// Populate character set members
-	ManifestEntry{
-		.version = 19,
-		.description = "2025_05_23_populate_character_set_members",
-		.check = "SHOW TABLES LIKE 'account_character_set_members'",
-		.condition = "empty",
-		.match = "",
-		.sql = R"(
-INSERT INTO account_character_set_members (set_id, character_id)
-SELECT
-	acs.set_id,
-	cd.id as character_id
-FROM character_data cd
-JOIN account_character_sets acs ON cd.account_id = acs.account_id
-WHERE cd.deleted_at IS NULL
-AND acs.set_name = 'Default';
-)",
-		.content_schema_update = false,
-	},
-
 	// Used for testing
 	//	ManifestEntry{
 	//		.version = 9229,

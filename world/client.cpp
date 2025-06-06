@@ -266,12 +266,34 @@ void Client::SendCharInfo(uint32 character_set)
 
 	if (!character_set)
 	{
-		character_set = AccountCharacterSetLimitsRepository::GetDefaultSetID(database, GetAccountID());
-		m_selected_character_set = character_set;
+		m_default_character_set = AccountCharacterSetLimitsRepository::GetDefaultSetID(database, GetAccountID());
+
+		if (!m_default_character_set) {
+			auto all_sets = AccountCharacterSetsRepository::GetAccountCharacterSets(database, GetAccountID());
+
+			if (!all_sets.empty()) {
+				m_default_character_set = all_sets[0].set_id;
+			} else {
+				auto new_set = AccountCharacterSetsRepository::CreateCharacterSet(database, GetAccountID(), "Default");
+				m_default_character_set = new_set.set_id;
+
+				// Populate the default set with EVERYTHING
+				auto all_characters = CharacterDataRepository::GetAllCharactersForAccount(database, GetAccountID());
+				for (const auto character : all_characters) {
+					AccountCharacterSetMembersRepository::AddCharacterToSet(database, m_default_character_set, character.id);
+				}
+			}
+
+			AccountCharacterSetLimitsRepository::SetDefaultSetID(database, GetAccountID(), m_default_character_set);
+		}
+
+		character_set = m_default_character_set;
 	}
 
+	m_selected_character_set = character_set;
+
 	EQApplicationPacket *sets_app = nullptr;
-	database.GetCharacterSets(GetAccountID(), &sets_app, character_set);
+	database.GetCharacterSets(GetAccountID(), &sets_app, m_selected_character_set);
 	if (sets_app)
 	{
 		QueuePacket(sets_app);
@@ -284,7 +306,7 @@ void Client::SendCharInfo(uint32 character_set)
 
 	// Send OP_SendCharInfo
 	EQApplicationPacket *outapp = nullptr;
-	database.GetCharSelectInfo(GetAccountID(), &outapp, m_ClientVersionBit, character_set);
+	database.GetCharSelectInfo(GetAccountID(), &outapp, m_ClientVersionBit, m_selected_character_set);
 
 	if (outapp)
 	{

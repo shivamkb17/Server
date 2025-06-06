@@ -563,31 +563,6 @@ void WorldDatabase::GetCharacterSets(uint32 account_id, EQApplicationPacket **ou
 
 		p += sizeof(CharacterEntry_Struct);
 	}
-
-	LogInfo("=== CHARACTER SETS PACKET DUMP ===");
-	LogInfo("Selected set: [{}], Default set: [{}], Max sets: [{}]", l->selected_set, l->default_set, l->max_sets);
-	LogInfo("Set count: [{}], Character count: [{}]", l->set_count, l->character_count);
-
-	for (size_t i = 0; i < l->set_count; ++i) {
-		LogInfo("Set [{}]: ID={}, Name='{}'", i, l->sets[i].set_id, l->sets[i].name);
-	}
-
-	p = (*out_app)->pBuffer + sizeof(CharacterSetList_Struct);
-	for (size_t i = 0; i < l->character_count; ++i) {
-		auto *e = reinterpret_cast<CharacterEntry_Struct *>(p);
-		LogInfo("Character [{}]: ID={}, Name='{}', Level={}, Classes={}",
-			i, e->character_id, e->name, e->level, e->classes);
-
-		std::string set_list = "";
-		for (size_t j = 0; j < 64 && e->assigned_sets[j] != 0; ++j) {
-			if (j > 0) set_list += ",";
-			set_list += std::to_string(e->assigned_sets[j]);
-		}
-		LogInfo("  Assigned sets: [{}]", set_list.empty() ? "none" : set_list);
-
-		p += sizeof(CharacterEntry_Struct);
-	}
-	LogInfo("=== END PACKET DUMP ===");
 }
 
 AccountCharacterSetsRepository::AccountCharacterSets WorldDatabase::CreateCharacterSet(uint32 account_id, std::string set_name)

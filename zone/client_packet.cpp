@@ -1058,6 +1058,12 @@ void Client::CompleteConnect()
 	AutoGrantAAPoints();
 	SendAlternateAdvancementTable();
 
+	SetHardcore(CharacterDataExtraRepository::GetPlayModeHardcore(database, CharacterID()));
+	SetSelfFound(CharacterDataExtraRepository::GetPlayModeSelfFound(database, CharacterID()));
+	SetSolo(CharacterDataExtraRepository::GetPlayModeSolo(database, CharacterID()));
+
+	LogInfo("Hardcore: [{}], Self-Found: [{}], Solo: [{}]", IsHardcore(), IsSelfFound(), IsSolo());
+
 	if (RuleB(Custom, ServerAuthStats)) {
 		SendDisciplineUpdate();
 	}

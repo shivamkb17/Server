@@ -55,6 +55,7 @@
 #include "../common/content/world_content_service.h"
 #include "../common/repositories/group_id_repository.h"
 #include "../common/repositories/character_data_repository.h"
+#include "../common/repositories/character_data_extra_repository.h"
 #include "../common/repositories/account_character_sets_repository.h"
 #include "../common/repositories/account_character_set_limits_repository.h"
 #include "../common/repositories/data_buckets_repository.h"
@@ -2155,6 +2156,8 @@ bool Client::OPCharCreate(char* name, CharCreate_Struct* cc) {
 		int char_id = database.GetCharacterID(pp.name);
 		AddCharacterToSetInCache(m_selected_character_set, char_id);
 	}
+
+	CharacterDataExtraRepository::SetAllPlayModes(database, database.GetCharacterID(pp.name), solo_mode, selffound_mode, hardcore_mode);
 
 	LogInfo("Character creation {} for [{}]", success ? "succeeded" : "failed", pp.name);
 	return success;

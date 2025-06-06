@@ -59,7 +59,7 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **o
 		character_limit = 8;
 	}
 
-	auto characters = CharacterDataRepository::GetCharactersForSet(database, account_id, character_set);
+	auto characters = CharacterDataRepository::GetCharactersForSet(database, account_id, character_set, true);
 
 	size_t character_count = characters.size();
 	if (characters.empty()) {

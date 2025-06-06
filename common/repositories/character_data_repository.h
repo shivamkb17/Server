@@ -49,7 +49,7 @@ public:
 		return CharacterDataRepository::GetWhere(db, fmt::format("`account_id` = {} AND `deleted_at` IS NULL ORDER BY `name`", account_id));
 	}
 
-	static std::vector<CharacterData> GetCharactersForSet(Database &db, uint32 account_id, uint32 set_id) {
+	static std::vector<CharacterData> GetCharactersForSet(Database &db, uint32 account_id, uint32 set_id, bool limit = false) {
 		auto character_ids = AccountCharacterSetMembersRepository::GetCharacterIDsForSet(db, set_id);
 
 		if (character_ids.empty()) {
@@ -58,11 +58,14 @@ public:
 
 		std::string id_list = Strings::Join(character_ids, ",");
 
-		return CharacterDataRepository::GetWhere(
-			db,
-			fmt::format("`account_id` = {} AND `id` IN ({}) AND `deleted_at` IS NULL ORDER BY `name`",
-					account_id, id_list)
-		);
+		std::string query = fmt::format("`account_id` = {} AND `id` IN ({}) AND `deleted_at` IS NULL ORDER BY `name`",
+										account_id, id_list);
+
+		if (limit) {
+			query += " LIMIT 12";
+		}
+
+		return CharacterDataRepository::GetWhere(db, query);
 	}
 
 	static uint32 GetSecondsSinceLastLogin(Database &db, const std::string& name)

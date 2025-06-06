@@ -1211,6 +1211,7 @@ bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app) {
 	if (!csr->updateDefault) {
 		m_character_set = csr->requested_set;
 		SendCharInfo(m_character_set);
+		return true;
 	} else {
 		auto r = AccountCharacterSetLimitsRepository::UpdateDefaultSetID(database, GetAccountID(), csr->requested_set);
 
@@ -1290,25 +1291,20 @@ bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
 
 bool Client::HandleCharacterSetMoveRequest(const EQApplicationPacket *app)
 {
-	if (app->size != sizeof(CharacterSetMoveRequest_Struct))
-	{
+	if (app->size != sizeof(CharacterSetMoveRequest_Struct)) {
 		LogError("Error: Malformed OP_CharacterSetMoveRequest");
 		return false;
 	}
 
 	CharacterSetMoveRequest_Struct *p = (CharacterSetMoveRequest_Struct *)app->pBuffer;
-	LogInfo("CharacterSetMoveRequest: set_id [{}] character_name [{}] AssignToSet [{}]",
-			p->set_id, p->character_name, p->AssignToSet);
-	if (p->AssignToSet)
-	{
-		int char_id = database.GetCharacterID(p->character_name);
-		AccountCharacterSetMembersRepository::AddCharacterToSet(database, p->set_id, char_id);
-	}
-	else
-	{
-		// Remove character from set
-		int char_id = database.GetCharacterID(p->character_name);
-		AccountCharacterSetMembersRepository::RemoveCharacterFromSet(database, p->set_id, char_id);
+	int character_id = database.GetCharacterID(p->character_name);
+
+	LogCharacterSets("CharacterSetMoveRequest: set_id [{}] character_name [{}] AssignToSet [{}]", p->set_id, p->character_name, p->AssignToSet);
+
+	if (p->AssignToSet) {
+		AccountCharacterSetMembersRepository::AddCharacterToSet(database, p->set_id, character_id);
+	} else {
+		AccountCharacterSetMembersRepository::RemoveCharacterFromSet(database, p->set_id, character_id);
 	}
 
 	SendCharInfo(m_character_set);

@@ -22,24 +22,16 @@ public:
         return InsertOne(db, entity);
     }
 
-    static bool DeleteCharacterSetIfEmpty(
-        Database& db,
-        int32_t set_id
-    )
-    {
-        auto member_count = AccountCharacterSetMembersRepository::Count(
-            db,
-            fmt::format("set_id = {}", set_id)
-        );
+    static bool DeleteCharacterSetIfEmpty(Database& db, int32_t set_id) {
+        auto c = AccountCharacterSetMembersRepository::Count(db, fmt::format("set_id = {}", set_id));
 
-        if (member_count > 0) {
-            return false; // Cannot delete sets with members
+        if (c > 0) {
+            return false;
         }
 
         int rows_affected = DeleteOne(db, set_id);
         return rows_affected > 0;
     }
-
 
     static bool RenameCharacterSet(
         Database& db,

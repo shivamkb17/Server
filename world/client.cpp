@@ -1215,14 +1215,13 @@ bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app) {
 		auto r = AccountCharacterSetLimitsRepository::UpdateDefaultSetID(database, GetAccountID(), csr->requested_set);
 
 		if (r)	{
-			LogInfo("Account [{}] updated default character set to [{}]", GetAccountID(), csr->requested_set);
-		} else {
-			LogError("Failed to update default character set for account [{}]", GetAccountID());
-			return false;
+			LogCharacterSets("Account [{}] updated default character set to [{}]", GetAccountID(), csr->requested_set);
+			return true;
 		}
-	}
 
-	return true;
+		LogError("Failed to update default character set for account [{}]", GetAccountID());
+		return false;
+	}
 }
 
 bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
@@ -1233,19 +1232,20 @@ bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
 
 	CharacterSetCreateRequest_Struct *p = (CharacterSetCreateRequest_Struct *)app->pBuffer;
 
+
+	auto set_info = AccountCharacterSetLimitsRepository::FindOne(database, GetAccountID());
+	int set_count = AccountCharacterSetsRepository::GetAccountCharacterSets(database, GetAccountID()).size();
+	int max_sets = RuleI(Custom, MaximumBaseCharacterSets) + set_info.extra_sets;
+
 	// Create
 	if (!p->set_id)	{
-		int set_count = AccountCharacterSetsRepository::GetAccountCharacterSets(database, GetAccountID()).size();
-		auto set_info = AccountCharacterSetLimitsRepository::FindOne(database, GetAccountID());
-
-		int max_sets = RuleI(Custom, MaximumBaseCharacterSets) + set_info.extra_sets;
 
 		if (set_info.created_sets >= max_sets) {
-			LogInfo("Account [{}] has reached the maximum number of character sets [{}]", GetAccountID(), max_sets);
+			LogCharacterSets("Account [{}] has reached the maximum number of character sets [{}]", GetAccountID(), max_sets);
 			return false;
 		}
 
-		LogInfo("Creating Set # {} for Account [{}] out of [{}] sets allowed", set_info.created_sets + 1, GetAccountID(), max_sets);
+		LogCharacterSets("Creating Set # {} for Account [{}] out of [{}] sets allowed", set_info.created_sets + 1, GetAccountID(), max_sets);
 
 		auto r = database.CreateCharacterSet(GetAccountID(), p->name);
 
@@ -1268,47 +1268,34 @@ bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
 	if (p->set_id && strlen(p->name)) {
 		auto r = AccountCharacterSetsRepository::RenameCharacterSet(database, m_character_set, p->name);
 		if (r) {
+			LogCharacterSets("Renamed Character Set ID [{}] to [{}] for Account [{}]", m_character_set, p->name, GetAccountID());
 			SendCharInfo(m_character_set);
 		}
 	}
 
-	else if (p->set_id != 0 && strlen(p->name) == 0)
-	{
-		// Delete
-		auto result = AccountCharacterSetsRepository::DeleteCharacterSetIfEmpty(database, m_character_set);
-		if (result)
-		{
-			int createdSetCount = AccountCharacterSetsRepository::GetAccountCharacterSets(database, GetAccountID()).size();
+	// Delete
+	else if (p->set_id && !strlen(p->name))	{
+		auto r = AccountCharacterSetsRepository::DeleteCharacterSetIfEmpty(database, m_character_set);
 
-			auto accountSetInfo = AccountCharacterSetLimitsRepository::GetWhere(
-				database,
-				fmt::format("`account_id` = {}", GetAccountID()));
-
-			int maxSets;
-			if (accountSetInfo.empty())
-			{
-				maxSets = RuleI(Custom, MaximumBaseCharacterSets);
-			}
-			else
-			{
-				maxSets = accountSetInfo[0].extra_sets;
-			}
-
-			if (AccountCharacterSetLimitsRepository::UpdateOrCreateAccountCharacterSetLimits(
-					database,
-					GetAccountID(),
-					createdSetCount,
-					maxSets,
-					AccountCharacterSetLimitsRepository::GetDefaultSetId(database, GetAccountID())))
-			{
-				LogInfo("Account [{}] character set data updated ", GetAccountID());
-			}
-			else
-			{
-				LogError("Failed to update character set limits for account [{}]", GetAccountID());
-			}
-			SendCharInfo(m_character_set);
+		if (!r) {
+			LogCharacterSetsDetail("Delete request recieved for non-existant Character Set ID [{}] Name [{}] for Account [{}].", p->set_id, p->name, GetAccountID());
+			return false;
 		}
+
+		if (AccountCharacterSetLimitsRepository::UpdateOrCreateAccountCharacterSetLimits(
+				database,
+				GetAccountID(),
+				set_count,
+				max_sets,
+				AccountCharacterSetLimitsRepository::GetDefaultSetId(database, GetAccountID())))
+		{
+			LogInfo("Account [{}] character set data updated ", GetAccountID());
+		}
+		else
+		{
+			LogError("Failed to update character set limits for account [{}]", GetAccountID());
+		}
+		SendCharInfo(m_character_set);
 	}
 
 	return true;

@@ -28,6 +28,11 @@
 #include "../common/eq_packet_structs.h"
 #include "cliententry.h"
 
+#include "../common/repositories/account_character_sets_repository.h"
+#include "../common/repositories/account_character_set_limits_repository.h"
+#include "../common/repositories/account_character_set_members_repository.h"
+#include "../common/repositories/character_data_repository.h"
+
 class EQApplicationPacket;
 class EQStreamInterface;
 
@@ -76,6 +81,23 @@ public:
 		EQ::InventoryProfile *p_inventory_profile
 	);
 
+	void SendCharacterSetInfo();
+	void PopulateCharacterDataCache();
+	void WritebackCharacterDataCache();
+	std::vector<uint32> GetCharacterIDsForSetFromCache(uint32 set_id);
+	bool AddCharacterToSetInCache(uint32 set_id, uint32 character_id);
+	std::vector<CharacterDataRepository::CharacterData> GetCharactersForSetFromCache(uint32 set_id);
+	AccountCharacterSetsRepository::AccountCharacterSets CreateCharacterSetInCache(const std::string& set_name);
+	bool DeleteCharacterSetIfEmptyFromCache(uint32 set_id);
+	bool RenameCharacterSetInCache(uint32 set_id, const std::string& new_name);
+	void RemoveCharacterFromSetInCache(uint32 character_id, uint32 set_id);
+
+	uint32 GetMaxCharacterSets();
+	uint32 GetAvailableEoMUnlocks();
+	bool UnlockCharacterSetWithEoM();
+	bool UnlockCharacterSetWithBonus();
+	bool CanCreateMoreCharacterSets();
+
 private:
 
 	uint32	ip;
@@ -91,6 +113,11 @@ private:
 
 	uint32  m_selected_character_set;
 	uint32  m_default_character_set;
+
+	AccountCharacterSetLimitsRepository::AccountCharacterSetLimits m_character_set_meta;
+	std::vector<AccountCharacterSetsRepository::AccountCharacterSets> m_character_sets;
+	std::vector<AccountCharacterSetMembersRepository::AccountCharacterSetMembers> m_character_set_members;
+	std::vector<CharacterDataRepository::CharacterData> m_account_characters;
 
 	bool StartInTutorial;
 	EQ::versions::ClientVersion m_ClientVersion;

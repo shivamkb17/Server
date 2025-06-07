@@ -15122,14 +15122,3 @@ void Client::CheckItemDiscoverability(uint32 item_id)
 
 	DiscoverItem(item_id);
 }
-
-bool Client::SetCharacterSetCap(int cap)
-{
-	auto result = AccountCharacterSetLimitsRepository::SetExtraSets(database, AccountID(), cap);
-	return result;
-}
-int Client::GetCharacterSetCap()
-{
-	auto result = AccountCharacterSetLimitsRepository::GetMaxSets(database, AccountID());
-	return result;
-}

@@ -279,11 +279,11 @@ CREATE TABLE `character_dynamic_aa_timers` (
 		.match = "",
 		.sql = R"(
 CREATE TABLE `account_character_sets` (
-	`set_id` int(11) NOT NULL AUTO_INCREMENT,
 	`account_id` int(11) NOT NULL,
+	`set_id` int(11) NOT NULL,
 	`set_name` varchar(255) NOT NULL,
 	`created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
-	PRIMARY KEY (`set_id`),
+	PRIMARY KEY (`account_id`, `set_id`),
 	UNIQUE KEY `unique_account_set_name` (`account_id`, `set_name`),
 	INDEX `idx_account_id` (`account_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -300,11 +300,13 @@ CREATE TABLE `account_character_sets` (
 		.match = "",
 		.sql = R"(
 CREATE TABLE `account_character_set_members` (
+	`account_id` int(11) NOT NULL,
 	`set_id` int(11) NOT NULL,
 	`character_id` int(11) NOT NULL,
-	PRIMARY KEY (`set_id`, `character_id`),
+	PRIMARY KEY (`account_id`, `set_id`, `character_id`),
+	INDEX `idx_set_id` (`set_id`),
 	INDEX `idx_character_id` (`character_id`),
-	INDEX `idx_set_id` (`set_id`)
+	INDEX `idx_account_set` (`account_id`, `set_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 )",
 		.content_schema_update = false,
@@ -318,13 +320,14 @@ CREATE TABLE `account_character_set_members` (
 		.condition = "empty",
 		.match = "",
 		.sql = R"(
-CREATE TABLE `account_character_set_limits` (
-	`account_id` int(11) NOT NULL,
-	`extra_sets` int(11) NOT NULL,
-	`default_set` int(11) NOT NULL,
-	PRIMARY KEY (`account_id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-)",
+	CREATE TABLE `account_character_set_limits` (
+		`account_id` int(11) NOT NULL,
+		`eom_sets` int(11) NOT NULL DEFAULT 0,
+		`bonus_sets` int(11) NOT NULL DEFAULT 0,
+		`default_set` int(11) NOT NULL DEFAULT 0,
+		PRIMARY KEY (`account_id`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+	)",
 		.content_schema_update = false,
 	},
 

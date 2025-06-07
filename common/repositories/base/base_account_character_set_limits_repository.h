@@ -20,7 +20,8 @@ class BaseAccountCharacterSetLimitsRepository {
 public:
 	struct AccountCharacterSetLimits {
 		int32_t account_id;
-		int32_t extra_sets;
+		int32_t eom_sets;
+		int32_t bonus_sets;
 		int32_t default_set;
 	};
 
@@ -33,7 +34,8 @@ public:
 	{
 		return {
 			"account_id",
-			"extra_sets",
+			"eom_sets",
+			"bonus_sets",
 			"default_set",
 		};
 	}
@@ -42,7 +44,8 @@ public:
 	{
 		return {
 			"account_id",
-			"extra_sets",
+			"eom_sets",
+			"bonus_sets",
 			"default_set",
 		};
 	}
@@ -85,7 +88,8 @@ public:
 		AccountCharacterSetLimits e{};
 
 		e.account_id  = 0;
-		e.extra_sets  = 0;
+		e.eom_sets    = 0;
+		e.bonus_sets  = 0;
 		e.default_set = 0;
 
 		return e;
@@ -124,8 +128,9 @@ public:
 			AccountCharacterSetLimits e{};
 
 			e.account_id  = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.extra_sets  = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
-			e.default_set = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
+			e.eom_sets    = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.bonus_sets  = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
+			e.default_set = row[3] ? static_cast<int32_t>(atoi(row[3])) : 0;
 
 			return e;
 		}
@@ -160,8 +165,9 @@ public:
 		auto columns = Columns();
 
 		v.push_back(columns[0] + " = " + std::to_string(e.account_id));
-		v.push_back(columns[1] + " = " + std::to_string(e.extra_sets));
-		v.push_back(columns[2] + " = " + std::to_string(e.default_set));
+		v.push_back(columns[1] + " = " + std::to_string(e.eom_sets));
+		v.push_back(columns[2] + " = " + std::to_string(e.bonus_sets));
+		v.push_back(columns[3] + " = " + std::to_string(e.default_set));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -184,7 +190,8 @@ public:
 		std::vector<std::string> v;
 
 		v.push_back(std::to_string(e.account_id));
-		v.push_back(std::to_string(e.extra_sets));
+		v.push_back(std::to_string(e.eom_sets));
+		v.push_back(std::to_string(e.bonus_sets));
 		v.push_back(std::to_string(e.default_set));
 
 		auto results = db.QueryDatabase(
@@ -216,7 +223,8 @@ public:
 			std::vector<std::string> v;
 
 			v.push_back(std::to_string(e.account_id));
-			v.push_back(std::to_string(e.extra_sets));
+			v.push_back(std::to_string(e.eom_sets));
+			v.push_back(std::to_string(e.bonus_sets));
 			v.push_back(std::to_string(e.default_set));
 
 			insert_chunks.push_back("(" + Strings::Implode(",", v) + ")");
@@ -252,8 +260,9 @@ public:
 			AccountCharacterSetLimits e{};
 
 			e.account_id  = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.extra_sets  = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
-			e.default_set = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
+			e.eom_sets    = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.bonus_sets  = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
+			e.default_set = row[3] ? static_cast<int32_t>(atoi(row[3])) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -279,8 +288,9 @@ public:
 			AccountCharacterSetLimits e{};
 
 			e.account_id  = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.extra_sets  = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
-			e.default_set = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
+			e.eom_sets    = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.bonus_sets  = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
+			e.default_set = row[3] ? static_cast<int32_t>(atoi(row[3])) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -356,7 +366,8 @@ public:
 		std::vector<std::string> v;
 
 		v.push_back(std::to_string(e.account_id));
-		v.push_back(std::to_string(e.extra_sets));
+		v.push_back(std::to_string(e.eom_sets));
+		v.push_back(std::to_string(e.bonus_sets));
 		v.push_back(std::to_string(e.default_set));
 
 		auto results = db.QueryDatabase(
@@ -381,7 +392,8 @@ public:
 			std::vector<std::string> v;
 
 			v.push_back(std::to_string(e.account_id));
-			v.push_back(std::to_string(e.extra_sets));
+			v.push_back(std::to_string(e.eom_sets));
+			v.push_back(std::to_string(e.bonus_sets));
 			v.push_back(std::to_string(e.default_set));
 
 			insert_chunks.push_back("(" + Strings::Implode(",", v) + ")");

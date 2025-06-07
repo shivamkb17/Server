@@ -44,7 +44,7 @@ WorldDatabase content_db;
 extern std::vector<RaceClassAllocation> character_create_allocations;
 extern std::vector<RaceClassCombos> character_create_race_class_combos;
 
-void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **out_app, uint32 client_version_bit, uint32 character_set)
+void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **out_app, uint32 client_version_bit, std::vector<CharacterDataRepository::CharacterData> character_set)
 {
 	EQ::versions::ClientVersion
 		   client_version  = EQ::versions::ConvertClientVersionBitToClientVersion(client_version_bit);
@@ -59,7 +59,11 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **o
 		character_limit = 8;
 	}
 
-	auto characters = CharacterDataRepository::GetCharactersForSet(database, account_id, character_set, true);
+	auto characters = character_set;
+
+	if (characters.size() > character_limit) {
+		characters.resize(character_limit);
+	}
 
 	size_t character_count = characters.size();
 	if (characters.empty()) {
@@ -466,112 +470,6 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **o
 
 		buff_ptr += sizeof(CharacterSelectEntry_Struct);
 	}
-}
-
-void WorldDatabase::GetCharacterSets(uint32 account_id, EQApplicationPacket **out_app, uint32 selected_set) {
-	auto sets = AccountCharacterSetsRepository::GetAccountCharacterSets(database, account_id);
-	auto characters = CharacterDataRepository::GetAllCharactersForAccount(database, account_id);
-
-	if (sets.empty()) {
-		auto d = AccountCharacterSetsRepository::CreateCharacterSet(database, account_id, "Default");
-		sets.push_back(d);
-
-		for (auto character : characters) {
-			AccountCharacterSetMembersRepository::AddCharacterToSet(database, d.set_id, character.id);
-		}
-	}
-
-	std::unordered_map<uint32, std::vector<uint32>> char_sets;
-	for (const auto &set : sets) {
-		auto sc = AccountCharacterSetMembersRepository::GetCharacterIDsForSet(database, set.set_id);
-		for (uint32 cid : sc) {
-			char_sets[cid].push_back(set.set_id);
-		}
-	}
-
-	std::unordered_map<uint32, uint32> char_classes;
-	if (RuleB(Custom, MulticlassingEnabled)) {
-		std::vector<uint32> cids;
-		for (const auto &ch : characters) {
-			cids.push_back(ch.id);
-		}
-
-		auto b = DataBucketsRepository::GetWhere(
-			database,
-			"`key` = 'GestaltClasses' AND character_id IN (" + Strings::Join(cids, ",") + ")");
-
-		for (const auto &bucket : b) {
-			char_classes[bucket.character_id] = static_cast<uint32>(Strings::ToInt(bucket.value));
-		}
-	}
-
-	size_t packet_size = sizeof(CharacterSetList_Struct) +
-						 (sizeof(CharacterEntry_Struct) * characters.size());
-
-	*out_app = new EQApplicationPacket(OP_SendCharacterSets, packet_size);
-	unsigned char *p = (*out_app)->pBuffer;
-
-	auto *l = reinterpret_cast<CharacterSetList_Struct *>(p);
-	memset(l, 0, sizeof(CharacterSetList_Struct));
-
-	l->selected_set = selected_set;
-	l->default_set = AccountCharacterSetLimitsRepository::GetDefaultSetID(database, account_id);
-
-	if (!l->default_set) {
-		auto d = AccountCharacterSetsRepository::CreateCharacterSet(database, account_id, "Default");
-		auto characters = CharacterDataRepository::GetAllCharactersForAccount(database, account_id);
-
-		for (auto character : characters) {
-			AccountCharacterSetMembersRepository::AddCharacterToSet(database, d.set_id, character.id);
-		}
-
-		l->default_set = d.set_id;
-
-		AccountCharacterSetLimitsRepository::SetDefaultSetID(database, account_id, d.set_id);
-	}
-
-	l->set_count = std::min(sets.size(), static_cast<size_t>(64));
-	l->character_count = characters.size();
-	l->max_sets = AccountCharacterSetLimitsRepository::GetMaxSets(database, account_id);
-
-	for (size_t i = 0; i < l->set_count; ++i) {
-		const auto &set = sets[i];
-		l->sets[i].set_id = set.set_id;
-		strncpy(l->sets[i].name, set.set_name.c_str(), sizeof(l->sets[i].name) - 1);
-		l->sets[i].name[sizeof(l->sets[i].name) - 1] = '\0';
-	}
-
-	p += sizeof(CharacterSetList_Struct);
-
-	for (size_t i = 0; i < characters.size(); ++i) {
-		const auto &ch = characters[i];
-		auto *e = reinterpret_cast<CharacterEntry_Struct *>(p);
-
-		memset(e, 0, sizeof(CharacterEntry_Struct));
-
-		e->character_id = ch.id;
-		strncpy(e->name, ch.name.c_str(), sizeof(e->name) - 1);
-		e->name[sizeof(e->name) - 1] = '\0';
-		e->level = ch.level;
-		e->classes = char_classes[ch.id];
-
-		const auto &csl = char_sets[ch.id];
-		size_t cnt = std::min(csl.size(), static_cast<size_t>(64));
-		for (size_t j = 0; j < cnt; ++j) {
-			e->assigned_sets[j] = csl[j];
-		}
-
-		p += sizeof(CharacterEntry_Struct);
-	}
-}
-
-AccountCharacterSetsRepository::AccountCharacterSets WorldDatabase::CreateCharacterSet(uint32 account_id, std::string set_name)
-{
-	auto result = AccountCharacterSetsRepository::CreateCharacterSet(database, account_id, set_name);
-
-	LogDebug("Attempted to create character set, result: [{}]", result.set_name);
-
-	return result;
 }
 
 int WorldDatabase::MoveCharacterToBind(int character_id, uint8 bind_number)

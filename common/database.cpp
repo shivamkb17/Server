@@ -407,6 +407,7 @@ bool Database::DeleteCharacter(const std::string& name)
 			);
 		}
 
+		// This makes an immedaite db remove for character sets as there are places other than world where this can happen.
 		AccountCharacterSetMembersRepository::RemoveCharacterFromAllSets(*this, e.id);
 
 		return true;

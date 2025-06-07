@@ -19,18 +19,20 @@
 class BaseAccountCharacterSetMembersRepository {
 public:
 	struct AccountCharacterSetMembers {
+		int32_t account_id;
 		int32_t set_id;
 		int32_t character_id;
 	};
 
 	static std::string PrimaryKey()
 	{
-		return std::string("set_id");
+		return std::string("account_id");
 	}
 
 	static std::vector<std::string> Columns()
 	{
 		return {
+			"account_id",
 			"set_id",
 			"character_id",
 		};
@@ -39,6 +41,7 @@ public:
 	static std::vector<std::string> SelectColumns()
 	{
 		return {
+			"account_id",
 			"set_id",
 			"character_id",
 		};
@@ -81,6 +84,7 @@ public:
 	{
 		AccountCharacterSetMembers e{};
 
+		e.account_id   = 0;
 		e.set_id       = 0;
 		e.character_id = 0;
 
@@ -93,7 +97,7 @@ public:
 	)
 	{
 		for (auto &account_character_set_members : account_character_set_memberss) {
-			if (account_character_set_members.set_id == account_character_set_members_id) {
+			if (account_character_set_members.account_id == account_character_set_members_id) {
 				return account_character_set_members;
 			}
 		}
@@ -119,8 +123,9 @@ public:
 		if (results.RowCount() == 1) {
 			AccountCharacterSetMembers e{};
 
-			e.set_id       = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.character_id = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.account_id   = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.set_id       = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.character_id = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
 
 			return e;
 		}
@@ -154,8 +159,9 @@ public:
 
 		auto columns = Columns();
 
-		v.push_back(columns[0] + " = " + std::to_string(e.set_id));
-		v.push_back(columns[1] + " = " + std::to_string(e.character_id));
+		v.push_back(columns[0] + " = " + std::to_string(e.account_id));
+		v.push_back(columns[1] + " = " + std::to_string(e.set_id));
+		v.push_back(columns[2] + " = " + std::to_string(e.character_id));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -163,7 +169,7 @@ public:
 				TableName(),
 				Strings::Implode(", ", v),
 				PrimaryKey(),
-				e.set_id
+				e.account_id
 			)
 		);
 
@@ -177,6 +183,7 @@ public:
 	{
 		std::vector<std::string> v;
 
+		v.push_back(std::to_string(e.account_id));
 		v.push_back(std::to_string(e.set_id));
 		v.push_back(std::to_string(e.character_id));
 
@@ -189,7 +196,7 @@ public:
 		);
 
 		if (results.Success()) {
-			e.set_id = results.LastInsertedID();
+			e.account_id = results.LastInsertedID();
 			return e;
 		}
 
@@ -208,6 +215,7 @@ public:
 		for (auto &e: entries) {
 			std::vector<std::string> v;
 
+			v.push_back(std::to_string(e.account_id));
 			v.push_back(std::to_string(e.set_id));
 			v.push_back(std::to_string(e.character_id));
 
@@ -243,8 +251,9 @@ public:
 		for (auto row = results.begin(); row != results.end(); ++row) {
 			AccountCharacterSetMembers e{};
 
-			e.set_id       = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.character_id = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.account_id   = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.set_id       = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.character_id = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -269,8 +278,9 @@ public:
 		for (auto row = results.begin(); row != results.end(); ++row) {
 			AccountCharacterSetMembers e{};
 
-			e.set_id       = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.character_id = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.account_id   = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.set_id       = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.character_id = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -345,6 +355,7 @@ public:
 	{
 		std::vector<std::string> v;
 
+		v.push_back(std::to_string(e.account_id));
 		v.push_back(std::to_string(e.set_id));
 		v.push_back(std::to_string(e.character_id));
 
@@ -369,6 +380,7 @@ public:
 		for (auto &e: entries) {
 			std::vector<std::string> v;
 
+			v.push_back(std::to_string(e.account_id));
 			v.push_back(std::to_string(e.set_id));
 			v.push_back(std::to_string(e.character_id));
 

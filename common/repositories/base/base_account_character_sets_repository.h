@@ -19,22 +19,22 @@
 class BaseAccountCharacterSetsRepository {
 public:
 	struct AccountCharacterSets {
-		int32_t     set_id;
 		int32_t     account_id;
+		int32_t     set_id;
 		std::string set_name;
 		time_t      created_at;
 	};
 
 	static std::string PrimaryKey()
 	{
-		return std::string("set_id");
+		return std::string("account_id");
 	}
 
 	static std::vector<std::string> Columns()
 	{
 		return {
-			"set_id",
 			"account_id",
+			"set_id",
 			"set_name",
 			"created_at",
 		};
@@ -43,8 +43,8 @@ public:
 	static std::vector<std::string> SelectColumns()
 	{
 		return {
-			"set_id",
 			"account_id",
+			"set_id",
 			"set_name",
 			"UNIX_TIMESTAMP(created_at)",
 		};
@@ -87,8 +87,8 @@ public:
 	{
 		AccountCharacterSets e{};
 
-		e.set_id     = 0;
 		e.account_id = 0;
+		e.set_id     = 0;
 		e.set_name   = "";
 		e.created_at = std::time(nullptr);
 
@@ -101,7 +101,7 @@ public:
 	)
 	{
 		for (auto &account_character_sets : account_character_setss) {
-			if (account_character_sets.set_id == account_character_sets_id) {
+			if (account_character_sets.account_id == account_character_sets_id) {
 				return account_character_sets;
 			}
 		}
@@ -127,8 +127,8 @@ public:
 		if (results.RowCount() == 1) {
 			AccountCharacterSets e{};
 
-			e.set_id     = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.account_id = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.account_id = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.set_id     = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
 			e.set_name   = row[2] ? row[2] : "";
 			e.created_at = strtoll(row[3] ? row[3] : "-1", nullptr, 10);
 
@@ -164,7 +164,8 @@ public:
 
 		auto columns = Columns();
 
-		v.push_back(columns[1] + " = " + std::to_string(e.account_id));
+		v.push_back(columns[0] + " = " + std::to_string(e.account_id));
+		v.push_back(columns[1] + " = " + std::to_string(e.set_id));
 		v.push_back(columns[2] + " = '" + Strings::Escape(e.set_name) + "'");
 		v.push_back(columns[3] + " = FROM_UNIXTIME(" + (e.created_at > 0 ? std::to_string(e.created_at) : "null") + ")");
 
@@ -174,7 +175,7 @@ public:
 				TableName(),
 				Strings::Implode(", ", v),
 				PrimaryKey(),
-				e.set_id
+				e.account_id
 			)
 		);
 
@@ -188,8 +189,8 @@ public:
 	{
 		std::vector<std::string> v;
 
-		v.push_back(std::to_string(e.set_id));
 		v.push_back(std::to_string(e.account_id));
+		v.push_back(std::to_string(e.set_id));
 		v.push_back("'" + Strings::Escape(e.set_name) + "'");
 		v.push_back("FROM_UNIXTIME(" + (e.created_at > 0 ? std::to_string(e.created_at) : "null") + ")");
 
@@ -202,7 +203,7 @@ public:
 		);
 
 		if (results.Success()) {
-			e.set_id = results.LastInsertedID();
+			e.account_id = results.LastInsertedID();
 			return e;
 		}
 
@@ -221,8 +222,8 @@ public:
 		for (auto &e: entries) {
 			std::vector<std::string> v;
 
-			v.push_back(std::to_string(e.set_id));
 			v.push_back(std::to_string(e.account_id));
+			v.push_back(std::to_string(e.set_id));
 			v.push_back("'" + Strings::Escape(e.set_name) + "'");
 			v.push_back("FROM_UNIXTIME(" + (e.created_at > 0 ? std::to_string(e.created_at) : "null") + ")");
 
@@ -258,8 +259,8 @@ public:
 		for (auto row = results.begin(); row != results.end(); ++row) {
 			AccountCharacterSets e{};
 
-			e.set_id     = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.account_id = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.account_id = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.set_id     = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
 			e.set_name   = row[2] ? row[2] : "";
 			e.created_at = strtoll(row[3] ? row[3] : "-1", nullptr, 10);
 
@@ -286,8 +287,8 @@ public:
 		for (auto row = results.begin(); row != results.end(); ++row) {
 			AccountCharacterSets e{};
 
-			e.set_id     = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
-			e.account_id = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
+			e.account_id = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
+			e.set_id     = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
 			e.set_name   = row[2] ? row[2] : "";
 			e.created_at = strtoll(row[3] ? row[3] : "-1", nullptr, 10);
 
@@ -364,8 +365,8 @@ public:
 	{
 		std::vector<std::string> v;
 
-		v.push_back(std::to_string(e.set_id));
 		v.push_back(std::to_string(e.account_id));
+		v.push_back(std::to_string(e.set_id));
 		v.push_back("'" + Strings::Escape(e.set_name) + "'");
 		v.push_back("FROM_UNIXTIME(" + (e.created_at > 0 ? std::to_string(e.created_at) : "null") + ")");
 
@@ -390,8 +391,8 @@ public:
 		for (auto &e: entries) {
 			std::vector<std::string> v;
 
-			v.push_back(std::to_string(e.set_id));
 			v.push_back(std::to_string(e.account_id));
+			v.push_back(std::to_string(e.set_id));
 			v.push_back("'" + Strings::Escape(e.set_name) + "'");
 			v.push_back("FROM_UNIXTIME(" + (e.created_at > 0 ? std::to_string(e.created_at) : "null") + ")");
 

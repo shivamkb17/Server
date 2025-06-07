@@ -273,9 +273,6 @@ public:
 	Client(); // mocking / testing
 	~Client();
 
-	bool SetCharacterSetCap(int cap);
-	int GetCharacterSetCap();
-
 	void ReconnectUCS();
 	void RecordStats();
 

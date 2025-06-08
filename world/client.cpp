@@ -70,23 +70,23 @@
 #include <zlib.h>
 #include <limits.h>
 
-//FatherNitwit: uncomment to enable my IP based authentication hack
-//#define IPBASED_AUTH_HACK
+// FatherNitwit: uncomment to enable my IP based authentication hack
+// #define IPBASED_AUTH_HACK
 
 // Disgrace: for windows compile
 #ifdef _WINDOWS
-	#include <winsock2.h>
-	#include <windows.h>
+#include <winsock2.h>
+#include <windows.h>
 #else
 
-	#ifdef FREEBSD //Timothy Whitman - January 7, 2003
-		#include <sys/types.h>
-	#endif
+#ifdef FREEBSD // Timothy Whitman - January 7, 2003
+#include <sys/types.h>
+#endif
 
-	#include <sys/socket.h>
-	#include <netinet/in.h>
-	#include <arpa/inet.h>
-	#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #endif
 
 std::vector<RaceClassAllocation> character_create_allocations;
@@ -101,22 +101,24 @@ extern volatile bool RunLoops;
 extern volatile bool UCSServerAvailable_;
 
 // unused ATM, but here for reference, should match RoF2
-enum class NameApprovalResponse : int {
+enum class NameApprovalResponse : int
+{
 	NotValid = -1, // string ID 1576
-	Rejected = 0, // string ID 1581
+	Rejected = 0,  // string ID 1581
 	Approved = 1,
-	CharacterLimit = 2, // string ID 1591 older clients mention 1 char on server
-	ThreeDeity = 3, // string ID 5502. 3 toons same deity team limit
+	CharacterLimit = 2,	 // string ID 1591 older clients mention 1 char on server
+	ThreeDeity = 3,		 // string ID 5502. 3 toons same deity team limit
 	HeadStartPreOoW = 4, // string ID 6862, head start failed due to OoW not being unlocked
-	HeadStartNoOoW = 5, // string ID 6863, head start failed due to not owning OoW
+	HeadStartNoOoW = 5,	 // string ID 6863, head start failed due to not owning OoW
 };
 
-Client::Client(EQStreamInterface* ieqs)
-:	autobootup_timeout(RuleI(World, ZoneAutobootTimeoutMS)),
-	connect(1000),
-	eqs(ieqs) {
+Client::Client(EQStreamInterface *ieqs)
+	: autobootup_timeout(RuleI(World, ZoneAutobootTimeoutMS)),
+	  connect(1000),
+	  eqs(ieqs)
+{
 	// Live does not send datarate as of 3/11/2005
-	//eqs->SetDataRate(7);
+	// eqs->SetDataRate(7);
 	ip = eqs->GetRemoteIP();
 	port = ntohs(eqs->GetRemotePort());
 
@@ -138,7 +140,8 @@ Client::Client(EQStreamInterface* ieqs)
 	numclients++;
 }
 
-Client::~Client() {
+Client::~Client()
+{
 	WritebackCharacterDataCache();
 
 	if (RunLoops && cle && zone_id == 0)
@@ -152,7 +155,8 @@ Client::~Client() {
 	safe_delete(eqs);
 }
 
-void Client::SendLogServer() {
+void Client::SendLogServer()
+{
 	auto outapp = new EQApplicationPacket(OP_LogServer, sizeof(LogServer_Struct));
 	LogServer_Struct *l = (LogServer_Struct *)outapp->pBuffer;
 	const char *wsn = WorldConfig::get()->ShortName.c_str();
@@ -178,7 +182,8 @@ void Client::SendLogServer() {
 	safe_delete(outapp);
 }
 
-bool Client::CanTradeFVNoDropItem() {
+bool Client::CanTradeFVNoDropItem()
+{
 	const int16 admin_status = GetAdmin();
 	const int no_drop_flag = RuleI(World, FVNoDropFlag);
 	const int no_drop_min_admin_status = RuleI(Character, MinStatusForNoDropExemptions);
@@ -197,7 +202,8 @@ bool Client::CanTradeFVNoDropItem() {
 	return false;
 }
 
-void Client::SendEnterWorld(std::string name) {
+void Client::SendEnterWorld(std::string name)
+{
 	std::string live_name{};
 
 	if (is_player_zoning)
@@ -224,7 +230,8 @@ void Client::SendEnterWorld(std::string name) {
 	safe_delete(outapp);
 }
 
-void Client::SendExpansionInfo() {
+void Client::SendExpansionInfo()
+{
 	auto outapp = new EQApplicationPacket(OP_ExpansionInfo, sizeof(ExpansionInfo_Struct));
 	ExpansionInfo_Struct *eis = (ExpansionInfo_Struct *)outapp->pBuffer;
 
@@ -245,7 +252,8 @@ void Client::SendExpansionInfo() {
 	safe_delete(outapp);
 }
 
-void Client::SendCharInfo(uint32 character_set) {
+void Client::SendCharInfo(uint32 character_set)
+{
 	if (cle)
 	{
 		cle->SetOnline(CLE_Status::CharSelect);
@@ -305,7 +313,8 @@ void Client::SendCharInfo(uint32 character_set) {
 	safe_delete(outapp);
 }
 
-void Client::SendMaxCharCreate() {
+void Client::SendMaxCharCreate()
+{
 	auto outapp = new EQApplicationPacket(OP_SendMaxCharacters, sizeof(MaxCharacters_Struct));
 	MaxCharacters_Struct *mc = (MaxCharacters_Struct *)outapp->pBuffer;
 
@@ -317,7 +326,8 @@ void Client::SendMaxCharCreate() {
 	safe_delete(outapp);
 }
 
-void Client::SendMembership() {
+void Client::SendMembership()
+{
 	auto outapp = new EQApplicationPacket(OP_SendMembership, sizeof(Membership_Struct));
 	Membership_Struct *mc = (Membership_Struct *)outapp->pBuffer;
 
@@ -374,7 +384,8 @@ void Client::SendMembership() {
 	safe_delete(outapp);
 }
 
-void Client::SendMembershipSettings() {
+void Client::SendMembershipSettings()
+{
 	auto outapp = new EQApplicationPacket(OP_SendMembershipDetails, sizeof(Membership_Details_Struct));
 	Membership_Details_Struct *mds = (Membership_Details_Struct *)outapp->pBuffer;
 
@@ -483,14 +494,16 @@ void Client::SendMembershipSettings() {
 	safe_delete(outapp);
 }
 
-void Client::SendPostEnterWorld() {
+void Client::SendPostEnterWorld()
+{
 	auto outapp = new EQApplicationPacket(OP_PostEnterWorld, 1);
 	outapp->size = 0;
 	QueuePacket(outapp);
 	safe_delete(outapp);
 }
 
-bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
+bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app)
+{
 	if (app->size != sizeof(LoginInfo))
 	{
 		return false;
@@ -628,7 +641,8 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app) {
 	}
 }
 
-bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app) {
+bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app)
+{
 	if (GetAccountID() == 0)
 	{
 		LogInfo("Name approval request with no logged in account");
@@ -711,7 +725,8 @@ bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app) {
 	return true;
 }
 
-bool Client::HandleGenerateRandomNamePacket(const EQApplicationPacket *app) {
+bool Client::HandleGenerateRandomNamePacket(const EQApplicationPacket *app)
+{
 	char newName[17] = {0};
 	bool unique = false;
 
@@ -786,7 +801,8 @@ bool Client::HandleGenerateRandomNamePacket(const EQApplicationPacket *app) {
 	return true;
 }
 
-bool Client::HandleCharacterCreateRequestPacket(const EQApplicationPacket *app) {
+bool Client::HandleCharacterCreateRequestPacket(const EQApplicationPacket *app)
+{
 	// New OpCode in SoF
 	uint32 allocs = character_create_allocations.size();
 	uint32 combos = character_create_race_class_combos.size();
@@ -837,7 +853,8 @@ bool Client::HandleCharacterCreateRequestPacket(const EQApplicationPacket *app) 
 	return true;
 }
 
-bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app) {
+bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app)
+{
 	if (GetAccountID() == 0) {
 		LogInfo("Account ID not set; unable to create character");
 		return false;
@@ -872,7 +889,8 @@ bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app) {
 	return true;
 }
 
-bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
+bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app)
+{
 	auto account_id = GetAccountID();
 	if (!account_id)
 	{
@@ -1190,7 +1208,8 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 	return true;
 }
 
-bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app) {
+bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app)
+{
 
 	uint32 char_acct_id = database.GetAccountIDByChar((char *)app->pBuffer);
 	if (char_acct_id == GetAccountID())
@@ -1286,7 +1305,8 @@ bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
     return true;
 }
 
-bool Client::HandleCharacterSetMoveRequest(const EQApplicationPacket *app) {
+bool Client::HandleCharacterSetMoveRequest(const EQApplicationPacket *app)
+{
     if (app->size != sizeof(CharacterSetMoveRequest_Struct)) {
         LogError("Error: Malformed OP_CharacterSetMoveRequest");
         return false;
@@ -1354,7 +1374,8 @@ bool Client::HandleCharacterSetUnlockRequest(const EQApplicationPacket *app) {
     }
 }
 
-bool Client::HandleZoneChangePacket(const EQApplicationPacket *app) {
+bool Client::HandleZoneChangePacket(const EQApplicationPacket *app)
+{
 	// HoT sends this to world while zoning and wants it echoed back.
 	if (m_ClientVersionBit & EQ::versions::maskRoFAndLater)
 	{
@@ -1363,7 +1384,8 @@ bool Client::HandleZoneChangePacket(const EQApplicationPacket *app) {
 	return true;
 }
 
-bool Client::HandlePacket(const EQApplicationPacket *app) {
+bool Client::HandlePacket(const EQApplicationPacket *app)
+{
 
 	EmuOpcode opcode = app->GetOpcode();
 
@@ -1503,7 +1525,8 @@ bool Client::HandlePacket(const EQApplicationPacket *app) {
 	return true;
 }
 
-bool Client::Process() {
+bool Client::Process()
+{
 	bool ret = true;
 	// bool sendguilds = true;
 	sockaddr_in to = {};
@@ -1560,7 +1583,8 @@ bool Client::Process() {
 	return ret;
 }
 
-bool Client::HandleChecksumPacket(const EQApplicationPacket *app) {
+bool Client::HandleChecksumPacket(const EQApplicationPacket *app)
+{
 	// Is checksum verification turned on
 	if (!RuleB(World, EnableChecksumVerification))
 	{
@@ -1623,7 +1647,8 @@ bool Client::HandleChecksumPacket(const EQApplicationPacket *app) {
 	return false;
 }
 
-bool Client::ChecksumVerificationCRCEQGame(uint64 checksum) {
+bool Client::ChecksumVerificationCRCEQGame(uint64 checksum)
+{
 	database.SetAccountCRCField(GetAccountID(), "crc_eqgame", checksum);
 
 	// Get checksum variable for eqgame.exe
@@ -1648,7 +1673,8 @@ bool Client::ChecksumVerificationCRCEQGame(uint64 checksum) {
 	return false;
 }
 
-bool Client::ChecksumVerificationCRCSkillCaps(uint64 checksum) {
+bool Client::ChecksumVerificationCRCSkillCaps(uint64 checksum)
+{
 	database.SetAccountCRCField(GetAccountID(), "crc_skillcaps", checksum);
 
 	// Get checksum variable for eqgame.exe
@@ -1673,7 +1699,8 @@ bool Client::ChecksumVerificationCRCSkillCaps(uint64 checksum) {
 	return false;
 }
 
-bool Client::ChecksumVerificationCRCBaseData(uint64 checksum) {
+bool Client::ChecksumVerificationCRCBaseData(uint64 checksum)
+{
 	database.SetAccountCRCField(GetAccountID(), "crc_basedata", checksum);
 
 	// Get checksum variable for skill_caps.txt
@@ -1698,7 +1725,8 @@ bool Client::ChecksumVerificationCRCBaseData(uint64 checksum) {
 	return false;
 }
 
-void Client::EnterWorld(bool TryBootup) {
+void Client::EnterWorld(bool TryBootup)
+{
 	if (zone_id == 0)
 		return;
 
@@ -1804,7 +1832,8 @@ void Client::EnterWorld(bool TryBootup) {
 	}
 }
 
-void Client::Clearance(int8 response) {
+void Client::Clearance(int8 response)
+{
 	ZoneServer *zs = nullptr;
 	if (instance_id > 0)
 	{
@@ -1910,7 +1939,8 @@ void Client::Clearance(int8 response) {
 		cle->SetOnline(CLE_Status::Zoning);
 }
 
-void Client::TellClientZoneUnavailable() {
+void Client::TellClientZoneUnavailable()
+{
 	auto outapp = new EQApplicationPacket(OP_ZoneUnavail, sizeof(ZoneUnavail_Struct));
 	ZoneUnavail_Struct *ua = (ZoneUnavail_Struct *)outapp->pBuffer;
 	const char *zonename = ZoneName(zone_id);
@@ -1929,14 +1959,16 @@ void Client::TellClientZoneUnavailable() {
 	SendCharInfo(m_selected_character_set);
 }
 
-void Client::QueuePacket(const EQApplicationPacket *app, bool ack_req) {
+void Client::QueuePacket(const EQApplicationPacket *app, bool ack_req)
+{
 	LogNetcode("Sending EQApplicationPacket OpCode {:#04x}", app->GetOpcode());
 
 	ack_req = true; // It's broke right now, dont delete this line till fix it. =P
 	eqs->QueuePacket(app, ack_req);
 }
 
-void Client::SendGuildList() {
+void Client::SendGuildList()
+{
 	auto guilds_list = guild_mgr.MakeGuildList();
 
 	std::stringstream ss;
@@ -1952,7 +1984,8 @@ void Client::SendGuildList() {
 }
 
 // @merth: I have no idea what this struct is for, so it's hardcoded for now
-void Client::SendApproveWorld() {
+void Client::SendApproveWorld()
+{
 	EQApplicationPacket *outapp;
 
 	// Send OPCode: OP_ApproveWorld, size: 544
@@ -1998,7 +2031,8 @@ void Client::SendApproveWorld() {
 	safe_delete(outapp);
 }
 
-bool Client::OPCharCreate(char *name, CharCreate_Struct *cc) {
+bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
+{
 	PlayerProfile_Struct pp;
 	EQ::InventoryProfile inv;
 
@@ -2257,7 +2291,8 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc) {
 }
 
 // returns true if the request is ok, false if there's an error
-bool CheckCharCreateInfoSoF(CharCreate_Struct *cc) {
+bool CheckCharCreateInfoSoF(CharCreate_Struct *cc)
+{
 	if (!cc)
 		return false;
 
@@ -2371,7 +2406,8 @@ bool CheckCharCreateInfoSoF(CharCreate_Struct *cc) {
 	return true;
 }
 
-bool CheckCharCreateInfoTitanium(CharCreate_Struct *cc) {
+bool CheckCharCreateInfoTitanium(CharCreate_Struct *cc)
+{
 	uint32 bSTR, bSTA, bAGI, bDEX, bWIS, bINT, bCHA, bTOTAL, cTOTAL, stat_points; // these are all uint32 in CharCreate_Struct, so we'll make them uint32 here to make the compiler shut up
 	int classtemp, racetemp;
 	int Charerrors = 0;
@@ -2546,7 +2582,8 @@ bool CheckCharCreateInfoTitanium(CharCreate_Struct *cc) {
 	return Charerrors == 0;
 }
 
-void Client::SetClassStartingSkills(PlayerProfile_Struct *pp) {
+void Client::SetClassStartingSkills(PlayerProfile_Struct *pp)
+{
 	/*
 	for (uint32 i = 0; i <= EQ::skills::HIGHEST_SKILL; ++i) {
 		if (pp->skills[i] == 0) {
@@ -2567,7 +2604,8 @@ void Client::SetClassStartingSkills(PlayerProfile_Struct *pp) {
 	*/
 }
 
-void Client::SetRaceStartingSkills(PlayerProfile_Struct *pp) {
+void Client::SetRaceStartingSkills(PlayerProfile_Struct *pp)
+{
 	switch (pp->race)
 	{
 	case BARBARIAN:
@@ -2631,7 +2669,8 @@ void Client::SetRaceStartingSkills(PlayerProfile_Struct *pp) {
 	}
 }
 
-void Client::SetRacialLanguages(PlayerProfile_Struct *pp) {
+void Client::SetRacialLanguages(PlayerProfile_Struct *pp)
+{
 	switch (pp->race)
 	{
 	case Race::Human:
@@ -2750,7 +2789,8 @@ void Client::SetRacialLanguages(PlayerProfile_Struct *pp) {
 	}
 }
 
-void Client::SetClassLanguages(PlayerProfile_Struct *pp) {
+void Client::SetClassLanguages(PlayerProfile_Struct *pp)
+{
 	// we only need to handle one class, but custom server might want to do more
 	switch (pp->class_)
 	{
@@ -2765,7 +2805,8 @@ void Client::SetClassLanguages(PlayerProfile_Struct *pp) {
 bool Client::StoreCharacter(
 	uint32 account_id,
 	PlayerProfile_Struct *p_player_profile_struct,
-	EQ::InventoryProfile *p_inventory_profile) {
+	EQ::InventoryProfile *p_inventory_profile)
+{
 	const uint32 character_id = database.GetCharacterID(p_player_profile_struct->name);
 	if (!character_id)
 	{
@@ -2837,7 +2878,8 @@ bool Client::StoreCharacter(
 	return true;
 }
 
-void Client::RecordPossibleHack(const std::string &message) {
+void Client::RecordPossibleHack(const std::string &message)
+{
 	if (player_event_logs.IsEventEnabled(PlayerEvent::POSSIBLE_HACK))
 	{
 		auto event = PlayerEvent::PossibleHackEvent{.message = message};
@@ -2858,7 +2900,8 @@ void Client::RecordPossibleHack(const std::string &message) {
 	}
 }
 
-void Client::SendGuildTributeFavorAndTimer(uint32 favor, uint32 time_remaining) {
+void Client::SendGuildTributeFavorAndTimer(uint32 favor, uint32 time_remaining)
+{
 	auto cle = GetCLE();
 	if (!cle)
 	{
@@ -2884,7 +2927,8 @@ void Client::SendGuildTributeFavorAndTimer(uint32 favor, uint32 time_remaining) 
 	}
 }
 
-void Client::SendGuildTributeOptInToggle(const GuildTributeMemberToggle *in) {
+void Client::SendGuildTributeOptInToggle(const GuildTributeMemberToggle *in)
+{
 	auto outapp = new EQApplicationPacket(OP_GuildOptInOut, sizeof(GuildTributeOptInOutReply_Struct));
 	auto data = (GuildTributeOptInOutReply_Struct *)outapp->pBuffer;
 
@@ -2900,7 +2944,8 @@ void Client::SendGuildTributeOptInToggle(const GuildTributeMemberToggle *in) {
 	safe_delete(outapp);
 }
 
-void Client::SendUnsupportedClientPacket(const std::string &message) {
+void Client::SendUnsupportedClientPacket(const std::string &message)
+{
 	EQApplicationPacket packet(OP_SendCharInfo, sizeof(CharacterSelect_Struct) + sizeof(CharacterSelectEntry_Struct));
 
 	unsigned char *buff_ptr = packet.pBuffer;

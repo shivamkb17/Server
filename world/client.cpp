@@ -246,7 +246,7 @@ void Client::SendCharInfo(uint32 character_set) {
 		cle->SetOnline(CLE_Status::CharSelect);
 	}
 
-	if (m_ClientVersionBit & EQ::versions::maskRoFAndLater)	{
+	if (m_ClientVersionBit & EQ::versions::maskRoFAndLater) {
 		SendMaxCharCreate();
 		SendMembership();
 		SendMembershipSettings();
@@ -288,7 +288,7 @@ void Client::SendCharInfo(uint32 character_set) {
 	EQApplicationPacket *outapp = nullptr;
 	database.GetCharSelectInfo(GetAccountID(), &outapp, m_ClientVersionBit, GetCharactersForSetFromCache(m_selected_character_set));
 
-	if (outapp)	{
+	if (outapp) {
 		QueuePacket(outapp);
 	}
 	else {
@@ -309,10 +309,9 @@ void Client::SendMaxCharCreate() {
 	safe_delete(outapp);
 }
 
-void Client::SendMembership()
-{
+void Client::SendMembership() {
 	auto outapp = new EQApplicationPacket(OP_SendMembership, sizeof(Membership_Struct));
-	Membership_Struct *mc = (Membership_Struct *)outapp->pBuffer;
+	Membership_Struct* mc = (Membership_Struct*)outapp->pBuffer;
 
 	/*
 		The remaining entry fields probably hold more membership restriction data that needs to be identified.
@@ -335,49 +334,48 @@ void Client::SendMembership()
 		That is 15 possible fields, and there are 15 unknowns in the struct...Coincidence?
 	*/
 
-	mc->membership = 2;			  // Hardcode to gold for now. We don't use anything else.
-	mc->races = 0x1ffff;		  // Available Races (4110 for silver)
-	mc->classes = 0x1ffff;		  // Available Classes (4614 for silver) - Was 0x101ffff
-	mc->entrysize = 21;			  // Number of membership setting entries below
-	mc->entries[0] = 0xffffffff;  // Max AA Restriction
-	mc->entries[1] = 0xffffffff;  // Max Level Restriction
-	mc->entries[2] = 0xffffffff;  // Max Char Slots per Account (not used by client?)
-	mc->entries[3] = 0xffffffff;  // 1 for Silver
-	mc->entries[4] = 0xffffffff;  // Main Inventory Size (0xffffffff on Live for Gold, but limiting to 8 until 10 is supported)
-	mc->entries[5] = 0xffffffff;  // Max Platinum per level
-	mc->entries[6] = 1;			  // 0 for Silver
-	mc->entries[7] = 1;			  // 0 for Silver
-	mc->entries[8] = 1;			  // 1 for Silver
-	mc->entries[9] = 0xffffffff;  // Unknown - Maybe Loyalty Points every 12 hours? 60 per week for Silver
-	mc->entries[10] = 1;		  // 1 for Silver
-	mc->entries[11] = 0xffffffff; // Shared Bank Slots
-	mc->entries[12] = 0xffffffff; // Unknown - Maybe Max Active Tasks?
-	mc->entries[13] = 1;		  // 1 for Silver
-	mc->entries[14] = 1;		  // 0 for Silver
-	mc->entries[15] = 1;		  // 0 for Silver
-	mc->entries[16] = 1;		  // 1 for Silver
-	mc->entries[17] = 1;		  // 0 for Silver
-	mc->entries[18] = 1;		  // 0 for Silver
-	mc->entries[19] = 0xffffffff; // 0 for Silver
-	mc->entries[20] = 0xffffffff; // 0 for Silver
+	mc->membership = 2;				//Hardcode to gold for now. We don't use anything else.
+	mc->races = 0x1ffff;			// Available Races (4110 for silver)
+	mc->classes = 0x1ffff;			// Available Classes (4614 for silver) - Was 0x101ffff
+	mc->entrysize = 21;				// Number of membership setting entries below
+	mc->entries[0] = 0xffffffff;	// Max AA Restriction
+	mc->entries[1] = 0xffffffff;	// Max Level Restriction
+	mc->entries[2] = 0xffffffff;	// Max Char Slots per Account (not used by client?)
+	mc->entries[3] = 0xffffffff;	// 1 for Silver
+	mc->entries[4] = 0xffffffff;	// Main Inventory Size (0xffffffff on Live for Gold, but limiting to 8 until 10 is supported)
+	mc->entries[5] = 0xffffffff;	// Max Platinum per level
+	mc->entries[6] = 1;				// 0 for Silver
+	mc->entries[7] = 1;				// 0 for Silver
+	mc->entries[8] = 1;				// 1 for Silver
+	mc->entries[9] = 0xffffffff;	// Unknown - Maybe Loyalty Points every 12 hours? 60 per week for Silver
+	mc->entries[10] = 1;			// 1 for Silver
+	mc->entries[11] = 0xffffffff;	// Shared Bank Slots
+	mc->entries[12] = 0xffffffff;	// Unknown - Maybe Max Active Tasks?
+	mc->entries[13] = 1;			// 1 for Silver
+	mc->entries[14] = 1;			// 0 for Silver
+	mc->entries[15] = 1;			// 0 for Silver
+	mc->entries[16] = 1;			// 1 for Silver
+	mc->entries[17] = 1;			// 0 for Silver
+	mc->entries[18] = 1;			// 0 for Silver
+	mc->entries[19] = 0xffffffff;	// 0 for Silver
+	mc->entries[20] = 0xffffffff;	// 0 for Silver
 	mc->exit_url_length = 0;
-	// mc->exit_url = 0; // Used on Live: "http://www.everquest.com/free-to-play/exit-silver"
+	//mc->exit_url = 0; // Used on Live: "http://www.everquest.com/free-to-play/exit-silver"
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
 }
 
-void Client::SendMembershipSettings()
-{
+void Client::SendMembershipSettings() {
 	auto outapp = new EQApplicationPacket(OP_SendMembershipDetails, sizeof(Membership_Details_Struct));
-	Membership_Details_Struct *mds = (Membership_Details_Struct *)outapp->pBuffer;
+	Membership_Details_Struct* mds = (Membership_Details_Struct*)outapp->pBuffer;
 
 	mds->membership_setting_count = 66;
-	int32 gold_settings[22] = {-1, -1, -1, -1, -1, -1, 1, 1, 1, -1, 1, -1, -1, 1, 1, 1, 1, 1, 1, -1, -1, 0};
+	int32 gold_settings[22] = {-1,-1,-1,-1,-1,-1,1,1,1,-1,1,-1,-1,1,1,1,1,1,1,-1,-1,0};
 	uint32 entry_count = 0;
-	for (int setting_id = 0; setting_id < 22; setting_id++)
+	for (int setting_id=0; setting_id < 22; setting_id++)
 	{
-		for (int setting_index = 0; setting_index < 3; setting_index++)
+		for (int setting_index=0; setting_index < 3; setting_index++)
 		{
 
 			mds->settings[entry_count].setting_index = setting_index;
@@ -393,7 +391,7 @@ void Client::SendMembershipSettings()
 	uint32 cur_purchase_id = 90287;
 	uint32 cur_purchase_id2 = 90301;
 	uint32 cur_bitwise_value = 1;
-	for (int entry_id = 0; entry_id < 15; entry_id++)
+	for (int entry_id=0; entry_id < 15; entry_id++)
 	{
 		if (entry_id == 0)
 		{
@@ -440,10 +438,10 @@ void Client::SendMembershipSettings()
 		}
 		cur_bitwise_value *= 2;
 	}
-	mds->exit_url_length = 0; // Live uses 42
-	// strcpy(eq->exit_url, "http://www.everquest.com/free-to-play/exit");
-	mds->exit_url_length2 = 0; // Live uses 49
-	// strcpy(eq->exit_url2, "http://www.everquest.com/free-to-play/exit-silver");
+	mds->exit_url_length = 0;	// Live uses 42
+	//strcpy(eq->exit_url, "http://www.everquest.com/free-to-play/exit");
+	mds->exit_url_length2 = 0;	// Live uses 49
+	//strcpy(eq->exit_url2, "http://www.everquest.com/free-to-play/exit-silver");
 
 	/*
 	Account Access Level Settings
@@ -487,23 +485,21 @@ void Client::SendPostEnterWorld()
 
 bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app)
 {
-	if (app->size != sizeof(LoginInfo))
-	{
+	if (app->size != sizeof(LoginInfo)) {
 		return false;
 	}
 
-	auto *r = (LoginInfo *)app->pBuffer;
+	auto *r = (LoginInfo *) app->pBuffer;
 
 	// Quagmire - max len for name is 18, pass 15
-	char name[19] = {0};
+	char name[19]     = {0};
 	char password[16] = {0};
-	strn0cpy(name, (char *)r->login_info, 18);
-	strn0cpy(password, (char *)&(r->login_info[strlen(name) + 1]), 15);
+	strn0cpy(name, (char *) r->login_info, 18);
+	strn0cpy(password, (char *) &(r->login_info[strlen(name) + 1]), 15);
 
 	LogDebug("Receiving login info packet from client | name [{}] password [{}]", name, password);
 
-	if (strlen(password) <= 1)
-	{
+	if (strlen(password) <= 1) {
 		LogInfo("Login without a password");
 		return false;
 	}
@@ -511,29 +507,24 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app)
 	is_player_zoning = (r->zoning == 1);
 
 	uint32 id = Strings::ToInt(name);
-	if (id == 0)
-	{
+	if (id == 0) {
 		LogWarning("Receiving login info packet from client | account_id is 0 - disconnecting");
 		return false;
 	}
 
 	LogClientLogin("Checking authentication id [{}]", id);
 
-	if ((cle = client_list.CheckAuth(id, password)))
-	{
+	if ((cle = client_list.CheckAuth(id, password))) {
 		LogClientLogin("Checking authentication id [{}] passed", id);
-		if (!is_player_zoning)
-		{
+		if (!is_player_zoning) {
 			// Track who is in and who is out of the game
 			std::string in_out;
 
-			if (cle->GetOnline() == CLE_Status::Never)
-			{
+			if (cle->GetOnline() == CLE_Status::Never) {
 				// Desktop -> Char Select
 				in_out = "in";
 			}
-			else
-			{
+			else {
 				// Game -> Char Select
 				in_out = "out";
 			}
@@ -547,22 +538,20 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app)
 
 			LogInfo("Account ({}) Logging ({}) to character select :: LSID [{}] ", cle->AccountName(), in_out, cle->LSID());
 		}
-		else
-		{
+		else {
 			cle->SetOnline();
 		}
 
-		const WorldConfig *Config = WorldConfig::get();
+		const WorldConfig *Config=WorldConfig::get();
 
-		if (Config->UpdateStats)
-		{
+		if (Config->UpdateStats) {
 			auto pack = new ServerPacket;
 			pack->opcode = ServerOP_LSPlayerJoinWorld;
 			pack->size = sizeof(ServerLSPlayerJoinWorld_Struct);
 			pack->pBuffer = new uchar[pack->size];
-			memset(pack->pBuffer, 0, pack->size);
-			ServerLSPlayerJoinWorld_Struct *join = (ServerLSPlayerJoinWorld_Struct *)pack->pBuffer;
-			strcpy(join->key, GetLSKey());
+			memset(pack->pBuffer,0,pack->size);
+			ServerLSPlayerJoinWorld_Struct* join =(ServerLSPlayerJoinWorld_Struct*)pack->pBuffer;
+			strcpy(join->key,GetLSKey());
 			join->lsaccount_id = GetLSID();
 			loginserverlist.SendPacket(pack);
 			safe_delete(pack);
@@ -575,39 +564,35 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app)
 		SendApproveWorld();
 		SendEnterWorld(cle->name());
 		SendPostEnterWorld();
-		if (!is_player_zoning)
-		{
+		if (!is_player_zoning) {
 			const auto supported_clients = RuleS(World, SupportedClients);
 			bool skip_char_info = false;
-			if (!supported_clients.empty())
-			{
-				const std::string &name = EQ::versions::ClientVersionName(m_ClientVersion);
-				const auto &clients = Strings::Split(supported_clients, ",");
-				if (std::find(clients.begin(), clients.end(), name) == clients.end())
-				{
+			if (!supported_clients.empty()) {
+				const std::string& name = EQ::versions::ClientVersionName(m_ClientVersion);
+				const auto& clients = Strings::Split(supported_clients, ",");
+				if (std::find(clients.begin(), clients.end(), name) == clients.end()) {
 					SendUnsupportedClientPacket(
 						fmt::format(
 							"Client Not In Supported List [{}]",
-							supported_clients));
+							supported_clients
+						)
+					);
 					skip_char_info = true;
 				}
 			}
-			const auto &custom_files_key = RuleS(World, CustomFilesKey);
-			if (!skip_char_info && !custom_files_key.empty() && cle->Admin() < RuleI(World, CustomFilesAdminLevel))
-			{
+			const auto& custom_files_key = RuleS(World, CustomFilesKey);
+			if (!skip_char_info && !custom_files_key.empty() && cle->Admin() < RuleI(World, CustomFilesAdminLevel)) {
 				// Modified clients can utilize this unused block in login_info to send custom payloads on login
 				// which indicates they are using custom client files with the correct version, based on key payload.
-				const auto client_key = std::string(reinterpret_cast<char *>(r->unknown064));
-				if (custom_files_key != client_key)
-				{
-					std::string message = fmt::format("Missing Files [{}]", RuleS(World, CustomFilesUrl));
+				const auto client_key = std::string(reinterpret_cast<char*>(r->unknown064));
+				if (custom_files_key != client_key) {
+					std::string message = fmt::format("Missing Files [{}]", RuleS(World, CustomFilesUrl) );
 					SendUnsupportedClientPacket(message);
 					skip_char_info = true;
 				}
 			}
 
-			if (!skip_char_info)
-			{
+			if (!skip_char_info) {
 				SendExpansionInfo();
 				SendCharInfo(m_default_character_set);
 				database.LoginIP(cle->AccountID(), long2ip(GetIP()));
@@ -617,8 +602,7 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app)
 		cle->SetIP(GetIP());
 		return true;
 	}
-	else
-	{
+	else {
 		LogInfo("Bad/Expired session key [{}]", name);
 		return false;
 	}

@@ -681,7 +681,7 @@ bool Client::HandleGenerateRandomNamePacket(const EQApplicationPacket *app) {
 	char newName[17] = {0};
 	bool unique = false;
 
-	while (!unique)	{
+	while (!unique) {
 		std::string cons = "bcdfghjklmnpqrstvwxyz";
 		std::string vows = "aeou";
 		std::string allVows = "aeiou";
@@ -812,7 +812,8 @@ bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app) {
 		QueuePacket(outapp);
 		safe_delete(outapp);
 	}
-	else {
+	else
+	{
 		if (m_ClientVersionBit & EQ::versions::maskTitaniumAndEarlier) {
 			StartInTutorial = true;
 		}
@@ -824,113 +825,103 @@ bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app) {
 	return true;
 }
 
-bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app)
-{
+bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 	auto account_id = GetAccountID();
-	if (!account_id)
-	{
+	if (!account_id) {
 		LogInfo("Enter world with no logged in account.");
 		eqs->Close();
 		return true;
 	}
 
-	if (GetAdmin() < 0)
-	{
+	if (GetAdmin() < 0) {
 		LogInfo("Account [{}] is banned or suspended.", account_id);
 		eqs->Close();
 		return true;
 	}
 
-	auto ew = (EnterWorld_Struct *)app->pBuffer;
+	auto ew = (EnterWorld_Struct *) app->pBuffer;
 	strn0cpy(char_name, ew->name, sizeof(char_name));
 
-	const auto &l = CharacterDataRepository::GetWhere(
+	const auto& l = CharacterDataRepository::GetWhere(
 		database,
 		fmt::format(
 			"`name` = '{}' LIMIT 1",
-			Strings::Escape(char_name)));
+			Strings::Escape(char_name)
+		)
+	);
 
-	if (l.empty())
-	{
+	if (l.empty()) {
 		LogInfo("Could not get CharInfo for [{}]", char_name);
 		eqs->Close();
 		return true;
 	}
 
-	const auto &e = l.front();
+	const auto& e = l.front();
 
 	// Make sure this account owns this character
-	if (e.account_id != account_id)
-	{
+	if (e.account_id != account_id) {
 		LogInfo(
 			"Account [{}] does not own the character named [{}] from account [{}]",
 			account_id,
 			char_name,
-			e.account_id);
+			e.account_id
+		);
 		eqs->Close();
 		return true;
 	}
 
-	charid = e.id;
-	zone_id = e.zone_id;
+	charid      = e.id;
+	zone_id     = e.zone_id;
 	instance_id = e.zone_instance;
 
 	auto r = content_service.FindZone(zone_id, instance_id);
-	if (r.zone_id && r.instance.id != instance_id)
-	{
+		if (r.zone_id && r.instance.id != instance_id) {
 		LogInfo(
 			"Zone [{}] has been remapped to instance_id [{}] from instance_id [{}] for client [{}]",
 			r.zone.short_name,
 			r.instance.id,
 			instance_id,
-			char_name);
+			char_name
+		);
 		instance_id = r.instance.id;
 	}
 
 	if (
 		RuleB(World, EnableIPExemptions) ||
-		RuleI(World, MaxClientsPerIP) > 0)
-	{
-		if (zone_id != Zones::BAZAAR && zone_id >= 1 && zone_id <= 999)
-		{
-			client_list.GetCLEIP(GetIP()); // Check current CLE Entry IPs against incoming connection
+		RuleI(World, MaxClientsPerIP) > 0
+	) {
+		if (zone_id != Zones::BAZAAR && zone_id >= 1 && zone_id <= 999) {
+			client_list.GetCLEIP(GetIP()); //Check current CLE Entry IPs against incoming connection
 		}
 	}
 
 	// This can probably be moved outside and have another method return requested info (don't forget to remove the #include "../common/shareddb.h" above)
 	// (This is a literal translation of the original process..I don't see why it can't be changed to a single-target query over account iteration)
-	if (!is_player_zoning)
-	{
+	if (!is_player_zoning) {
 		size_t character_limit = EQ::constants::StaticLookup(eqs->ClientVersion())->CharacterCreationLimit;
-		if (character_limit > EQ::constants::CHARACTER_CREATION_LIMIT)
-		{
+		if (character_limit > EQ::constants::CHARACTER_CREATION_LIMIT) {
 			character_limit = EQ::constants::CHARACTER_CREATION_LIMIT;
 		}
 
-		if (eqs->ClientVersion() == EQ::versions::ClientVersion::Titanium)
-		{
+		if (eqs->ClientVersion() == EQ::versions::ClientVersion::Titanium) {
 			character_limit = Titanium::constants::CHARACTER_CREATION_LIMIT;
 		}
 
 		auto query = fmt::format(
 			"SELECT `id`, `name`, `level`, `last_login` FROM character_data WHERE `account_id` = {} ORDER BY `name` LIMIT {}",
 			account_id,
-			character_limit);
+			character_limit
+		);
 		auto results = database.QueryDatabase(query);
 
 		/* Check GoHome */
-		if (ew->return_home && !ew->tutorial)
-		{
+		if (ew->return_home && !ew->tutorial) {
 			bool home_enabled = false;
-			for (auto row : results)
-			{
-				if (!strcasecmp(row[1], char_name))
-				{
-					if (RuleB(World, EnableReturnHomeButton))
-					{
+			for (auto row : results) {
+				if (!strcasecmp(row[1], char_name)) {
+					if (RuleB(World, EnableReturnHomeButton)) {
 						int now = time(nullptr);
-						if ((now - Strings::ToInt(row[3])) >= RuleI(World, MinOfflineTimeToReturnHome))
-						{
+						if ((now - Strings::ToInt(row[3])) >= RuleI(World, MinOfflineTimeToReturnHome)) {
 							home_enabled = true;
 							break;
 						}
@@ -938,12 +929,9 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app)
 				}
 			}
 
-			if (home_enabled)
-			{
+			if (home_enabled) {
 				zone_id = database.MoveCharacterToBind(charid, 4);
-			}
-			else
-			{
+			} else {
 				LogInfo("[{}] is trying to go home before they're able.", char_name);
 				RecordPossibleHack("[MQGoHome] player tried to go home before they were able");
 

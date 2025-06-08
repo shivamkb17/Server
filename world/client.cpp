@@ -286,12 +286,11 @@ void Client::SendCharInfo(uint32 character_set)
 			}
 
 			m_character_set_meta.default_set = m_default_character_set;
+			// Significant changes were made here, we can go ahead and write them.
+			WritebackCharacterDataCache();
 		}
 
 		character_set = m_default_character_set;
-
-		// Significant changes were made here, we can go ahead and write them.
-		WritebackCharacterDataCache();
 	}
 
 	m_selected_character_set = character_set;
@@ -3025,12 +3024,15 @@ void Client::SendCharacterSetInfo() {
 }
 
 void Client::PopulateCharacterDataCache() {
-   m_account_characters = CharacterDataRepository::GetAllCharactersForAccount(database, GetAccountID());
-   m_character_sets = AccountCharacterSetsRepository::GetAccountCharacterSets(database, GetAccountID());
-   m_character_set_members = AccountCharacterSetMembersRepository::GetAccountSetMembership(database, GetAccountID());
-   m_character_set_meta = AccountCharacterSetLimitsRepository::GetAccountSetMeta(database, GetAccountID());
+	m_account_characters = CharacterDataRepository::GetAllCharactersForAccount(database, GetAccountID());
+	m_character_sets = AccountCharacterSetsRepository::GetAccountCharacterSets(database, GetAccountID());
+	m_character_set_members = AccountCharacterSetMembersRepository::GetAccountSetMembership(database, GetAccountID());
+	m_character_set_meta = AccountCharacterSetLimitsRepository::GetAccountSetMeta(database, GetAccountID());
 
-   m_default_character_set = m_character_set_meta.default_set;
+	m_default_character_set = m_character_set_meta.default_set;
+	if (!m_selected_character_set) {
+		m_selected_character_set = m_default_character_set;
+   	}
 }
 
 void Client::WritebackCharacterDataCache() {

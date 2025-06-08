@@ -9,7 +9,9 @@ class AccountCharacterSetLimitsRepository : public BaseAccountCharacterSetLimits
 public:
 
 	static AccountCharacterSetLimits GetAccountSetMeta(Database &db, uint32 account_id) {
-		return FindOne(db, account_id);
+		auto r = FindOne(db, account_id);
+		r.account_id = account_id;
+		return r;
 	}
 
 	static void UpdateAccountSetMeta(Database &db, AccountCharacterSetLimits data) {

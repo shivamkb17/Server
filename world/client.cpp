@@ -1622,7 +1622,7 @@ void Client::EnterWorld(bool TryBootup) {
 	if (instance_id > 0)
 	{
 		if (!database.VerifyInstanceAlive(instance_id, GetCharID()) ||
-			!database.VerifyZoneInstance(zone_id, instance_id))
+		    !database.VerifyZoneInstance(zone_id, instance_id))
 		{
 			instance_id = 0;
 			database.MoveCharacterToInstanceSafeReturn(GetCharID(), zone_id, instance_id);
@@ -1639,8 +1639,8 @@ void Client::EnterWorld(bool TryBootup) {
 
 	const char *zone_name = ZoneName(zone_id, true);
 	if (zone_server) {
-		if (false == enter_world_triggered)	{
-			// Drop any clients we own in other zones.
+		if (false == enter_world_triggered){
+			//Drop any clients we own in other zones.
 			zoneserver_list.DropClient(GetLSID(), zone_server);
 
 			// warn the zone we're coming
@@ -1832,7 +1832,7 @@ void Client::SendGuildList()
 {
 	auto guilds_list = guild_mgr.MakeGuildList();
 
-	std::stringstream 			ss;
+	std::stringstream           ss;
 	cereal::BinaryOutputArchive ar(ss);
 	ar(guilds_list);
 
@@ -1902,16 +1902,18 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 	inv.SetInventoryVersion(EQ::versions::ConvertClientVersionBitToClientVersion(m_ClientVersionBit));
 	inv.SetGMInventory(false); // character cannot have gm flag at this point
 
-	time_t bday = time(nullptr);
+	time_t  bday = time(nullptr);
 	in_addr in;
 
-	const uint32 stats_sum = (cc->AGI +
-							  cc->CHA +
-							  cc->DEX +
-							  cc->INT +
-							  cc->STA +
-							  cc->STR +
-							  cc->WIS);
+	const uint32 stats_sum = (
+		cc->AGI +
+		cc->CHA +
+		cc->DEX +
+		cc->INT +
+		cc->STA +
+		cc->STR +
+		cc->WIS
+	);
 
 	in.s_addr = GetIP();
 
@@ -1920,7 +1922,8 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 		GetCLE()->LSName(),
 		GetCLE()->LSID(),
 		inet_ntoa(in),
-		GetPort());
+		GetPort()
+	);
 	LogInfo("Name [{}]", name);
 	LogInfo(
 		"race [{}] class [{}] gender [{}] deity [{}] start_zone [{}] tutorial [{}]",
@@ -1929,7 +1932,8 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 		cc->gender,
 		cc->deity,
 		cc->start_zone,
-		cc->tutorial ? "true" : "false");
+		cc->tutorial ? "true" : "false"
+	);
 	LogInfo(
 		"AGI [{}] CHA [{}] DEX [{}] INT [{}] STA [{}] STR [{}] WIS [{}] Total [{}]",
 		cc->AGI,
@@ -1939,66 +1943,62 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 		cc->STA,
 		cc->STR,
 		cc->WIS,
-		stats_sum);
+		stats_sum
+	);
 	LogInfo("Face [{}] Eye Colors [{}] [{}]", cc->face, cc->eyecolor1, cc->eyecolor2);
 	LogInfo("Hair [{}] Hair Color [{}]", cc->hairstyle, cc->haircolor);
 	LogInfo("Beard [{}] Beard Color [{}]", cc->beard, cc->beardcolor);
 
 	/* Validate the char creation struct */
-	if (m_ClientVersionBit & EQ::versions::maskSoFAndLater)
-	{
-		if (!CheckCharCreateInfoSoF(cc))
-		{
+	if (m_ClientVersionBit & EQ::versions::maskSoFAndLater) {
+		if (!CheckCharCreateInfoSoF(cc)) {
 			LogInfo("CheckCharCreateInfo did not validate the request (bad race/class/stats)");
 			return false;
 		}
-	}
-	else
-	{
-		if (!CheckCharCreateInfoTitanium(cc))
-		{
+	} else {
+		if (!CheckCharCreateInfoTitanium(cc)) {
 			LogInfo("CheckCharCreateInfo did not validate the request (bad race/class/stats)");
 			return false;
 		}
 	}
 
 	/* Convert incoming cc_s to the new PlayerProfile_Struct */
-	memset(&pp, 0, sizeof(PlayerProfile_Struct)); // start building the profile
+	memset(&pp, 0, sizeof(PlayerProfile_Struct));	// start building the profile
 
 	strn0cpy(pp.name, name, sizeof(pp.name));
 
-	pp.race = cc->race;
-	pp.class_ = RuleB(Custom, MulticlassingEnabled) ? Class::Bard : cc->class_;
-	pp.gender = cc->gender;
-	pp.deity = cc->deity;
-	pp.STR = cc->STR;
-	pp.STA = cc->STA;
-	pp.AGI = cc->AGI;
-	pp.DEX = cc->DEX;
-	pp.WIS = cc->WIS;
-	pp.INT = cc->INT;
-	pp.CHA = cc->CHA;
-	pp.face = cc->face;
-	pp.eyecolor1 = cc->eyecolor1;
-	pp.eyecolor2 = cc->eyecolor2;
-	pp.hairstyle = cc->hairstyle;
-	pp.haircolor = cc->haircolor;
-	pp.beard = cc->beard;
-	pp.beardcolor = cc->beardcolor;
+	pp.race             = cc->race;
+	pp.class_           = RuleB(Custom, MulticlassingEnabled) ? Class::Bard : cc->class_;
+	pp.gender           = cc->gender;
+	pp.deity            = cc->deity;
+	pp.STR              = cc->STR;
+	pp.STA              = cc->STA;
+	pp.AGI              = cc->AGI;
+	pp.DEX              = cc->DEX;
+	pp.WIS              = cc->WIS;
+	pp.INT              = cc->INT;
+	pp.CHA              = cc->CHA;
+	pp.face             = cc->face;
+	pp.eyecolor1        = cc->eyecolor1;
+	pp.eyecolor2        = cc->eyecolor2;
+	pp.hairstyle        = cc->hairstyle;
+	pp.haircolor        = cc->haircolor;
+	pp.beard            = cc->beard;
+	pp.beardcolor       = cc->beardcolor;
 	pp.drakkin_heritage = cc->drakkin_heritage;
-	pp.drakkin_tattoo = cc->drakkin_tattoo;
-	pp.drakkin_details = cc->drakkin_details;
-	pp.birthday = bday;
-	pp.lastlogin = bday;
-	pp.level = 1;
-	pp.points = 5;
-	pp.cur_hp = 1000;
-	pp.hunger_level = 6000;
-	pp.thirst_level = 6000;
-	pp.classes = GetPlayerClassBit(cc->class_);
+	pp.drakkin_tattoo   = cc->drakkin_tattoo;
+	pp.drakkin_details  = cc->drakkin_details;
+	pp.birthday         = bday;
+	pp.lastlogin        = bday;
+	pp.level            = 1;
+	pp.points           = 5;
+	pp.cur_hp           = 1000;
+	pp.hunger_level     = 6000;
+	pp.thirst_level     = 6000;
+	pp.classes          = GetPlayerClassBit(cc->class_);
 
 	/* Set default skills for everybody */
-	pp.skills[EQ::skills::SkillSwimming] = RuleI(Skills, SwimmingStartValue);
+	pp.skills[EQ::skills::SkillSwimming]     = RuleI(Skills, SwimmingStartValue);
 	pp.skills[EQ::skills::SkillSenseHeading] = RuleI(Skills, SenseHeadingStartValue);
 
 	/* Set Racial and Class specific language and skills */
@@ -2010,8 +2010,7 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 	memset(pp.spell_book, std::numeric_limits<uint8>::max(), (sizeof(uint32) * EQ::spells::SPELLBOOK_SIZE));
 	memset(pp.mem_spells, std::numeric_limits<uint8>::max(), (sizeof(uint32) * EQ::spells::SPELL_GEM_COUNT));
 
-	for (auto &b : pp.buffs)
-	{
+	for (auto& b : pp.buffs) {
 		b.spellid = std::numeric_limits<uint16>::max();
 	}
 
@@ -2019,56 +2018,46 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 	pp.pvp = database.GetServerType() == 1 ? 1 : 0;
 
 	/* If it is an SoF Client and the SoF Start Zone rule is set, send new chars there */
-	if (m_ClientVersionBit & EQ::versions::maskSoFAndLater)
-	{
+	if (m_ClientVersionBit & EQ::versions::maskSoFAndLater) {
 		LogInfo("Found [SoFStartZoneID] rule setting [{}]", RuleI(World, SoFStartZoneID));
-		if (RuleI(World, SoFStartZoneID) > 0)
-		{
+		if (RuleI(World, SoFStartZoneID) > 0) {
 			pp.zone_id = RuleI(World, SoFStartZoneID);
 			cc->start_zone = pp.zone_id;
 		}
-	}
-	else
-	{
+	} else {
 		LogInfo("Found [TitaniumStartZoneID] rule setting [{}]", RuleI(World, TitaniumStartZoneID));
-		if (RuleI(World, TitaniumStartZoneID) > 0)
-		{ /* if there's a startzone variable put them in there */
-			pp.zone_id = RuleI(World, TitaniumStartZoneID);
+		if (RuleI(World, TitaniumStartZoneID) > 0) { 	/* if there's a startzone variable put them in there */
+			pp.zone_id     = RuleI(World, TitaniumStartZoneID);
 			cc->start_zone = pp.zone_id;
 		}
 	}
 
 	/* use normal starting zone logic to either get defaults, or if startzone was set, load that from the db table.*/
 	const bool is_valid_start_zone = content_db.GetStartZone(&pp, cc, m_ClientVersionBit & EQ::versions::maskTitaniumAndEarlier);
-	if (!is_valid_start_zone)
-	{
+	if (!is_valid_start_zone){
 		return false;
 	}
 
-	if (!pp.zone_id)
-	{
+	if (!pp.zone_id) {
 		pp.zone_id = Zones::QEYNOS;
 
 		pp.x = pp.y = pp.z = -1;
 	}
 
-	for (uint8 slot_id = 1; slot_id < 5; slot_id++)
-	{
+	for (uint8 slot_id = 1; slot_id < 5; slot_id++) {
 		pp.binds[slot_id].zone_id = pp.zone_id;
-		pp.binds[slot_id].x = pp.x;
-		pp.binds[slot_id].y = pp.y;
-		pp.binds[slot_id].z = pp.z;
+		pp.binds[slot_id].x       = pp.x;
+		pp.binds[slot_id].y       = pp.y;
+		pp.binds[slot_id].z       = pp.z;
 		pp.binds[slot_id].heading = pp.heading;
 	}
 
 	/* Overrides if we have the tutorial flag set! */
-	if (cc->tutorial && RuleB(World, EnableTutorialButton))
-	{
+	if (cc->tutorial && RuleB(World, EnableTutorialButton))	{
 		pp.zone_id = RuleI(World, TutorialZoneID);
 
 		auto z = GetZone(pp.zone_id);
-		if (z)
-		{
+		if (z) {
 			pp.x = z->safe_x;
 			pp.y = z->safe_y;
 			pp.z = z->safe_z;
@@ -2076,17 +2065,15 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 	}
 
 	/*  Will either be the same as home or tutorial if enabled. */
-	if (RuleB(World, StartZoneSameAsBindOnCreation))
-	{
+	if (RuleB(World, StartZoneSameAsBindOnCreation)) {
 		pp.binds[0].zone_id = pp.zone_id;
-		pp.binds[0].x = pp.x;
-		pp.binds[0].y = pp.y;
-		pp.binds[0].z = pp.z;
+		pp.binds[0].x       = pp.x;
+		pp.binds[0].y       = pp.y;
+		pp.binds[0].z       = pp.z;
 		pp.binds[0].heading = pp.heading;
 	}
 
-	if (GetZone(pp.zone_id))
-	{
+	if (GetZone(pp.zone_id)) {
 		LogInfo(
 			"Current location zone_short_name [{}] zone_id [{}] x [{:.2f}] y [{:.2f}] z [{:.2f}] heading [{:.2f}]",
 			ZoneName(pp.zone_id),
@@ -2094,11 +2081,11 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 			pp.x,
 			pp.y,
 			pp.z,
-			pp.heading);
+			pp.heading
+		);
 	}
 
-	if (GetZone(pp.binds[0].zone_id))
-	{
+	if (GetZone(pp.binds[0].zone_id)) {
 		LogInfo(
 			"Bind location zone_short_name [{}] zone_id [{}] x [{:.2f}] y [{:.2f}] z [{:.2f}] heading [{:.2f}]",
 			ZoneName(pp.binds[0].zone_id),
@@ -2106,11 +2093,11 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 			pp.binds[0].x,
 			pp.binds[0].y,
 			pp.binds[0].z,
-			pp.binds[4].heading);
+			pp.binds[4].heading
+		);
 	}
 
-	if (GetZone(pp.binds[4].zone_id))
-	{
+	if (GetZone(pp.binds[4].zone_id)) {
 		LogInfo(
 			"Home location zone_short_name [{}] zone_id [{}] x [{:.2f}] y [{:.2f}] z [{:.2f}] heading [{:.2f}]",
 			ZoneName(pp.binds[4].zone_id),
@@ -2118,22 +2105,21 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 			pp.binds[4].x,
 			pp.binds[4].y,
 			pp.binds[4].z,
-			pp.binds[4].heading);
+			pp.binds[4].heading
+		);
 	}
 
 	content_db.SetStartingItems(&pp, &inv, pp.race, cc->class_, pp.deity, pp.zone_id, pp.name, GetAdmin());
 
 	// Seasonal
-	if (RuleI(Custom, EnableSeasonalCharacters))
-	{
+	if (RuleI(Custom, EnableSeasonalCharacters)) {
 		int char_id = database.GetCharacterID(pp.name);
-		int season = RuleI(Custom, EnableSeasonalCharacters);
+		int season  = RuleI(Custom, EnableSeasonalCharacters);
 
 		// Construct the SQL query
 		std::string query = StringFormat(
 			"INSERT INTO data_buckets (`key`, `value`, `character_id`, `npc_id`, `bot_id`) "
-			"VALUES ('SeasonalCharacter', '%d', %d, 0, 0);",
-			season, char_id);
+			"VALUES ('SeasonalCharacter', '%d', %d, 0, 0);", season, char_id);
 
 		// Execute the query
 		database.QueryDatabase(query);

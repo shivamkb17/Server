@@ -1434,12 +1434,12 @@ bool Client::Process()
 	to.sin_port = port;
 	to.sin_addr.s_addr = ip;
 
-	if (autobootup_timeout.Check())	{
+	if (autobootup_timeout.Check()) {
 		LogInfo("Zone bootup timer expired, bootup failed or too slow");
 		TellClientZoneUnavailable();
 	}
 
-	if (connect.Check()){
+	if(connect.Check()){
 		SendGuildList();// Send OPCode: OP_GuildsList
 		SendApproveWorld();
 		connect.Disable();
@@ -1457,14 +1457,14 @@ bool Client::Process()
 	}
 
 	if (!eqs->CheckState(ESTABLISHED)) {
-		if (WorldConfig::get()->UpdateStats){
+		if(WorldConfig::get()->UpdateStats){
 			auto pack = new ServerPacket;
 			pack->opcode = ServerOP_LSPlayerLeftWorld;
 			pack->size = sizeof(ServerLSPlayerLeftWorld_Struct);
 			pack->pBuffer = new uchar[pack->size];
-			memset(pack->pBuffer, 0, pack->size);
-			ServerLSPlayerLeftWorld_Struct *logout = (ServerLSPlayerLeftWorld_Struct *)pack->pBuffer;
-			strcpy(logout->key, GetLSKey());
+			memset(pack->pBuffer,0,pack->size);
+			ServerLSPlayerLeftWorld_Struct* logout =(ServerLSPlayerLeftWorld_Struct*)pack->pBuffer;
+			strcpy(logout->key,GetLSKey());
 			logout->lsaccount_id = GetLSID();
 			loginserverlist.SendPacket(pack);
 			safe_delete(pack);
@@ -1479,8 +1479,7 @@ bool Client::Process()
 bool Client::HandleChecksumPacket(const EQApplicationPacket *app)
 {
 	// Is checksum verification turned on
-	if (!RuleB(World, EnableChecksumVerification))
-	{
+	if (!RuleB(World, EnableChecksumVerification)) {
 		return true;
 	}
 
@@ -1488,53 +1487,61 @@ bool Client::HandleChecksumPacket(const EQApplicationPacket *app)
 	auto *cs = (Checksum_Struct *)app->pBuffer;
 
 	// Determine which checksum to process
-	switch (app->GetOpcode())
-	{
-	case OP_World_Client_CRC1: // eqgame.exe
-	{
-		bool passes_checksum_validation = (ChecksumVerificationCRCEQGame(cs->checksum) ||
-										   (GetAdmin() >= RuleI(GM, MinStatusToBypassCheckSumVerification)));
+	switch (app->GetOpcode()) {
+		case OP_World_Client_CRC1: // eqgame.exe
+		{
+			bool passes_checksum_validation = (
+				ChecksumVerificationCRCEQGame(cs->checksum) ||
+				(GetAdmin() >= RuleI(GM, MinStatusToBypassCheckSumVerification))
+			);
 
-		LogChecksumVerification(
-			"eqgame.exe validation [{}] client [{}] ({}) has [{}] status [{}]",
-			passes_checksum_validation ? "Passed" : "Failed",
-			GetAccountName(),
-			GetAccountID(),
-			cs->checksum,
-			GetAdmin());
+			LogChecksumVerification(
+				"eqgame.exe validation [{}] client [{}] ({}) has [{}] status [{}]",
+				passes_checksum_validation ? "Passed" : "Failed",
+				GetAccountName(),
+				GetAccountID(),
+				cs->checksum,
+				GetAdmin()
+			);
 
-		return passes_checksum_validation;
-	}
-	case OP_World_Client_CRC2: // SkillCaps.txt
-	{
-		bool passes_checksum_validation = (ChecksumVerificationCRCSkillCaps(cs->checksum) ||
-										   (GetAdmin() >= RuleI(GM, MinStatusToBypassCheckSumVerification)));
+			return passes_checksum_validation;
+		}
+		case OP_World_Client_CRC2: // SkillCaps.txt
+		{
+			bool passes_checksum_validation = (
+				ChecksumVerificationCRCSkillCaps(cs->checksum) ||
+				(GetAdmin() >= RuleI(GM, MinStatusToBypassCheckSumVerification))
+			);
 
-		LogChecksumVerification(
-			"SkillCaps.txt validation [{}] client [{}] ({}) has [{}] status [{}]",
-			passes_checksum_validation ? "Passed" : "Failed",
-			GetAccountName(),
-			GetAccountID(),
-			cs->checksum,
-			GetAdmin());
+			LogChecksumVerification(
+				"SkillCaps.txt validation [{}] client [{}] ({}) has [{}] status [{}]",
+				passes_checksum_validation ? "Passed" : "Failed",
+				GetAccountName(),
+				GetAccountID(),
+				cs->checksum,
+				GetAdmin()
+			);
 
-		return passes_checksum_validation;
-	}
-	case OP_World_Client_CRC3: // BaseData.txt
-	{
-		bool passes_checksum_validation = (ChecksumVerificationCRCBaseData(cs->checksum) ||
-										   (GetAdmin() >= RuleI(GM, MinStatusToBypassCheckSumVerification)));
+			return passes_checksum_validation;
+		}
+		case OP_World_Client_CRC3: // BaseData.txt
+		{
+			bool passes_checksum_validation = (
+				ChecksumVerificationCRCBaseData(cs->checksum) ||
+				(GetAdmin() >= RuleI(GM, MinStatusToBypassCheckSumVerification))
+			);
 
-		LogChecksumVerification(
-			"BaseData.txt validation [{}] client [{}] ({}) has [{}] status [{}]",
-			passes_checksum_validation ? "Passed" : "Failed",
-			GetAccountName(),
-			GetAccountID(),
-			cs->checksum,
-			GetAdmin());
+			LogChecksumVerification(
+				"BaseData.txt validation [{}] client [{}] ({}) has [{}] status [{}]",
+				passes_checksum_validation ? "Passed" : "Failed",
+				GetAccountName(),
+				GetAccountID(),
+				cs->checksum,
+				GetAdmin()
+			);
 
-		return passes_checksum_validation;
-	}
+			return passes_checksum_validation;
+		}
 	}
 
 	return false;
@@ -1547,19 +1554,16 @@ bool Client::ChecksumVerificationCRCEQGame(uint64 checksum)
 	// Get checksum variable for eqgame.exe
 	std::string checksumvar;
 	uint64_t checksumint;
-	if (database.GetVariable("crc_eqgame", checksumvar))
-	{
+	if (database.GetVariable("crc_eqgame", checksumvar)) {
 		checksumint = Strings::ToBigInt(checksumvar);
 	}
-	else
-	{
+	else {
 		LogChecksumVerification("variable not set in variables table.");
 		return true;
 	}
 
 	// Verify checksums match
-	if (checksumint == checksum)
-	{
+	if (checksumint == checksum) {
 		return true;
 	}
 

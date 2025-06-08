@@ -70,23 +70,23 @@
 #include <zlib.h>
 #include <limits.h>
 
-// FatherNitwit: uncomment to enable my IP based authentication hack
-// #define IPBASED_AUTH_HACK
+//FatherNitwit: uncomment to enable my IP based authentication hack
+//#define IPBASED_AUTH_HACK
 
 // Disgrace: for windows compile
 #ifdef _WINDOWS
-#include <winsock2.h>
-#include <windows.h>
+	#include <winsock2.h>
+	#include <windows.h>
 #else
 
-#ifdef FREEBSD // Timothy Whitman - January 7, 2003
-#include <sys/types.h>
-#endif
+	#ifdef FREEBSD //Timothy Whitman - January 7, 2003
+		#include <sys/types.h>
+	#endif
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
+	#include <sys/socket.h>
+	#include <netinet/in.h>
+	#include <arpa/inet.h>
+	#include <unistd.h>
 #endif
 
 std::vector<RaceClassAllocation> character_create_allocations;
@@ -101,24 +101,23 @@ extern volatile bool RunLoops;
 extern volatile bool UCSServerAvailable_;
 
 // unused ATM, but here for reference, should match RoF2
-enum class NameApprovalResponse : int
-{
+enum class NameApprovalResponse : int {
 	NotValid = -1, // string ID 1576
-	Rejected = 0,  // string ID 1581
+	Rejected = 0, // string ID 1581
 	Approved = 1,
-	CharacterLimit = 2,	 // string ID 1591 older clients mention 1 char on server
-	ThreeDeity = 3,		 // string ID 5502. 3 toons same deity team limit
+	CharacterLimit = 2, // string ID 1591 older clients mention 1 char on server
+	ThreeDeity = 3, // string ID 5502. 3 toons same deity team limit
 	HeadStartPreOoW = 4, // string ID 6862, head start failed due to OoW not being unlocked
-	HeadStartNoOoW = 5,	 // string ID 6863, head start failed due to not owning OoW
+	HeadStartNoOoW = 5, // string ID 6863, head start failed due to not owning OoW
 };
 
-Client::Client(EQStreamInterface *ieqs)
-	: autobootup_timeout(RuleI(World, ZoneAutobootTimeoutMS)),
-	  connect(1000),
-	  eqs(ieqs)
+Client::Client(EQStreamInterface* ieqs)
+:	autobootup_timeout(RuleI(World, ZoneAutobootTimeoutMS)),
+	connect(1000),
+	eqs(ieqs)
 {
 	// Live does not send datarate as of 3/11/2005
-	// eqs->SetDataRate(7);
+	//eqs->SetDataRate(7);
 	ip = eqs->GetRemoteIP();
 	port = ntohs(eqs->GetRemotePort());
 
@@ -140,8 +139,7 @@ Client::Client(EQStreamInterface *ieqs)
 	numclients++;
 }
 
-Client::~Client()
-{
+Client::~Client() {
 	WritebackCharacterDataCache();
 
 	if (RunLoops && cle && zone_id == 0)
@@ -149,7 +147,7 @@ Client::~Client()
 
 	numclients--;
 
-	// let the stream factory know were done with this stream
+	//let the stream factory know were done with this stream
 	eqs->Close();
 	eqs->ReleaseFromUse();
 	safe_delete(eqs);
@@ -158,23 +156,22 @@ Client::~Client()
 void Client::SendLogServer()
 {
 	auto outapp = new EQApplicationPacket(OP_LogServer, sizeof(LogServer_Struct));
-	LogServer_Struct *l = (LogServer_Struct *)outapp->pBuffer;
-	const char *wsn = WorldConfig::get()->ShortName.c_str();
-	memcpy(l->worldshortname, wsn, strlen(wsn));
+	LogServer_Struct *l=(LogServer_Struct *)outapp->pBuffer;
+	const char *wsn=WorldConfig::get()->ShortName.c_str();
+	memcpy(l->worldshortname,wsn,strlen(wsn));
 
-	if (RuleB(Mail, EnableMailSystem))
+	if(RuleB(Mail, EnableMailSystem))
 		l->enablemail = 1;
 
-	if (RuleB(Chat, EnableVoiceMacros))
+	if(RuleB(Chat, EnableVoiceMacros))
 		l->enablevoicemacros = 1;
 
 	l->enable_pvp = (RuleI(World, PVPSettings));
 
-	if (RuleB(World, IsGMPetitionWindowEnabled))
+	if(RuleB(World, IsGMPetitionWindowEnabled))
 		l->enable_petition_wnd = 1;
 
-	if (CanTradeFVNoDropItem())
-	{
+	if (CanTradeFVNoDropItem()) {
 		l->enable_FV = 1;
 	}
 
@@ -184,20 +181,19 @@ void Client::SendLogServer()
 
 bool Client::CanTradeFVNoDropItem()
 {
-	const int16 admin_status = GetAdmin();
-	const int no_drop_flag = RuleI(World, FVNoDropFlag);
-	const int no_drop_min_admin_status = RuleI(Character, MinStatusForNoDropExemptions);
-	switch (no_drop_flag)
-	{
-	case FVNoDropFlagRule::Disabled:
-		return false;
-	case FVNoDropFlagRule::Enabled:
-		return true;
-	case FVNoDropFlagRule::AdminOnly:
-		return admin_status >= no_drop_min_admin_status;
-	default:
-		LogWarning("Invalid value {0} set for FVNoDropFlag", no_drop_flag);
-		return false;
+	const int16 admin_status             = GetAdmin();
+	const int   no_drop_flag             = RuleI(World, FVNoDropFlag);
+	const int   no_drop_min_admin_status = RuleI(Character, MinStatusForNoDropExemptions);
+	switch (no_drop_flag) {
+		case FVNoDropFlagRule::Disabled:
+			return false;
+		case FVNoDropFlagRule::Enabled:
+			return true;
+		case FVNoDropFlagRule::AdminOnly:
+			return admin_status >= no_drop_min_admin_status;
+		default:
+			LogWarning("Invalid value {0} set for FVNoDropFlag", no_drop_flag);
+			return false;
 	}
 	return false;
 }

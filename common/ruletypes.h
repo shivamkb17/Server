@@ -1211,6 +1211,7 @@ RULE_REAL(Custom, 	NonDaggerBackstabMultiplier2H,			0.50, 	"Multiple Backstabs c
 RULE_BOOL(Custom, 	MonkSkillAttacksAreH2HForProcs, 		true, 	"Read the name")
 RULE_INT(Custom,	BaseCharacterSets,						2,		"Base number of character sets which players have access to.")
 RULE_INT(Custom,	EoMUnlockCharacterSets,					1,		"Maximum number of character sets which a player can unlock with EoM.")
+RULE_INT(Custom,	EoMUnlockCharacterSetCost,				10,		"EoM Cost to unlock a character set slot")
 
 // Item Upgrades
 RULE_BOOL(Custom, 	DoItemUpgrades, 						true, "Retribution item upgrades")

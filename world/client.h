@@ -113,6 +113,7 @@ private:
 
 	uint32  m_selected_character_set;
 	uint32  m_default_character_set;
+	uint32  m_eom_available;
 
 	AccountCharacterSetLimitsRepository::AccountCharacterSetLimits m_character_set_meta;
 	std::vector<AccountCharacterSetsRepository::AccountCharacterSets> m_character_sets;
@@ -146,6 +147,7 @@ private:
 	bool HandleCharacterSetRequest(const EQApplicationPacket *app);
 	bool HandleCharacterSetCreateRequest(const EQApplicationPacket *app);
 	bool HandleCharacterSetMoveRequest(const EQApplicationPacket *app);
+	bool HandleCharacterSetUnlockRequest(const EQApplicationPacket *app);
 	bool ChecksumVerificationCRCEQGame(uint64 checksum);
 	bool ChecksumVerificationCRCSkillCaps(uint64 checksum);
 	bool ChecksumVerificationCRCBaseData(uint64 checksum);

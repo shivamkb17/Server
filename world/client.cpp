@@ -58,6 +58,7 @@
 #include "../common/repositories/account_character_sets_repository.h"
 #include "../common/repositories/account_character_set_limits_repository.h"
 #include "../common/repositories/data_buckets_repository.h"
+#include "../common/repositories/account_alt_currency_repository.h"
 #include "../common/skill_caps.h"
 
 #include <iostream>
@@ -1339,6 +1340,40 @@ bool Client::HandleCharacterSetMoveRequest(const EQApplicationPacket *app)
     return true;
 }
 
+bool Client::HandleCharacterSetUnlockRequest(const EQApplicationPacket *app) {
+    if (app->size != sizeof(CharacterSetUnlockRequest_Struct)) {
+        LogError("Error: Malformed OP_CharacterSetUnlockRequest");
+        return false;
+    }
+
+    CharacterSetUnlockRequest_Struct* csur = (CharacterSetUnlockRequest_Struct*) app->pBuffer;
+
+    uint32_t total_cost = csur->quantity * RuleI(Custom, EoMUnlockCharacterSetCost);
+
+    if (m_eom_available >= total_cost) {
+        m_eom_available -= total_cost;
+
+        AccountAltCurrencyRepository::UpdateByAccountAndCurrency(
+            database,
+            GetAccountID(),
+            6,
+            m_eom_available
+        );
+
+        m_character_set_meta.eom_sets += csur->quantity;
+		AccountCharacterSetLimitsRepository::UpdateAccountSetMeta(database, m_character_set_meta);
+
+        LogCharacterSets("Account [{}] unlocked {} character sets for {} EoM", GetAccountID(), csur->quantity, total_cost);
+
+		SendCharacterSetInfo();
+
+        return true;
+    } else {
+        LogError("Account [{}] attempted to unlock {} character sets but only has {} EoM (needs {})", GetAccountID(), csur->quantity, m_eom_available, total_cost);
+        return false;
+    }
+}
+
 bool Client::HandleZoneChangePacket(const EQApplicationPacket *app)
 {
 	// HoT sends this to world while zoning and wants it echoed back.
@@ -1473,6 +1508,11 @@ bool Client::HandlePacket(const EQApplicationPacket *app)
 	case OP_CharacterSetMoveRequest:
 	{
 		HandleCharacterSetMoveRequest(app);
+		return true;
+	}
+	case OP_CharacterSetUnlockRequest:
+	{
+		HandleCharacterSetUnlockRequest(app);
 		return true;
 	}
 
@@ -2989,6 +3029,10 @@ void Client::SendCharacterSetInfo() {
     l->character_count = characters.size();
     l->max_sets = GetMaxCharacterSets();
 
+	l->eom_available = m_eom_available;
+	l->eom_cost = 10;
+	l->unlocks_available = RuleI(Custom, EoMUnlockCharacterSets) - m_character_set_meta.eom_sets;
+
     for (size_t i = 0; i < l->set_count; ++i) {
         const auto &set = sets[i];
         l->sets[i].set_id = set.set_id;
@@ -3033,6 +3077,8 @@ void Client::PopulateCharacterDataCache() {
 	if (!m_selected_character_set) {
 		m_selected_character_set = m_default_character_set;
    	}
+
+	m_eom_available = AccountAltCurrencyRepository::FindByAccountAndCurrency(database, GetAccountID(), 6).amount;
 }
 
 void Client::WritebackCharacterDataCache() {

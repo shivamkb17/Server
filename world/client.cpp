@@ -1802,11 +1802,10 @@ void Client::Clearance(int8 response)
 		cle->SetOnline(CLE_Status::Zoning);
 }
 
-void Client::TellClientZoneUnavailable()
-{
+void Client::TellClientZoneUnavailable() {
 	auto outapp = new EQApplicationPacket(OP_ZoneUnavail, sizeof(ZoneUnavail_Struct));
-	ZoneUnavail_Struct *ua = (ZoneUnavail_Struct *)outapp->pBuffer;
-	const char *zonename = ZoneName(zone_id);
+	ZoneUnavail_Struct* ua = (ZoneUnavail_Struct*)outapp->pBuffer;
+	const char* zonename = ZoneName(zone_id);
 	if (zonename)
 		strcpy(ua->zonename, zonename);
 	QueuePacket(outapp);

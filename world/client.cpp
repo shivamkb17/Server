@@ -200,13 +200,11 @@ bool Client::CanTradeFVNoDropItem()
 
 void Client::SendEnterWorld(std::string name)
 {
-	std::string live_name{};
+	std::string live_name {};
 
-	if (is_player_zoning)
-	{
+	if (is_player_zoning) {
 		live_name = database.GetLiveChar(GetAccountID());
-		if (database.GetAccountIDByChar(live_name) != GetAccountID())
-		{
+		if (database.GetAccountIDByChar(live_name) != GetAccountID()) {
 			eqs->Close();
 			return;
 		}
@@ -214,8 +212,7 @@ void Client::SendEnterWorld(std::string name)
 		LogInfo("Zoning with live_name [{}] account_id [{}]", live_name, GetAccountID());
 	}
 
-	if (!is_player_zoning && RuleB(World, EnableAutoLogin))
-	{
+	if (!is_player_zoning && RuleB(World, EnableAutoLogin)) {
 		live_name = AccountRepository::GetAutoLoginCharacterNameByAccountID(database, GetAccountID());
 		LogInfo("Attempting to auto login with live_name [{}] account_id [{}]", live_name, GetAccountID());
 	}
@@ -226,21 +223,17 @@ void Client::SendEnterWorld(std::string name)
 	safe_delete(outapp);
 }
 
-void Client::SendExpansionInfo()
-{
+void Client::SendExpansionInfo() {
 	auto outapp = new EQApplicationPacket(OP_ExpansionInfo, sizeof(ExpansionInfo_Struct));
-	ExpansionInfo_Struct *eis = (ExpansionInfo_Struct *)outapp->pBuffer;
+	ExpansionInfo_Struct *eis = (ExpansionInfo_Struct*)outapp->pBuffer;
 
-	if (RuleI(World, CharacterSelectExpansionSettings) != -1)
-	{
+	if (RuleI(World, CharacterSelectExpansionSettings) != -1) {
 		eis->Expansions = RuleI(World, CharacterSelectExpansionSettings);
 	}
-	else if (RuleB(World, UseClientBasedExpansionSettings))
-	{
+	else if (RuleB(World, UseClientBasedExpansionSettings)) {
 		eis->Expansions = EQ::expansions::ConvertClientVersionToExpansionsMask(eqs->ClientVersion());
 	}
-	else
-	{
+	else {
 		eis->Expansions = RuleI(World, ExpansionSettings);
 	}
 
@@ -248,15 +241,12 @@ void Client::SendExpansionInfo()
 	safe_delete(outapp);
 }
 
-void Client::SendCharInfo(uint32 character_set)
-{
-	if (cle)
-	{
+void Client::SendCharInfo(uint32 character_set) {
+	if (cle) {
 		cle->SetOnline(CLE_Status::CharSelect);
 	}
 
-	if (m_ClientVersionBit & EQ::versions::maskRoFAndLater)
-	{
+	if (m_ClientVersionBit & EQ::versions::maskRoFAndLater)	{
 		SendMaxCharCreate();
 		SendMembership();
 		SendMembershipSettings();
@@ -298,21 +288,18 @@ void Client::SendCharInfo(uint32 character_set)
 	EQApplicationPacket *outapp = nullptr;
 	database.GetCharSelectInfo(GetAccountID(), &outapp, m_ClientVersionBit, GetCharactersForSetFromCache(m_selected_character_set));
 
-	if (outapp)
-	{
+	if (outapp)	{
 		QueuePacket(outapp);
 	}
-	else
-	{
+	else {
 		LogError("Database did not return an OP_SendCharInfo packet for account [{}]", GetAccountID());
 	}
 	safe_delete(outapp);
 }
 
-void Client::SendMaxCharCreate()
-{
+void Client::SendMaxCharCreate() {
 	auto outapp = new EQApplicationPacket(OP_SendMaxCharacters, sizeof(MaxCharacters_Struct));
-	MaxCharacters_Struct *mc = (MaxCharacters_Struct *)outapp->pBuffer;
+	MaxCharacters_Struct* mc = (MaxCharacters_Struct*)outapp->pBuffer;
 
 	mc->max_chars = EQ::constants::StaticLookup(m_ClientVersion)->CharacterCreationLimit;
 	if (mc->max_chars > EQ::constants::CHARACTER_CREATION_LIMIT)

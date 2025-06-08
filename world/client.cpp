@@ -1335,6 +1335,7 @@ bool Client::HandlePacket(const EQApplicationPacket *app) {
 			StartInTutorial = false;
 
 			return HandleChecksumPacket(app);
+
 		}
 		case OP_SendLoginInfo:
 		{
@@ -1374,7 +1375,7 @@ bool Client::HandlePacket(const EQApplicationPacket *app) {
 		{
 			// I don't see this getting executed on logout
 			eqs->Close();
-			cle->SetOnline(CLE_Status::Offline); // allows this player to log in again without an ip restriction.
+			cle->SetOnline(CLE_Status::Offline); //allows this player to log in again without an ip restriction.
 			return false;
 		}
 		case OP_ZoneChange:
@@ -1425,23 +1426,21 @@ bool Client::HandlePacket(const EQApplicationPacket *app) {
 bool Client::Process()
 {
 	bool ret = true;
-	// bool sendguilds = true;
+	//bool sendguilds = true;
 	sockaddr_in to = {};
 
-	memset((char *)&to, 0, sizeof(to));
+	memset((char *) &to, 0, sizeof(to));
 	to.sin_family = AF_INET;
 	to.sin_port = port;
 	to.sin_addr.s_addr = ip;
 
-	if (autobootup_timeout.Check())
-	{
+	if (autobootup_timeout.Check())	{
 		LogInfo("Zone bootup timer expired, bootup failed or too slow");
 		TellClientZoneUnavailable();
 	}
 
-	if (connect.Check())
-	{
-		SendGuildList(); // Send OPCode: OP_GuildsList
+	if (connect.Check()){
+		SendGuildList();// Send OPCode: OP_GuildsList
 		SendApproveWorld();
 		connect.Disable();
 	}
@@ -1451,17 +1450,14 @@ bool Client::Process()
 
 	/************ Get all packets from packet manager out queue and process them ************/
 	EQApplicationPacket *app = 0;
-	while (ret && (app = (EQApplicationPacket *)eqs->PopPacket()))
-	{
+	while(ret && (app = (EQApplicationPacket *)eqs->PopPacket())) {
 		ret = HandlePacket(app);
 
 		delete app;
 	}
 
-	if (!eqs->CheckState(ESTABLISHED))
-	{
-		if (WorldConfig::get()->UpdateStats)
-		{
+	if (!eqs->CheckState(ESTABLISHED)) {
+		if (WorldConfig::get()->UpdateStats){
 			auto pack = new ServerPacket;
 			pack->opcode = ServerOP_LSPlayerLeftWorld;
 			pack->size = sizeof(ServerLSPlayerLeftWorld_Struct);

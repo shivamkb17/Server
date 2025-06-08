@@ -3017,13 +3017,19 @@ bool Client::DeleteCharacterSetIfEmptyFromCache(uint32 set_id) {
 }
 
 bool Client::RenameCharacterSetInCache(uint32 set_id, const std::string& new_name) {
-    for (auto& set : m_character_sets) {
-        if (set.set_id == set_id) {
-            set.set_name = new_name;
-            return true;
-        }
-    }
-    return false;
+   for (const auto& s : m_character_sets) {
+       if (s.set_id != set_id && s.set_name == new_name) {
+           return false;
+       }
+   }
+
+   for (auto& s : m_character_sets) {
+       if (s.set_id == set_id) {
+           s.set_name = new_name;
+           return true;
+       }
+   }
+   return false;
 }
 
 void Client::RemoveCharacterFromSetInCache(uint32 character_id, uint32 set_id) {

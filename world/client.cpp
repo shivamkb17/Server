@@ -478,7 +478,7 @@ void Client::SendMembershipSettings() {
 void Client::SendPostEnterWorld()
 {
 	auto outapp = new EQApplicationPacket(OP_PostEnterWorld, 1);
-	outapp->size = 0;
+	outapp->size=0;
 	QueuePacket(outapp);
 	safe_delete(outapp);
 }
@@ -544,7 +544,7 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app)
 
 		const WorldConfig *Config=WorldConfig::get();
 
-		if (Config->UpdateStats) {
+		if(Config->UpdateStats) {
 			auto pack = new ServerPacket;
 			pack->opcode = ServerOP_LSPlayerJoinWorld;
 			pack->size = sizeof(ServerLSPlayerJoinWorld_Struct);
@@ -610,28 +610,25 @@ bool Client::HandleSendLoginInfoPacket(const EQApplicationPacket *app)
 
 bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app)
 {
-	if (GetAccountID() == 0)
-	{
+	if (GetAccountID() == 0) {
 		LogInfo("Name approval request with no logged in account");
 		return false;
 	}
 
-	auto n = (NameApproval_Struct *)app->pBuffer;
+	auto n = (NameApproval_Struct*) app->pBuffer;
 
 	strn0cpy(char_name, n->name, sizeof(char_name));
 
-	const uint32 length = strlen(n->name);
-	const uint32 race_id = n->race_id;
+	const uint32 length   = strlen(n->name);
+	const uint32 race_id  = n->race_id;
 	const uint32 class_id = n->class_id;
 
-	if (!IsPlayerRace(race_id))
-	{
+	if (!IsPlayerRace(race_id)) {
 		LogInfo("Invalid Race ID.");
 		return false;
 	}
 
-	if (!EQ::ValueWithin(class_id, Class::Warrior, Class::Berserker))
-	{
+	if (!EQ::ValueWithin(class_id, Class::Warrior, Class::Berserker)) {
 		LogInfo("Invalid Class ID.");
 		return false;
 	}
@@ -640,40 +637,29 @@ bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app)
 		"char_name [{}] race_id [{}] class_id [{}]",
 		char_name,
 		GetRaceIDName(race_id),
-		GetClassIDName(class_id));
+		GetClassIDName(class_id)
+	);
 
 	bool is_valid = true;
 
-	if (!EQ::ValueWithin(length, 4, 15))
-	{ /* Name must be between 4 and 15 characters long, packet forged if this is true */
+	if (!EQ::ValueWithin(length, 4, 15)) { /* Name must be between 4 and 15 characters long, packet forged if this is true */
 		is_valid = false;
-	}
-	else if (islower(char_name[0]))
-	{ /* Name must begin with an upper-case letter, can be sent with some tricking of the client */
+	} else if (islower(char_name[0])) { /* Name must begin with an upper-case letter, can be sent with some tricking of the client */
 		is_valid = false;
-	}
-	else if (strstr(char_name, " "))
-	{ /* Name must not have any spaces, packet forged if this is true */
+	} else if (strstr(char_name, " ")) { /* Name must not have any spaces, packet forged if this is true */
 		is_valid = false;
-	}
-	else if (!database.CheckNameFilter(char_name))
-	{ /* I would like to do this later, since it's likely more expensive, but oh well */
+	} else if (!database.CheckNameFilter(char_name)) { /* I would like to do this later, since it's likely more expensive, but oh well */
 		is_valid = false;
-	}
-	else
-	{ /* Name must not contain any uppercase letters, can be sent with some tricking of the client */
-		for (int i = 1; i < length; ++i)
-		{
-			if (isupper(char_name[i]))
-			{
+	} else { /* Name must not contain any uppercase letters, can be sent with some tricking of the client */
+		for (int i = 1; i < length; ++i) {
+			if (isupper(char_name[i])) {
 				is_valid = false;
 				break;
 			}
 		}
 	}
 
-	if (is_valid)
-	{ /* Still not invalid, let's see if it's taken */
+	if (is_valid) { /* Still not invalid, let's see if it's taken */
 		is_valid = database.ReserveName(GetAccountID(), char_name, content_db);
 	}
 
@@ -684,21 +670,18 @@ bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app)
 	QueuePacket(outapp);
 	safe_delete(outapp);
 
-	if (!is_valid)
-	{
+	if (!is_valid) {
 		memset(char_name, 0, sizeof(char_name));
 	}
 
 	return true;
 }
 
-bool Client::HandleGenerateRandomNamePacket(const EQApplicationPacket *app)
-{
+bool Client::HandleGenerateRandomNamePacket(const EQApplicationPacket *app) {
 	char newName[17] = {0};
 	bool unique = false;
 
-	while (!unique)
-	{
+	while (!unique)	{
 		std::string cons = "bcdfghjklmnpqrstvwxyz";
 		std::string vows = "aeou";
 		std::string allVows = "aeiou";
@@ -717,50 +700,39 @@ bool Client::HandleGenerateRandomNamePacket(const EQApplicationPacket *app)
 		int len = 0;
 		memset(newName, 0, sizeof(newName));
 
-		if (firstCharDist(gen) == 0)
-		{
+		if (firstCharDist(gen) == 0) {
 			newName[len++] = vows[vowDist(gen)];
 			newName[len++] = cons[consDist(gen)];
-		}
-		else
-		{
+		} else {
 			newName[len++] = cons[consDist(gen)];
 			newName[len++] = allVows[allVowDist(gen)];
 		}
 
 		newName[0] = toupper(newName[0]);
 
-		while (len < lenDist(gen) - 1)
-		{
-			if (len % 2 == 0)
-			{
+		while (len < lenDist(gen) - 1) {
+			if (len % 2 == 0) {
 				newName[len++] = cons[consDist(gen)];
-			}
-			else
-			{
+			} else {
 				newName[len++] = allVows[allVowDist(gen)];
 			}
 		}
 
 		std::string end = endPhon[endPhonDist(gen)];
-		for (char c : end)
-		{
-			if (len < 10)
-				newName[len++] = c;
+		for (char c : end) {
+			if (len < 10) newName[len++] = c;
 		}
 
-		if (database.CheckNameFilter(newName))
-		{
+		if (database.CheckNameFilter(newName)) {
 			std::string query = StringFormat("SELECT `name` FROM `character_data` WHERE `name` = '%s'", newName);
 			auto res = database.QueryDatabase(query);
-			if (res.Success() && res.RowCount() == 0)
-			{
+			if (res.Success() && res.RowCount() == 0) {
 				unique = true;
 			}
 		}
 	}
 
-	NameGeneration_Struct *ngs = (NameGeneration_Struct *)app->pBuffer;
+	NameGeneration_Struct* ngs = (NameGeneration_Struct*)app->pBuffer;
 	memset(ngs->name, 0, 64);
 	strcpy(ngs->name, newName);
 
@@ -768,8 +740,7 @@ bool Client::HandleGenerateRandomNamePacket(const EQApplicationPacket *app)
 	return true;
 }
 
-bool Client::HandleCharacterCreateRequestPacket(const EQApplicationPacket *app)
-{
+bool Client::HandleCharacterCreateRequestPacket(const EQApplicationPacket *app) {
 	// New OpCode in SoF
 	uint32 allocs = character_create_allocations.size();
 	uint32 combos = character_create_race_class_combos.size();
@@ -782,30 +753,27 @@ bool Client::HandleCharacterCreateRequestPacket(const EQApplicationPacket *app)
 
 	auto outapp = new EQApplicationPacket(OP_CharacterCreateRequest, len);
 	unsigned char *ptr = outapp->pBuffer;
-	*((uint8 *)ptr) = 0;
+	*((uint8*)ptr) = 0;
 	ptr += sizeof(uint8);
 
-	*((uint32 *)ptr) = allocs;
+	*((uint32*)ptr) = allocs;
 	ptr += sizeof(uint32);
 
-	for (int i = 0; i < allocs; ++i)
-	{
-		RaceClassAllocation *alc = (RaceClassAllocation *)ptr;
+	for(int i = 0; i < allocs; ++i) {
+		RaceClassAllocation *alc = (RaceClassAllocation*)ptr;
 
 		alc->Index = character_create_allocations[i].Index;
-		for (int j = 0; j < 7; ++j)
-		{
+		for(int j = 0; j < 7; ++j) {
 			alc->BaseStats[j] = character_create_allocations[i].BaseStats[j];
 			alc->DefaultPointAllocation[j] = character_create_allocations[i].DefaultPointAllocation[j];
 		}
 		ptr += sizeof(RaceClassAllocation);
 	}
 
-	*((uint32 *)ptr) = combos;
+	*((uint32*)ptr) = combos;
 	ptr += sizeof(uint32);
-	for (int i = 0; i < combos; ++i)
-	{
-		RaceClassCombos *cmb = (RaceClassCombos *)ptr;
+	for(int i = 0; i < combos; ++i) {
+		RaceClassCombos *cmb = (RaceClassCombos*)ptr;
 		cmb->ExpansionRequired = character_create_race_class_combos[i].ExpansionRequired;
 		cmb->Race = character_create_race_class_combos[i].Race;
 		cmb->Class = character_create_race_class_combos[i].Class;
@@ -820,12 +788,12 @@ bool Client::HandleCharacterCreateRequestPacket(const EQApplicationPacket *app)
 	return true;
 }
 
-bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app)
-{
+bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app) {
 	if (GetAccountID() == 0) {
 		LogInfo("Account ID not set; unable to create character");
 		return false;
-	} else if (app->size != sizeof(CharCreate_Struct)) {
+	}
+	else if (app->size != sizeof(CharCreate_Struct)) {
 		LogInfo("Wrong size on OP_CharacterCreate. Got: [{}], Expected: [{}]", app->size, sizeof(CharCreate_Struct));
 		DumpPacket(app);
 		// the previous behavior was essentially returning true here
@@ -833,9 +801,8 @@ bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app)
 		return true;
 	}
 
-	CharCreate_Struct *cc = (CharCreate_Struct *)app->pBuffer;
-
-	if (OPCharCreate(char_name, cc) == false) {
+	CharCreate_Struct *cc = (CharCreate_Struct*)app->pBuffer;
+	if(OPCharCreate(char_name, cc) == false) {
 		// This is ugly but it is the only way to keep the cache consistent that I can see.
 		WritebackCharacterDataCache();
 		database.DeleteCharacter(char_name);
@@ -844,7 +811,8 @@ bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app)
 		outapp->pBuffer[0] = 0;
 		QueuePacket(outapp);
 		safe_delete(outapp);
-	} else {
+	}
+	else {
 		if (m_ClientVersionBit & EQ::versions::maskTitaniumAndEarlier) {
 			StartInTutorial = true;
 		}

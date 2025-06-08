@@ -1614,12 +1614,11 @@ bool Client::ChecksumVerificationCRCBaseData(uint64 checksum)
 	return false;
 }
 
-void Client::EnterWorld(bool TryBootup)
-{
+void Client::EnterWorld(bool TryBootup) {
 	if (zone_id == 0)
 		return;
 
-	ZoneServer *zone_server = nullptr;
+	ZoneServer* zone_server = nullptr;
 	if (instance_id > 0)
 	{
 		if (!database.VerifyInstanceAlive(instance_id, GetCharID()) ||
@@ -1639,36 +1638,30 @@ void Client::EnterWorld(bool TryBootup)
 	}
 
 	const char *zone_name = ZoneName(zone_id, true);
-	if (zone_server)
-	{
-		if (false == enter_world_triggered)
-		{
+	if (zone_server) {
+		if (false == enter_world_triggered)	{
 			// Drop any clients we own in other zones.
 			zoneserver_list.DropClient(GetLSID(), zone_server);
 
 			// warn the zone we're coming
 			zone_server->IncomingClient(this);
 
-			// tell the server not to trigger this multiple times before we get a zone unavailable
+			//tell the server not to trigger this multiple times before we get a zone unavailable
 			enter_world_triggered = true;
 		}
 	}
-	else
-	{
-		if (TryBootup)
-		{
+	else {
+		if (TryBootup) {
 			LogInfo("Attempting autobootup of [{}] [{}] [{}]", zone_name, zone_id, instance_id);
 			autobootup_timeout.Start();
 			zone_waiting_for_bootup = zoneserver_list.TriggerBootup(zone_id, instance_id);
-			if (zone_waiting_for_bootup == 0)
-			{
+			if (zone_waiting_for_bootup == 0) {
 				LogInfo("No zoneserver available to boot up");
 				TellClientZoneUnavailable();
 			}
 			return;
 		}
-		else
-		{
+		else {
 			LogInfo("Requested zone [{}] is not running", zone_name);
 			TellClientZoneUnavailable();
 			return;
@@ -1677,15 +1670,13 @@ void Client::EnterWorld(bool TryBootup)
 
 	zone_waiting_for_bootup = 0;
 
-	if (GetAdmin() < 80 && zoneserver_list.IsZoneLocked(zone_id))
-	{
+	if (GetAdmin() < 80 && zoneserver_list.IsZoneLocked(zone_id)) {
 		LogInfo("Enter world failed. Zone is locked");
 		TellClientZoneUnavailable();
 		return;
 	}
 
-	if (!cle)
-	{
+	if (!cle) {
 		TellClientZoneUnavailable();
 		return;
 	}
@@ -1699,32 +1690,31 @@ void Client::EnterWorld(bool TryBootup)
 		(seen_character_select ? "Zoning from character select" : "Zoning to"),
 		zone_name,
 		zone_id,
-		instance_id);
+		instance_id
+	);
 
-	if (seen_character_select)
-	{
+	if (seen_character_select) {
 		auto pack = new ServerPacket;
 		pack->opcode = ServerOP_AcceptWorldEntrance;
 		pack->size = sizeof(WorldToZone_Struct);
 		pack->pBuffer = new uchar[pack->size];
 		memset(pack->pBuffer, 0, pack->size);
-		WorldToZone_Struct *wtz = (WorldToZone_Struct *)pack->pBuffer;
+		WorldToZone_Struct* wtz = (WorldToZone_Struct*) pack->pBuffer;
 		wtz->account_id = GetAccountID();
 		wtz->response = 0;
 		zone_server->SendPacket(pack);
 		delete pack;
 	}
-	else
-	{ // if they havent seen character select screen, we can assume this is a zone
-	  // to zone movement, which should be preauthorized before they leave the previous zone
+	else {	// if they havent seen character select screen, we can assume this is a zone
+			// to zone movement, which should be preauthorized before they leave the previous zone
 		Clearance(1);
 	}
 }
 
 void Client::Clearance(int8 response)
 {
-	ZoneServer *zs = nullptr;
-	if (instance_id > 0)
+	ZoneServer* zs = nullptr;
+	if(instance_id > 0)
 	{
 		zs = zoneserver_list.FindByInstanceID(instance_id);
 	}
@@ -1733,14 +1723,12 @@ void Client::Clearance(int8 response)
 		zs = zoneserver_list.FindByZoneID(zone_id);
 	}
 
-	if (zs == 0 || response == -1 || response == 0)
+	if(zs == 0 || response == -1 || response == 0)
 	{
 		if (zs == 0)
 		{
 			LogInfo("Unable to find zoneserver in Client::Clearance!!");
-		}
-		else
-		{
+		} else {
 			LogInfo("Invalid response [{}] in Client::Clearance", response);
 		}
 
@@ -1748,25 +1736,22 @@ void Client::Clearance(int8 response)
 		return;
 	}
 
-	EQApplicationPacket *outapp;
+	EQApplicationPacket* outapp;
 
-	if (zs->GetCAddress() == nullptr)
-	{
+	if (zs->GetCAddress() == nullptr) {
 		LogInfo("Unable to do zs->GetCAddress() in Client::Clearance!!");
 		TellClientZoneUnavailable();
 		return;
 	}
 
-	if (zone_id == 0)
-	{
+	if (zone_id == 0) {
 		LogInfo("zoneID is nullptr in Client::Clearance!!");
 		TellClientZoneUnavailable();
 		return;
 	}
 
-	const char *zonename = ZoneName(zone_id);
-	if (zonename == 0)
-	{
+	const char* zonename = ZoneName(zone_id);
+	if (zonename == 0) {
 		LogInfo("zonename is nullptr in Client::Clearance!!");
 		TellClientZoneUnavailable();
 		return;
@@ -1774,52 +1759,41 @@ void Client::Clearance(int8 response)
 
 	// Send zone server IP data
 	outapp = new EQApplicationPacket(OP_ZoneServerInfo, sizeof(ZoneServerInfo_Struct));
-	ZoneServerInfo_Struct *zsi = (ZoneServerInfo_Struct *)outapp->pBuffer;
+	ZoneServerInfo_Struct* zsi = (ZoneServerInfo_Struct*)outapp->pBuffer;
 
 	std::string zs_addr;
-	if (cle && cle->IsLocalClient())
-	{
+	if(cle && cle->IsLocalClient()) {
 		const char *local_addr = zs->GetCLocalAddress();
 
-		if (local_addr[0])
-		{
+		if(local_addr[0]) {
 			zs_addr = local_addr;
-		}
-		else
-		{
+		} else {
 			zs_addr = zs->GetIP();
 
-			if (zs_addr.empty())
-			{
+			if (zs_addr.empty()) {
 				zs_addr = WorldConfig::get()->LocalAddress;
 			}
 
-			if (zs_addr == "127.0.0.1")
+			if(zs_addr == "127.0.0.1")
 			{
 				LogInfo("Local zone address was [{}], setting local address to: [{}]", zs_addr, WorldConfig::get()->LocalAddress.c_str());
 				zs_addr = WorldConfig::get()->LocalAddress;
-			}
-			else
-			{
+			} else {
 				LogInfo("Local zone address [{}]", zs_addr);
 			}
 		}
-	}
-	else
-	{
+
+	} else {
 		const char *addr = zs->GetCAddress();
-		if (addr[0])
-		{
+		if(addr[0]) {
 			zs_addr = addr;
-		}
-		else
-		{
+		} else {
 			zs_addr = WorldConfig::get()->WorldAddress;
 		}
 	}
 
 	strcpy(zsi->ip, zs_addr.c_str());
-	zsi->port = zs->GetCPort();
+	zsi->port =zs->GetCPort();
 	LogInfo("Sending client to zone [{}] ([{}]:[{}]) at [{}]:[{}]", zonename, zone_id, instance_id, zsi->ip, zsi->port);
 	QueuePacket(outapp);
 	safe_delete(outapp);

@@ -1108,6 +1108,7 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 		safe_delete(outapp);
 	}
 
+	WritebackCharacterDataCache();
 	EnterWorld();
 
 	return true;
@@ -1617,6 +1618,7 @@ bool Client::ChecksumVerificationCRCBaseData(uint64 checksum)
 }
 
 void Client::EnterWorld(bool TryBootup) {
+
 	if (zone_id == 0)
 		return;
 
@@ -2889,6 +2891,11 @@ void Client::PopulateCharacterDataCache() {
 }
 
 void Client::WritebackCharacterDataCache() {
+	// Sanity check, this should NEVER be empty here.
+	if (m_character_sets.empty()) {
+		return;
+	}
+
     AccountCharacterSetsRepository::DeleteWhere(database,
         fmt::format("account_id = {}", GetAccountID()));
     AccountCharacterSetMembersRepository::DeleteWhere(database,

@@ -2149,21 +2149,18 @@ bool CheckCharCreateInfoSoF(CharCreate_Struct *cc)
 	RaceClassCombos class_combo;
 	bool found = false;
 	int combos = character_create_race_class_combos.size();
-	for (int i = 0; i < combos; ++i)
-	{
+	for (int i = 0; i < combos; ++i) {
 		if (character_create_race_class_combos[i].Class == cc->class_ &&
-			character_create_race_class_combos[i].Race == cc->race &&
-			character_create_race_class_combos[i].Deity == cc->deity &&
-			character_create_race_class_combos[i].Zone == cc->start_zone)
-		{
+				character_create_race_class_combos[i].Race == cc->race &&
+				character_create_race_class_combos[i].Deity == cc->deity &&
+				character_create_race_class_combos[i].Zone == cc->start_zone) {
 			class_combo = character_create_race_class_combos[i];
 			found = true;
 			break;
 		}
 	}
 
-	if (!found)
-	{
+	if (!found) {
 		LogInfo("Could not find class/race/deity/start_zone combination");
 		return false;
 	}
@@ -2171,68 +2168,58 @@ bool CheckCharCreateInfoSoF(CharCreate_Struct *cc)
 	uint32 allocs = character_create_allocations.size();
 	RaceClassAllocation allocation = {0};
 	found = false;
-	for (int i = 0; i < allocs; ++i)
-	{
-		if (character_create_allocations[i].Index == class_combo.AllocationIndex)
-		{
+	for (int i = 0; i < allocs; ++i) {
+		if (character_create_allocations[i].Index == class_combo.AllocationIndex) {
 			allocation = character_create_allocations[i];
 			found = true;
 			break;
 		}
 	}
 
-	if (!found)
-	{
+	if (!found) {
 		LogInfo("Could not find starting stats for selected character combo, cannot verify stats");
 		return false;
 	}
 
 	uint32 max_stats = allocation.DefaultPointAllocation[0] +
-					   allocation.DefaultPointAllocation[1] +
-					   allocation.DefaultPointAllocation[2] +
-					   allocation.DefaultPointAllocation[3] +
-					   allocation.DefaultPointAllocation[4] +
-					   allocation.DefaultPointAllocation[5] +
-					   allocation.DefaultPointAllocation[6];
+		allocation.DefaultPointAllocation[1] +
+		allocation.DefaultPointAllocation[2] +
+		allocation.DefaultPointAllocation[3] +
+		allocation.DefaultPointAllocation[4] +
+		allocation.DefaultPointAllocation[5] +
+		allocation.DefaultPointAllocation[6];
 
-	if (cc->STR > allocation.BaseStats[0] + max_stats || cc->STR < allocation.BaseStats[0])
-	{
+	if (cc->STR > allocation.BaseStats[0] + max_stats || cc->STR < allocation.BaseStats[0]) {
 		LogInfo("Strength out of range");
 		return false;
 	}
 
-	if (cc->DEX > allocation.BaseStats[1] + max_stats || cc->DEX < allocation.BaseStats[1])
-	{
+	if (cc->DEX > allocation.BaseStats[1] + max_stats || cc->DEX < allocation.BaseStats[1]) {
 		LogInfo("Dexterity out of range");
 		return false;
 	}
 
-	if (cc->AGI > allocation.BaseStats[2] + max_stats || cc->AGI < allocation.BaseStats[2])
-	{
+	if (cc->AGI > allocation.BaseStats[2] + max_stats || cc->AGI < allocation.BaseStats[2]) {
 		LogInfo("Agility out of range");
 		return false;
 	}
 
-	if (cc->STA > allocation.BaseStats[3] + max_stats || cc->STA < allocation.BaseStats[3])
-	{
+	if (cc->STA > allocation.BaseStats[3] + max_stats || cc->STA < allocation.BaseStats[3]) {
 		LogInfo("Stamina out of range");
 		return false;
 	}
 
-	if (cc->INT > allocation.BaseStats[4] + max_stats || cc->INT < allocation.BaseStats[4])
-	{
+	if (cc->INT > allocation.BaseStats[4] + max_stats || cc->INT < allocation.BaseStats[4]) {
 		LogInfo("Intelligence out of range");
 		return false;
 	}
 
-	if (cc->WIS > allocation.BaseStats[5] + max_stats || cc->WIS < allocation.BaseStats[5])
-	{
+	if (cc->WIS > allocation.BaseStats[5] + max_stats || cc->WIS < allocation.BaseStats[5]) {
 		LogInfo("Wisdom out of range");
 		return false;
 	}
 
-	if (cc->CHA > allocation.BaseStats[6] + max_stats || cc->CHA < allocation.BaseStats[6])
-	{
+	if (cc->CHA > allocation.BaseStats[6] + max_stats || cc->CHA < allocation.BaseStats[6]) {
 		LogInfo("Charisma out of range");
 		return false;
 	}
@@ -2245,8 +2232,7 @@ bool CheckCharCreateInfoSoF(CharCreate_Struct *cc)
 	current_stats += cc->INT - allocation.BaseStats[4];
 	current_stats += cc->WIS - allocation.BaseStats[5];
 	current_stats += cc->CHA - allocation.BaseStats[6];
-	if (current_stats > max_stats)
-	{
+	if (current_stats > max_stats) {
 		LogInfo("Current Stats > Maximum Stats");
 		return false;
 	}
@@ -2256,70 +2242,74 @@ bool CheckCharCreateInfoSoF(CharCreate_Struct *cc)
 
 bool CheckCharCreateInfoTitanium(CharCreate_Struct *cc)
 {
-	uint32 bSTR, bSTA, bAGI, bDEX, bWIS, bINT, bCHA, bTOTAL, cTOTAL, stat_points; // these are all uint32 in CharCreate_Struct, so we'll make them uint32 here to make the compiler shut up
+	uint32 bSTR, bSTA, bAGI, bDEX, bWIS, bINT, bCHA, bTOTAL, cTOTAL, stat_points; //these are all uint32 in CharCreate_Struct, so we'll make them uint32 here to make the compiler shut up
 	int classtemp, racetemp;
 	int Charerrors = 0;
+
 
 // if this is increased you'll have to add a column to the classrace
 // table below
 #define _TABLE_RACES 16
 
 	static const int BaseRace[_TABLE_RACES][7] =
-		{/* STR  STA  AGI  DEX  WIS  INT  CHR */
-		 {/*Human*/ 75, 75, 75, 75, 75, 75, 75},
-		 {/*Barbarian*/ 103, 95, 82, 70, 70, 60, 55},
-		 {/*Erudite*/ 60, 70, 70, 70, 83, 107, 70},
-		 {/*Wood Elf*/ 65, 65, 95, 80, 80, 75, 75},
-		 {/*High Elf*/ 55, 65, 85, 70, 95, 92, 80},
-		 {/*Dark Elf*/ 60, 65, 90, 75, 83, 99, 60},
-		 {/*Half Elf*/ 70, 70, 90, 85, 60, 75, 75},
-		 {/*Dwarf*/ 90, 90, 70, 90, 83, 60, 45},
-		 {/*Troll*/ 108, 109, 83, 75, 60, 52, 40},
-		 {/*Ogre*/ 130, 122, 70, 70, 67, 60, 37},
-		 {/*Halfling*/ 70, 75, 95, 90, 80, 67, 50},
-		 {/*Gnome*/ 60, 70, 85, 85, 67, 98, 60},
-		 {/*Iksar*/ 70, 70, 90, 85, 80, 75, 55},
-		 {/*Vah Shir*/ 90, 75, 90, 70, 70, 65, 65},
-		 {/*Froglok*/ 70, 80, 100, 100, 75, 75, 50},
-		 {/*Drakkin*/ 70, 80, 85, 75, 80, 85, 75}};
+	{            /* STR  STA  AGI  DEX  WIS  INT  CHR */
+	{ /*Human*/      75,  75,  75,  75,  75,  75,  75},
+	{ /*Barbarian*/ 103,  95,  82,  70,  70,  60,  55},
+	{ /*Erudite*/    60,  70,  70,  70,  83, 107,  70},
+	{ /*Wood Elf*/   65,  65,  95,  80,  80,  75,  75},
+	{ /*High Elf*/   55,  65,  85,  70,  95,  92,  80},
+	{ /*Dark Elf*/   60,  65,  90,  75,  83,  99,  60},
+	{ /*Half Elf*/   70,  70,  90,  85,  60,  75,  75},
+	{ /*Dwarf*/      90,  90,  70,  90,  83,  60,  45},
+	{ /*Troll*/     108, 109,  83,  75,  60,  52,  40},
+	{ /*Ogre*/      130, 122,  70,  70,  67,  60,  37},
+	{ /*Halfling*/   70,  75,  95,  90,  80,  67,  50},
+	{ /*Gnome*/      60,  70,  85,  85,  67,  98,  60},
+	{ /*Iksar*/      70,  70,  90,  85,  80,  75,  55},
+	{ /*Vah Shir*/   90,  75,  90,  70,  70,  65,  65},
+	{ /*Froglok*/    70,  80, 100, 100,  75,  75,  50},
+	{ /*Drakkin*/    70,  80,  85,  75,  80,  85,  75}
+	};
 
 	static const int BaseClass[Class::PLAYER_CLASS_COUNT][8] =
-		{/* STR  STA  AGI  DEX  WIS  INT  CHR  ADD*/
-		 {/*Warrior*/ 10, 10, 5, 0, 0, 0, 0, 25},
-		 {/*Cleric*/ 5, 5, 0, 0, 10, 0, 0, 30},
-		 {/*Paladin*/ 10, 5, 0, 0, 5, 0, 10, 20},
-		 {/*Ranger*/ 5, 10, 10, 0, 5, 0, 0, 20},
-		 {/*ShadowKnight*/ 10, 5, 0, 0, 0, 10, 5, 20},
-		 {/*Druid*/ 0, 10, 0, 0, 10, 0, 0, 30},
-		 {/*Monk*/ 5, 5, 10, 10, 0, 0, 0, 20},
-		 {/*Bard*/ 5, 0, 0, 10, 0, 0, 10, 25},
-		 {/*Rouge*/ 0, 0, 10, 10, 0, 0, 0, 30},
-		 {/*Shaman*/ 0, 5, 0, 0, 10, 0, 5, 30},
-		 {/*Necromancer*/ 0, 0, 0, 10, 0, 10, 0, 30},
-		 {/*Wizard*/ 0, 10, 0, 0, 0, 10, 0, 30},
-		 {/*Magician*/ 0, 10, 0, 0, 0, 10, 0, 30},
-		 {/*Enchanter*/ 0, 0, 0, 0, 0, 10, 10, 30},
-		 {/*Beastlord*/ 0, 10, 5, 0, 10, 0, 5, 20},
-		 {/*Berserker*/ 10, 5, 0, 10, 0, 0, 0, 25}};
+	{              /* STR  STA  AGI  DEX  WIS  INT  CHR  ADD*/
+	{ /*Warrior*/      10,  10,   5,   0,   0,   0,   0,  25},
+	{ /*Cleric*/        5,   5,   0,   0,  10,   0,   0,  30},
+	{ /*Paladin*/      10,   5,   0,   0,   5,   0,  10,  20},
+	{ /*Ranger*/        5,  10,  10,   0,   5,   0,   0,  20},
+	{ /*ShadowKnight*/ 10,   5,   0,   0,   0,   10,  5,  20},
+	{ /*Druid*/         0,  10,   0,   0,  10,   0,   0,  30},
+	{ /*Monk*/          5,   5,  10,  10,   0,   0,   0,  20},
+	{ /*Bard*/          5,   0,   0,  10,   0,   0,  10,  25},
+	{ /*Rouge*/         0,   0,  10,  10,   0,   0,   0,  30},
+	{ /*Shaman*/        0,   5,   0,   0,  10,   0,   5,  30},
+	{ /*Necromancer*/   0,   0,   0,  10,   0,  10,   0,  30},
+	{ /*Wizard*/        0,  10,   0,   0,   0,  10,   0,  30},
+	{ /*Magician*/      0,  10,   0,   0,   0,  10,   0,  30},
+	{ /*Enchanter*/     0,   0,   0,   0,   0,  10,  10,  30},
+	{ /*Beastlord*/     0,  10,   5,   0,  10,   0,   5,  20},
+	{ /*Berserker*/    10,   5,   0,  10,   0,   0,   0,  25}
+	};
 
-	static const bool ClassRaceLookupTable[Class::PLAYER_CLASS_COUNT][_TABLE_RACES] =
-		{/*Human  Barbarian Erudite Woodelf Highelf Darkelf Halfelf Dwarf  Troll  Ogre   Halfling Gnome  Iksar  Vahshir Froglok Drakkin*/
-		 {/*Warrior*/ true, true, false, true, false, true, true, true, true, true, true, true, true, true, true, true},
-		 {/*Cleric*/ true, false, true, false, true, true, true, true, false, false, true, true, false, false, true, true},
-		 {/*Paladin*/ true, false, true, false, true, false, true, true, false, false, true, true, false, false, true, true},
-		 {/*Ranger*/ true, false, false, true, false, false, true, false, false, false, true, false, false, false, false, true},
-		 {/*ShadowKnight*/ true, false, true, false, false, true, false, false, true, true, false, true, true, false, true, true},
-		 {/*Druid*/ true, false, false, true, false, false, true, false, false, false, true, false, false, false, false, true},
-		 {/*Monk*/ true, false, false, false, false, false, false, false, false, false, false, false, true, false, false, true},
-		 {/*Bard*/ true, false, false, true, false, false, true, false, false, false, false, false, false, true, false, true},
-		 {/*Rogue*/ true, true, false, true, false, true, true, true, false, false, true, true, false, true, true, true},
-		 {/*Shaman*/ false, true, false, false, false, false, false, false, true, true, false, false, true, true, true, false},
-		 {/*Necromancer*/ true, false, true, false, false, true, false, false, false, false, false, true, true, false, true, true},
-		 {/*Wizard*/ true, false, true, false, true, true, false, false, false, false, false, true, false, false, true, true},
-		 {/*Magician*/ true, false, true, false, true, true, false, false, false, false, false, true, false, false, false, true},
-		 {/*Enchanter*/ true, false, true, false, true, true, false, false, false, false, false, true, false, false, false, true},
-		 {/*Beastlord*/ false, true, false, false, false, false, false, false, true, true, false, false, true, true, false, false},
-		 {/*Berserker*/ false, true, false, false, false, false, false, true, true, true, false, false, false, true, false, false}};
+	static const bool ClassRaceLookupTable[Class::PLAYER_CLASS_COUNT][_TABLE_RACES]=
+	{                   /*Human  Barbarian Erudite Woodelf Highelf Darkelf Halfelf Dwarf  Troll  Ogre   Halfling Gnome  Iksar  Vahshir Froglok Drakkin*/
+	{ /*Warrior*/         true,  true,     false,  true,   false,  true,   true,   true,  true,  true,  true,    true,  true,  true,   true,   true},
+	{ /*Cleric*/          true,  false,    true,   false,  true,   true,   true,   true,  false, false, true,    true,  false, false,  true,   true},
+	{ /*Paladin*/         true,  false,    true,   false,  true,   false,  true,   true,  false, false, true,    true,  false, false,  true,   true},
+	{ /*Ranger*/          true,  false,    false,  true,   false,  false,  true,   false, false, false, true,    false, false, false,  false,  true},
+	{ /*ShadowKnight*/    true,  false,    true,   false,  false,  true,   false,  false, true,  true,  false,   true,  true,  false,  true,   true},
+	{ /*Druid*/           true,  false,    false,  true,   false,  false,  true,   false, false, false, true,    false, false, false,  false,  true},
+	{ /*Monk*/            true,  false,    false,  false,  false,  false,  false,  false, false, false, false,   false, true,  false,  false,  true},
+	{ /*Bard*/            true,  false,    false,  true,   false,  false,  true,   false, false, false, false,   false, false, true,   false,  true},
+	{ /*Rogue*/           true,  true,     false,  true,   false,  true,   true,   true,  false, false, true,    true,  false, true,   true,   true},
+	{ /*Shaman*/          false, true,     false,  false,  false,  false,  false,  false, true,  true,  false,   false, true,  true,   true,   false},
+	{ /*Necromancer*/     true,  false,    true,   false,  false,  true,   false,  false, false, false, false,   true,  true,  false,  true,   true},
+	{ /*Wizard*/          true,  false,    true,   false,  true,   true,   false,  false, false, false, false,   true,  false, false,  true,   true},
+	{ /*Magician*/        true,  false,    true,   false,  true,   true,   false,  false, false, false, false,   true,  false, false,  false,  true},
+	{ /*Enchanter*/       true,  false,    true,   false,  true,   true,   false,  false, false, false, false,   true,  false, false,  false,  true},
+	{ /*Beastlord*/       false, true,     false,  false,  false,  false,  false,  false, true,  true,  false,   false, true,  true,   false,  false},
+	{ /*Berserker*/       false, true,     false,  false,  false,  false,  false,  true,  true,  true,  false,   false, false, true,   false,  false}
+	};
 
 	if (!cc)
 		return false;
@@ -2329,30 +2319,23 @@ bool CheckCharCreateInfoTitanium(CharCreate_Struct *cc)
 	classtemp = cc->class_ - 1;
 	racetemp = cc->race - 1;
 	// these have non sequential race numbers so they need to be mapped
-	if (cc->race == FROGLOK)
-		racetemp = 14;
-	if (cc->race == VAHSHIR)
-		racetemp = 13;
-	if (cc->race == IKSAR)
-		racetemp = 12;
-	if (cc->race == DRAKKIN)
-		racetemp = 15;
+	if (cc->race == FROGLOK) racetemp = 14;
+	if (cc->race == VAHSHIR) racetemp = 13;
+	if (cc->race == IKSAR) racetemp = 12;
+	if (cc->race == DRAKKIN) racetemp = 15;
 
 	// if out of range looking it up in the table would crash stuff
 	// so we return from these
-	if (classtemp >= Class::PLAYER_CLASS_COUNT)
-	{
+	if (classtemp >= Class::PLAYER_CLASS_COUNT) {
 		LogInfo(" class is out of range");
 		return false;
 	}
-	if (racetemp >= _TABLE_RACES)
-	{
+	if (racetemp >= _TABLE_RACES) {
 		LogInfo(" race is out of range");
 		return false;
 	}
 
-	if (!ClassRaceLookupTable[classtemp][racetemp])
-	{ // Lookup table better than a bunch of ifs?
+	if (!ClassRaceLookupTable[classtemp][racetemp]) { //Lookup table better than a bunch of ifs?
 		LogInfo(" invalid race/class combination");
 		// we return from this one, since if it's an invalid combination our table
 		// doesn't have meaningful values for the stats
@@ -2380,44 +2363,36 @@ bool CheckCharCreateInfoTitanium(CharCreate_Struct *cc)
 	// NOTE: these could just be else if, but i want to see all the stats
 	// that are messed up not just the first hit
 
-	if (bTOTAL + stat_points != cTOTAL)
-	{
+	if (bTOTAL + stat_points != cTOTAL) {
 		LogInfo(" stat points total doesn't match expected value: expecting [{}] got [{}]", bTOTAL + stat_points, cTOTAL);
 		Charerrors++;
 	}
 
-	if (cc->STR > bSTR + stat_points || cc->STR < bSTR)
-	{
+	if (cc->STR > bSTR + stat_points || cc->STR < bSTR) {
 		LogInfo(" stat STR is out of range");
 		Charerrors++;
 	}
-	if (cc->STA > bSTA + stat_points || cc->STA < bSTA)
-	{
+	if (cc->STA > bSTA + stat_points || cc->STA < bSTA) {
 		LogInfo(" stat STA is out of range");
 		Charerrors++;
 	}
-	if (cc->AGI > bAGI + stat_points || cc->AGI < bAGI)
-	{
+	if (cc->AGI > bAGI + stat_points || cc->AGI < bAGI) {
 		LogInfo(" stat AGI is out of range");
 		Charerrors++;
 	}
-	if (cc->DEX > bDEX + stat_points || cc->DEX < bDEX)
-	{
+	if (cc->DEX > bDEX + stat_points || cc->DEX < bDEX) {
 		LogInfo(" stat DEX is out of range");
 		Charerrors++;
 	}
-	if (cc->WIS > bWIS + stat_points || cc->WIS < bWIS)
-	{
+	if (cc->WIS > bWIS + stat_points || cc->WIS < bWIS) {
 		LogInfo(" stat WIS is out of range");
 		Charerrors++;
 	}
-	if (cc->INT > bINT + stat_points || cc->INT < bINT)
-	{
+	if (cc->INT > bINT + stat_points || cc->INT < bINT) {
 		LogInfo(" stat INT is out of range");
 		Charerrors++;
 	}
-	if (cc->CHA > bCHA + stat_points || cc->CHA < bCHA)
-	{
+	if (cc->CHA > bCHA + stat_points || cc->CHA < bCHA) {
 		LogInfo(" stat CHA is out of range");
 		Charerrors++;
 	}
@@ -2432,29 +2407,39 @@ bool CheckCharCreateInfoTitanium(CharCreate_Struct *cc)
 
 void Client::SetClassStartingSkills(PlayerProfile_Struct *pp)
 {
-	/*
-	for (uint32 i = 0; i <= EQ::skills::HIGHEST_SKILL; ++i) {
-		if (pp->skills[i] == 0) {
-			// Skip specialized, tradeskills (fishing excluded), Alcohol Tolerance, and Bind Wound
-			if (EQ::skills::IsSpecializedSkill((EQ::skills::SkillType)i) ||
-				(EQ::skills::IsTradeskill((EQ::skills::SkillType)i) && i != EQ::skills::SkillFishing) ||
-				i == EQ::skills::SkillAlcoholTolerance || i == EQ::skills::SkillBindWound)
-				continue;
+   for (uint32 i = 0; i <= EQ::skills::HIGHEST_SKILL; ++i) {
+       if (pp->skills[i] == 0) {
+           // Skip specialized, tradeskills (fishing excluded), Alcohol Tolerance, and Bind Wound
+           if (EQ::skills::IsSpecializedSkill((EQ::skills::SkillType)i) ||
+               (EQ::skills::IsTradeskill((EQ::skills::SkillType)i) && i != EQ::skills::SkillFishing) ||
+               i == EQ::skills::SkillAlcoholTolerance || i == EQ::skills::SkillBindWound)
+               continue;
 
-			pp->skills[i] = skill_caps.GetSkillCap(pp->class_, (EQ::skills::SkillType)i, 1).cap;
-		}
-	}
+           // Check all classes in the bitmask and take the highest skill cap
+           uint8 highest_cap = 0;
+           for (uint8 class_id = Class::Warrior; class_id <= Class::Berserker; ++class_id) {
+               if (pp->classes & GetPlayerClassBit(class_id)) {
+                   uint8 cap = skill_caps.GetSkillCap(class_id, (EQ::skills::SkillType)i, 1).cap;
+                   if (cap > highest_cap) {
+                       highest_cap = cap;
+                   }
+               }
+           }
+           pp->skills[i] = highest_cap;
+       }
+   }
 
-	if (cle->GetClientVersion() < static_cast<uint8>(EQ::versions::ClientVersion::RoF2) && pp->class_ == Class::Berserker) {
-		pp->skills[EQ::skills::Skill1HPiercing] = pp->skills[EQ::skills::Skill2HPiercing];
-		pp->skills[EQ::skills::Skill2HPiercing] = 0;
-	}
-	*/
+   // Handle Berserker special case - check if any of the classes is Berserker
+   if (cle->GetClientVersion() < static_cast<uint8>(EQ::versions::ClientVersion::RoF2) &&
+       (pp->classes & GetPlayerClassBit(Class::Berserker))) {
+       pp->skills[EQ::skills::Skill1HPiercing] = pp->skills[EQ::skills::Skill2HPiercing];
+       pp->skills[EQ::skills::Skill2HPiercing] = 0;
+   }
 }
 
-void Client::SetRaceStartingSkills(PlayerProfile_Struct *pp)
+void Client::SetRaceStartingSkills( PlayerProfile_Struct *pp )
 {
-	switch (pp->race)
+	switch( pp->race )
 	{
 	case BARBARIAN:
 	case DWARF:
@@ -2464,190 +2449,174 @@ void Client::SetRaceStartingSkills(PlayerProfile_Struct *pp)
 	case HUMAN:
 	case OGRE:
 	case TROLL:
-	case DRAKKIN: // Drakkin are supposed to get a starting AA Skill
-	{
-		// No Race Specific Skills
-		break;
-	}
+	case DRAKKIN:	//Drakkin are supposed to get a starting AA Skill
+		{
+			// No Race Specific Skills
+			break;
+		}
 	case DARK_ELF:
-	{
-		pp->skills[EQ::skills::SkillHide] = 50;
-		break;
-	}
+		{
+			pp->skills[EQ::skills::SkillHide] = 50;
+			break;
+		}
 	case FROGLOK:
-	{
-		if (RuleI(Skills, SwimmingStartValue) < 125)
 		{
-			pp->skills[EQ::skills::SkillSwimming] = 125;
+			if (RuleI(Skills, SwimmingStartValue) < 125) {
+				pp->skills[EQ::skills::SkillSwimming] = 125;
+			}
+			break;
 		}
-		break;
-	}
 	case GNOME:
-	{
-		pp->skills[EQ::skills::SkillTinkering] = 50;
-		break;
-	}
-	case HALFLING:
-	{
-		pp->skills[EQ::skills::SkillHide] = 50;
-		pp->skills[EQ::skills::SkillSneak] = 50;
-		break;
-	}
-	case IKSAR:
-	{
-		pp->skills[EQ::skills::SkillForage] = 50;
-		if (RuleI(Skills, SwimmingStartValue) < 100)
 		{
-			pp->skills[EQ::skills::SkillSwimming] = 100;
+			pp->skills[EQ::skills::SkillTinkering] = 50;
+			break;
 		}
-		break;
-	}
+	case HALFLING:
+		{
+			pp->skills[EQ::skills::SkillHide] = 50;
+			pp->skills[EQ::skills::SkillSneak] = 50;
+			break;
+		}
+	case IKSAR:
+		{
+			pp->skills[EQ::skills::SkillForage] = 50;
+			if (RuleI(Skills, SwimmingStartValue) < 100) {
+				pp->skills[EQ::skills::SkillSwimming] = 100;
+			}
+			break;
+		}
 	case WOOD_ELF:
-	{
-		pp->skills[EQ::skills::SkillForage] = 50;
-		pp->skills[EQ::skills::SkillHide] = 50;
-		break;
-	}
+		{
+			pp->skills[EQ::skills::SkillForage] = 50;
+			pp->skills[EQ::skills::SkillHide] = 50;
+			break;
+		}
 	case VAHSHIR:
-	{
-		pp->skills[EQ::skills::SkillSafeFall] = 50;
-		pp->skills[EQ::skills::SkillSneak] = 50;
-		break;
-	}
+		{
+			pp->skills[EQ::skills::SkillSafeFall] = 50;
+			pp->skills[EQ::skills::SkillSneak] = 50;
+			break;
+		}
 	}
 }
 
-void Client::SetRacialLanguages(PlayerProfile_Struct *pp)
+void Client::SetRacialLanguages( PlayerProfile_Struct *pp )
 {
-	switch (pp->race)
-	{
-	case Race::Human:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		break;
-	}
-	case Race::Barbarian:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		pp->languages[Language::Barbarian] = Language::MaxValue;
-		break;
-	}
-	case Race::Erudite:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		pp->languages[Language::Erudian] = Language::MaxValue;
-		break;
-	}
-	case Race::WoodElf:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		pp->languages[Language::Elvish] = Language::MaxValue;
-		break;
-	}
-	case Race::HighElf:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		pp->languages[Language::DarkElvish] = 25;
-		pp->languages[Language::ElderElvish] = 25;
-		pp->languages[Language::Elvish] = Language::MaxValue;
-		break;
-	}
-	case Race::DarkElf:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		pp->languages[Language::DarkElvish] = Language::MaxValue;
-		pp->languages[Language::DarkSpeech] = Language::MaxValue;
-		pp->languages[Language::ElderElvish] = Language::MaxValue;
-		pp->languages[Language::Elvish] = 25;
-		break;
-	}
-	case Race::HalfElf:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		pp->languages[Language::Elvish] = Language::MaxValue;
-		break;
-	}
-	case Race::Dwarf:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		pp->languages[Language::Dwarvish] = Language::MaxValue;
-		pp->languages[Language::Gnomish] = 25;
-		break;
-	}
-	case Race::Troll:
-	{
-		pp->languages[Language::CommonTongue] = RuleI(Character, TrollCommonTongue);
-		pp->languages[Language::DarkSpeech] = Language::MaxValue;
-		pp->languages[Language::Troll] = Language::MaxValue;
-		break;
-	}
-	case Race::Ogre:
-	{
-		pp->languages[Language::CommonTongue] = RuleI(Character, OgreCommonTongue);
-		pp->languages[Language::DarkSpeech] = Language::MaxValue;
-		pp->languages[Language::Ogre] = Language::MaxValue;
-		break;
-	}
-	case Race::Halfling:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		pp->languages[Language::Halfling] = Language::MaxValue;
-		break;
-	}
-	case Race::Gnome:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		pp->languages[Language::Dwarvish] = 25;
-		pp->languages[Language::Gnomish] = Language::MaxValue;
-		break;
-	}
-	case Race::Iksar:
-	{
-		pp->languages[Language::CommonTongue] = RuleI(Character, IksarCommonTongue);
-		pp->languages[Language::DarkSpeech] = Language::MaxValue;
-		pp->languages[Language::Lizardman] = Language::MaxValue;
-		break;
-	}
-	case Race::VahShir:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		pp->languages[Language::CombineTongue] = Language::MaxValue;
-		pp->languages[Language::Erudian] = 25;
-		pp->languages[Language::VahShir] = Language::MaxValue;
-		break;
-	}
-	case Race::Froglok2:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		pp->languages[Language::Froglok] = Language::MaxValue;
-		pp->languages[Language::Troll] = 25;
-		break;
-	}
-	case Race::Drakkin:
-	{
-		pp->languages[Language::CommonTongue] = Language::MaxValue;
-		pp->languages[Language::ElderDragon] = Language::MaxValue;
-		pp->languages[Language::Dragon] = Language::MaxValue;
-		break;
-	}
-	default:
-	{
-		break;
-	}
+	switch (pp->race) {
+		case Race::Human: {
+			pp->languages[Language::CommonTongue] = Language::MaxValue;
+			break;
+		}
+		case Race::Barbarian: {
+			pp->languages[Language::CommonTongue] = Language::MaxValue;
+			pp->languages[Language::Barbarian]    = Language::MaxValue;
+			break;
+		}
+		case Race::Erudite: {
+			pp->languages[Language::CommonTongue] = Language::MaxValue;
+			pp->languages[Language::Erudian]      = Language::MaxValue;
+			break;
+		}
+		case Race::WoodElf: {
+			pp->languages[Language::CommonTongue] = Language::MaxValue;
+			pp->languages[Language::Elvish]       = Language::MaxValue;
+			break;
+		}
+		case Race::HighElf: {
+			pp->languages[Language::CommonTongue] = Language::MaxValue;
+			pp->languages[Language::DarkElvish]   = 25;
+			pp->languages[Language::ElderElvish]  = 25;
+			pp->languages[Language::Elvish]       = Language::MaxValue;
+			break;
+		}
+		case Race::DarkElf: {
+			pp->languages[Language::CommonTongue] = Language::MaxValue;
+			pp->languages[Language::DarkElvish]   = Language::MaxValue;
+			pp->languages[Language::DarkSpeech]   = Language::MaxValue;
+			pp->languages[Language::ElderElvish]  = Language::MaxValue;
+			pp->languages[Language::Elvish]       = 25;
+			break;
+		}
+		case Race::HalfElf: {
+			pp->languages[Language::CommonTongue] = Language::MaxValue;
+			pp->languages[Language::Elvish]       = Language::MaxValue;
+			break;
+		}
+		case Race::Dwarf: {
+			pp->languages[Language::CommonTongue] = Language::MaxValue;
+			pp->languages[Language::Dwarvish]     = Language::MaxValue;
+			pp->languages[Language::Gnomish]      = 25;
+			break;
+		}
+		case Race::Troll: {
+			pp->languages[Language::CommonTongue] = RuleI(Character, TrollCommonTongue);
+			pp->languages[Language::DarkSpeech]   = Language::MaxValue;
+			pp->languages[Language::Troll]        = Language::MaxValue;
+			break;
+		}
+		case Race::Ogre: {
+			pp->languages[Language::CommonTongue] = RuleI(Character, OgreCommonTongue);
+			pp->languages[Language::DarkSpeech]   = Language::MaxValue;
+			pp->languages[Language::Ogre]         = Language::MaxValue;
+			break;
+		}
+		case Race::Halfling: {
+			pp->languages[Language::CommonTongue] = Language::MaxValue;
+			pp->languages[Language::Halfling]     = Language::MaxValue;
+			break;
+		}
+		case Race::Gnome: {
+			pp->languages[Language::CommonTongue] = Language::MaxValue;
+			pp->languages[Language::Dwarvish]     = 25;
+			pp->languages[Language::Gnomish]      = Language::MaxValue;
+			break;
+		}
+		case Race::Iksar: {
+			pp->languages[Language::CommonTongue] = RuleI(Character, IksarCommonTongue);
+			pp->languages[Language::DarkSpeech]   = Language::MaxValue;
+			pp->languages[Language::Lizardman]    = Language::MaxValue;
+			break;
+		}
+		case Race::VahShir: {
+			pp->languages[Language::CommonTongue]  = Language::MaxValue;
+			pp->languages[Language::CombineTongue] = Language::MaxValue;
+			pp->languages[Language::Erudian]       = 25;
+			pp->languages[Language::VahShir]       = Language::MaxValue;
+			break;
+		}
+		case Race::Froglok2: {
+			pp->languages[Language::CommonTongue] = Language::MaxValue;
+			pp->languages[Language::Froglok]      = Language::MaxValue;
+			pp->languages[Language::Troll]        = 25;
+			break;
+		}
+		case Race::Drakkin: {
+			pp->languages[Language::CommonTongue] = Language::MaxValue;
+			pp->languages[Language::ElderDragon]  = Language::MaxValue;
+			pp->languages[Language::Dragon]       = Language::MaxValue;
+			break;
+		}
+		default: {
+			break;
+		}
 	}
 }
 
 void Client::SetClassLanguages(PlayerProfile_Struct *pp)
 {
-	// we only need to handle one class, but custom server might want to do more
-	switch (pp->class_)
-	{
-	case Class::Rogue:
-		pp->languages[Language::ThievesCant] = Language::MaxValue;
-		break;
-	default:
-		break;
-	}
+    // Handle single class case
+    switch (pp->class_) {
+        case Class::Rogue:
+            pp->languages[Language::ThievesCant] = Language::MaxValue;
+            break;
+        default:
+            break;
+    }
+
+    // Handle multi-class case using bitmask
+    if (pp->classes & GetPlayerClassBit(Class::Rogue)) {
+        pp->languages[Language::ThievesCant] = Language::MaxValue;
+    }
 }
 
 bool Client::StoreCharacter(

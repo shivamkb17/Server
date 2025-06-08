@@ -1142,6 +1142,8 @@ bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app) {
 		m_character_set_meta.default_set = csr->requested_set;
 		AccountCharacterSetLimitsRepository::UpdateAccountSetMeta(database, m_character_set_meta);
 
+		SendCharacterSetInfo();
+
 		LogCharacterSets("Account [{}] updated default character set to [{}]", GetAccountID(), csr->requested_set);
 		return true;
 	}

@@ -475,8 +475,7 @@ void Client::SendMembershipSettings() {
 	safe_delete(outapp);
 }
 
-void Client::SendPostEnterWorld()
-{
+void Client::SendPostEnterWorld() {
 	auto outapp = new EQApplicationPacket(OP_PostEnterWorld, 1);
 	outapp->size=0;
 	QueuePacket(outapp);
@@ -1423,8 +1422,7 @@ bool Client::HandlePacket(const EQApplicationPacket *app) {
 	return true;
 }
 
-bool Client::Process()
-{
+bool Client::Process() {
 	bool ret = true;
 	//bool sendguilds = true;
 	sockaddr_in to = {};
@@ -1553,7 +1551,7 @@ bool Client::ChecksumVerificationCRCEQGame(uint64 checksum)
 
 	// Get checksum variable for eqgame.exe
 	std::string checksumvar;
-	uint64_t checksumint;
+	uint64_t    checksumint;
 	if (database.GetVariable("crc_eqgame", checksumvar)) {
 		checksumint = Strings::ToBigInt(checksumvar);
 	}
@@ -1576,20 +1574,17 @@ bool Client::ChecksumVerificationCRCSkillCaps(uint64 checksum)
 
 	// Get checksum variable for eqgame.exe
 	std::string checksumvar;
-	uint64_t checksumint;
-	if (database.GetVariable("crc_skillcaps", checksumvar))
-	{
+	uint64_t    checksumint;
+	if (database.GetVariable("crc_skillcaps", checksumvar)) {
 		checksumint = Strings::ToBigInt(checksumvar);
 	}
-	else
-	{
+	else {
 		LogChecksumVerification("[checksum_crc2_skillcaps] variable not set in variables table.");
 		return true;
 	}
 
 	// Verify checksums match
-	if (checksumint == checksum)
-	{
+	if (checksumint == checksum) {
 		return true;
 	}
 
@@ -1602,20 +1597,17 @@ bool Client::ChecksumVerificationCRCBaseData(uint64 checksum)
 
 	// Get checksum variable for skill_caps.txt
 	std::string checksumvar;
-	uint64_t checksumint;
-	if (database.GetVariable("crc_basedata", checksumvar))
-	{
+	uint64_t    checksumint;
+	if (database.GetVariable("crc_basedata", checksumvar)) {
 		checksumint = Strings::ToBigInt(checksumvar);
 	}
-	else
-	{
+	else {
 		LogChecksumVerification("variable not set in variables table.");
 		return true;
 	}
 
 	// Verify checksums match
-	if (checksumint == checksum)
-	{
+	if (checksumint == checksum) {
 		return true;
 	}
 

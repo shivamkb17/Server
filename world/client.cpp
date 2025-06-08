@@ -875,7 +875,7 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 	instance_id = e.zone_instance;
 
 	auto r = content_service.FindZone(zone_id, instance_id);
-		if (r.zone_id && r.instance.id != instance_id) {
+	if (r.zone_id && r.instance.id != instance_id) {
 		LogInfo(
 			"Zone [{}] has been remapped to instance_id [{}] from instance_id [{}] for client [{}]",
 			r.zone.short_name,
@@ -941,30 +941,24 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 		}
 
 		/* Check Tutorial*/
-		if (RuleB(World, EnableTutorialButton) && (ew->tutorial || StartInTutorial))
-		{
+		if (RuleB(World, EnableTutorialButton) && (ew->tutorial || StartInTutorial)) {
 			bool tutorial_enabled = false;
-			for (auto row : results)
-			{
-				if (!strcasecmp(row[1], char_name))
-				{
+			for (auto row : results) {
+				if (!strcasecmp(row[1], char_name)) {
 					if (
 						RuleB(World, EnableTutorialButton) &&
-						Strings::ToInt(row[2]) <= RuleI(World, MaxLevelForTutorial))
-					{
+						Strings::ToInt(row[2]) <= RuleI(World, MaxLevelForTutorial)
+					) {
 						tutorial_enabled = true;
 						break;
 					}
 				}
 			}
 
-			if (tutorial_enabled)
-			{
+			if (tutorial_enabled) {
 				zone_id = RuleI(World, TutorialZoneID);
 				database.MoveCharacterToZone(charid, zone_id);
-			}
-			else
-			{
+			} else {
 				LogInfo("[{}] is trying to go to the Tutorial but they are not allowed.", char_name);
 				RecordPossibleHack("[MQTutorial] player tried to enter the tutorial without having tutorial enabled for this character");
 
@@ -974,45 +968,40 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 		}
 	}
 
-	if (!zone_id || !ZoneName(zone_id))
-	{
+	if (!zone_id || !ZoneName(zone_id)) {
 		// This is to save people in an invalid zone, once it's removed from the DB
 		database.MoveCharacterToZone(charid, ZoneID("arena"));
 		LogInfo("Zone [{}] not found, moving [{}] to Arena.", zone_id, char_name);
 	}
 
-	if (instance_id)
-	{
+	if (instance_id) {
 		if (
 			!database.VerifyInstanceAlive(instance_id, GetCharID()) ||
-			!database.VerifyZoneInstance(zone_id, instance_id))
-		{
+			!database.VerifyZoneInstance(zone_id, instance_id)
+		) {
 			zone_id = database.MoveCharacterToInstanceSafeReturn(charid, zone_id, instance_id);
 			instance_id = 0;
 		}
 	}
 
-	if (!is_player_zoning)
-	{
+	if(!is_player_zoning) {
 		GroupIdRepository::DeleteWhere(
 			database,
 			fmt::format(
 				"`character_id` = {} AND `name` = '{}'",
 				charid,
-				Strings::Escape(char_name)));
+				Strings::Escape(char_name)
+			)
+		);
 		database.SetLoginFlags(charid, false, false, 1);
-	}
-	else
-	{
+	} else {
 		auto group_id = database.GetGroupID(char_name);
-		if (group_id)
-		{
+		if (group_id) {
 			auto leader_name = database.GetGroupLeaderForLogin(char_name);
-			if (!leader_name.empty())
-			{
+			if (!leader_name.empty()) {
 				auto pack = new EQApplicationPacket(OP_GroupUpdate, sizeof(GroupJoin_Struct));
-				auto gj = (GroupJoin_Struct *)pack->pBuffer;
-				gj->action = 8;
+				auto gj = (GroupJoin_Struct*) pack->pBuffer;
+				gj->action=8;
 				strn0cpy(gj->yourname, char_name, sizeof(gj->yourname));
 				strn0cpy(gj->membername, leader_name.c_str(), sizeof(gj->membername));
 				QueuePacket(pack);
@@ -1023,23 +1012,18 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 
 	auto outapp = new EQApplicationPacket(OP_MOTD);
 	std::string motd = RuleS(World, MOTD);
-	if (!motd.empty())
-	{
-		outapp->size = motd.length() + 1;
+	if (!motd.empty()) {
+		outapp->size    = motd.length() + 1;
 		outapp->pBuffer = new uchar[outapp->size];
 		memset(outapp->pBuffer, 0, outapp->size);
-		strcpy((char *)outapp->pBuffer, motd.c_str());
-	}
-	else if (database.GetVariable("MOTD", motd))
-	{
-		outapp->size = motd.length() + 1;
+		strcpy((char*) outapp->pBuffer, motd.c_str());
+	} else if (database.GetVariable("MOTD", motd)) {
+		outapp->size    = motd.length() + 1;
 		outapp->pBuffer = new uchar[outapp->size];
 		memset(outapp->pBuffer, 0, outapp->size);
-		strcpy((char *)outapp->pBuffer, motd.c_str());
-	}
-	else
-	{ // Null Message of the Day. :)
-		outapp->size = 1;
+		strcpy((char*) outapp->pBuffer, motd.c_str());
+	} else { // Null Message of the Day. :)
+		outapp->size    = 1;
 		outapp->pBuffer = new uchar[outapp->size];
 		outapp->pBuffer[0] = 0;
 	}
@@ -1051,46 +1035,45 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 	int mail_key = emu_random.Int(1, INT_MAX);
 
 	database.SetMailKey(charid, GetIP(), mail_key);
-	if (UCSServerAvailable_)
-	{
+	if (UCSServerAvailable_) {
 		auto config = WorldConfig::get();
 		std::string buffer;
 
 		auto connection_type = EQ::versions::ucsUnknown;
 
 		// chat server packet
-		switch (GetClientVersion())
-		{
-		case EQ::versions::ClientVersion::Titanium:
-			connection_type = EQ::versions::ucsTitaniumChat;
-			break;
-		case EQ::versions::ClientVersion::SoF:
-			connection_type = EQ::versions::ucsSoFCombined;
-			break;
-		case EQ::versions::ClientVersion::SoD:
-			connection_type = EQ::versions::ucsSoDCombined;
-			break;
-		case EQ::versions::ClientVersion::UF:
-			connection_type = EQ::versions::ucsUFCombined;
-			break;
-		case EQ::versions::ClientVersion::RoF:
-			connection_type = EQ::versions::ucsRoFCombined;
-			break;
-		case EQ::versions::ClientVersion::RoF2:
-			connection_type = EQ::versions::ucsRoF2Combined;
-			break;
-		default:
-			connection_type = EQ::versions::ucsUnknown;
-			break;
+		switch (GetClientVersion()) {
+			case EQ::versions::ClientVersion::Titanium:
+				connection_type = EQ::versions::ucsTitaniumChat;
+				break;
+			case EQ::versions::ClientVersion::SoF:
+				connection_type = EQ::versions::ucsSoFCombined;
+				break;
+			case EQ::versions::ClientVersion::SoD:
+				connection_type = EQ::versions::ucsSoDCombined;
+				break;
+			case EQ::versions::ClientVersion::UF:
+				connection_type = EQ::versions::ucsUFCombined;
+				break;
+			case EQ::versions::ClientVersion::RoF:
+				connection_type = EQ::versions::ucsRoFCombined;
+				break;
+			case EQ::versions::ClientVersion::RoF2:
+				connection_type = EQ::versions::ucsRoF2Combined;
+				break;
+			default:
+				connection_type = EQ::versions::ucsUnknown;
+				break;
 		}
 
 		buffer = fmt::format("{},{},{}.{},{}{:08X}",
-							 config->GetUCSHost(),
-							 config->GetUCSPort(),
-							 config->ShortName,
-							 GetCharName(),
-							 static_cast<char>(connection_type),
-							 mail_key);
+			config->GetUCSHost(),
+			config->GetUCSPort(),
+			config->ShortName,
+			GetCharName(),
+			static_cast<char>(connection_type),
+			mail_key
+		);
 
 		outapp = new EQApplicationPacket(OP_SetChatServer, (buffer.length() + 1));
 		memcpy(outapp->pBuffer, buffer.c_str(), buffer.length());

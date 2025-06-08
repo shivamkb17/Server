@@ -1083,23 +1083,23 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 		safe_delete(outapp);
 
 		// mail server packet
-		switch (GetClientVersion())
-		{
-		case EQ::versions::ClientVersion::Titanium:
-			connection_type = EQ::versions::ucsTitaniumMail;
-			break;
-		default:
-			// retain value from previous switch
-			break;
+		switch (GetClientVersion()) {
+			case EQ::versions::ClientVersion::Titanium:
+				connection_type = EQ::versions::ucsTitaniumMail;
+				break;
+			default:
+				// retain value from previous switch
+				break;
 		}
 
 		buffer = fmt::format("{},{},{}.{},{}{:08X}",
-							 config->GetUCSHost(),
-							 config->GetUCSPort(),
-							 config->ShortName,
-							 GetCharName(),
-							 static_cast<char>(connection_type),
-							 mail_key);
+			config->GetUCSHost(),
+			config->GetUCSPort(),
+			config->ShortName,
+			GetCharName(),
+			static_cast<char>(connection_type),
+			mail_key
+		);
 
 		outapp = new EQApplicationPacket(OP_SetChatServer2, (buffer.length() + 1));
 		memcpy(outapp->pBuffer, buffer.c_str(), buffer.length());
@@ -1114,12 +1114,10 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 	return true;
 }
 
-bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app)
-{
+bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app) {
 
-	uint32 char_acct_id = database.GetAccountIDByChar((char *)app->pBuffer);
-	if (char_acct_id == GetAccountID())
-	{
+	uint32 char_acct_id = database.GetAccountIDByChar((char*)app->pBuffer);
+	if (char_acct_id == GetAccountID())	{
 		WritebackCharacterDataCache();
 		LogInfo("Delete character: [{}]", (const char *)app->pBuffer);
 		database.DeleteCharacter((char *)app->pBuffer);
@@ -1280,8 +1278,7 @@ bool Client::HandleCharacterSetUnlockRequest(const EQApplicationPacket *app) {
     }
 }
 
-bool Client::HandleZoneChangePacket(const EQApplicationPacket *app)
-{
+bool Client::HandleZoneChangePacket(const EQApplicationPacket *app) {
 	// HoT sends this to world while zoning and wants it echoed back.
 	if (m_ClientVersionBit & EQ::versions::maskRoFAndLater)
 	{
@@ -1290,8 +1287,7 @@ bool Client::HandleZoneChangePacket(const EQApplicationPacket *app)
 	return true;
 }
 
-bool Client::HandlePacket(const EQApplicationPacket *app)
-{
+bool Client::HandlePacket(const EQApplicationPacket *app) {
 
 	EmuOpcode opcode = app->GetOpcode();
 
@@ -1301,132 +1297,127 @@ bool Client::HandlePacket(const EQApplicationPacket *app)
 		OpcodeManager::EmuToName(app->GetOpcode()),
 		o->EmuToEQ(app->GetOpcode()) == 0 ? app->GetProtocolOpcode() : o->EmuToEQ(app->GetOpcode()),
 		app->Size(),
-		(LogSys.IsLogEnabled(Logs::Detail, Logs::PacketClientServer) ? DumpPacketToString(app) : ""));
+		(LogSys.IsLogEnabled(Logs::Detail, Logs::PacketClientServer) ? DumpPacketToString(app) : "")
+	);
 
-	if (!eqs->CheckState(ESTABLISHED))
-	{
+	if (!eqs->CheckState(ESTABLISHED)) {
 		LogInfo("Client disconnected (net inactive on send)");
 		return false;
 	}
 
 	// Voidd: Anti-GM Account hack, Checks source ip against valid GM Account IP Addresses
-	if (RuleB(World, GMAccountIPList) && GetAdmin() >= (RuleI(World, MinGMAntiHackStatus)))
-	{
-		if (!database.CheckGMIPs(long2ip(GetIP()), GetAccountID()))
-		{
+	if (RuleB(World, GMAccountIPList) && GetAdmin() >= (RuleI(World, MinGMAntiHackStatus))) {
+		if(!database.CheckGMIPs(long2ip(GetIP()), GetAccountID())) {
 			LogInfo("GM Account not permited from source address [{}] and accountid [{}]", long2ip(GetIP()).c_str(), GetAccountID());
 			eqs->Close();
 		}
 	}
 
-	if (GetAccountID() == 0 && opcode != OP_SendLoginInfo)
-	{
+	if (GetAccountID() == 0 && opcode != OP_SendLoginInfo) {
 		// Got a packet other than OP_SendLoginInfo when not logged in
 		LogInfo("Expecting OP_SendLoginInfo, got [{}]", OpcodeNames[opcode]);
 		return false;
 	}
-	else if (opcode == OP_AckPacket)
-	{
+	else if (opcode == OP_AckPacket) {
 		return true;
 	}
 
-	switch (opcode)
+	switch(opcode)
 	{
-	case OP_World_Client_CRC1: // eqgame.exe
-	case OP_World_Client_CRC2: // SkillCaps.txt
-	case OP_World_Client_CRC3: // BaseData.txt
-	{
-		// There is no obvious entry in the CC struct to indicate that the 'Start Tutorial button
-		// is selected when a character is created. I have observed that in this case, OP_EnterWorld is sent
-		// before OP_World_Client_CRC1. Therefore, if we receive OP_World_Client_CRC1 before OP_EnterWorld,
-		// then 'Start Tutorial' was not chosen.
-		StartInTutorial = false;
+		case OP_World_Client_CRC1: // eqgame.exe
+		case OP_World_Client_CRC2: // SkillCaps.txt
+		case OP_World_Client_CRC3: // BaseData.txt
+		{
+			// There is no obvious entry in the CC struct to indicate that the 'Start Tutorial button
+			// is selected when a character is created. I have observed that in this case, OP_EnterWorld is sent
+			// before OP_World_Client_CRC1. Therefore, if we receive OP_World_Client_CRC1 before OP_EnterWorld,
+			// then 'Start Tutorial' was not chosen.
+			StartInTutorial = false;
 
-		return HandleChecksumPacket(app);
-	}
-	case OP_SendLoginInfo:
-	{
-		return HandleSendLoginInfoPacket(app);
-	}
-	case OP_ApproveName: // Name approval
-	{
-		return HandleNameApprovalPacket(app);
-	}
-	case OP_RandomNameGenerator:
-	{
-		return HandleGenerateRandomNamePacket(app);
-	}
-	case OP_CharacterCreateRequest:
-	{
-		// New OpCode in SoF
-		return HandleCharacterCreateRequestPacket(app);
-	}
-	case OP_CharacterCreate: // Char create
-	{
-		return HandleCharacterCreatePacket(app);
-	}
-	case OP_EnterWorld: // Enter world
-	{
-		return HandleEnterWorldPacket(app);
-	}
-	case OP_DeleteCharacter:
-	{
-		return HandleDeleteCharacterPacket(app);
-	}
-	case OP_WorldComplete:
-	{
-		eqs->Close();
-		return true;
-	}
-	case OP_WorldLogout:
-	{
-		// I don't see this getting executed on logout
-		eqs->Close();
-		cle->SetOnline(CLE_Status::Offline); // allows this player to log in again without an ip restriction.
-		return false;
-	}
-	case OP_ZoneChange:
-	{
-		// HoT sends this to world while zoning and wants it echoed back.
-		return HandleZoneChangePacket(app);
-	}
-	case OP_LoginUnknown1:
-	case OP_LoginUnknown2:
-	case OP_CrashDump:
-	case OP_WearChange:
-	case OP_LoginComplete:
-	case OP_ApproveWorld:
-	case OP_WorldClientReady:
-	{
-		// Essentially we are just 'eating' these packets, indicating
-		// they are handled.
-		return true;
-	}
-	case OP_CharacterSetRequest:
-	{
-		return HandleCharacterSetRequest(app);
-	}
-	case OP_CharacterSetCreateRequest:
-	{
-		HandleCharacterSetCreateRequest(app);
-		return true;
-	}
-	case OP_CharacterSetMoveRequest:
-	{
-		HandleCharacterSetMoveRequest(app);
-		return true;
-	}
-	case OP_CharacterSetUnlockRequest:
-	{
-		HandleCharacterSetUnlockRequest(app);
-		return true;
-	}
-
-	default:
-	{
-		LogNetcode("Received unknown EQApplicationPacket");
-		return true;
-	}
+			return HandleChecksumPacket(app);
+		}
+		case OP_SendLoginInfo:
+		{
+			return HandleSendLoginInfoPacket(app);
+		}
+		case OP_ApproveName: //Name approval
+		{
+			return HandleNameApprovalPacket(app);
+		}
+		case OP_RandomNameGenerator:
+		{
+			return HandleGenerateRandomNamePacket(app);
+		}
+		case OP_CharacterCreateRequest:
+		{
+			// New OpCode in SoF
+			return HandleCharacterCreateRequestPacket(app);
+		}
+		case OP_CharacterCreate: //Char create
+		{
+			return HandleCharacterCreatePacket(app);
+		}
+		case OP_EnterWorld: // Enter world
+		{
+			return HandleEnterWorldPacket(app);
+		}
+		case OP_DeleteCharacter:
+		{
+			return HandleDeleteCharacterPacket(app);
+		}
+		case OP_WorldComplete:
+		{
+			eqs->Close();
+			return true;
+		}
+		case OP_WorldLogout:
+		{
+			// I don't see this getting executed on logout
+			eqs->Close();
+			cle->SetOnline(CLE_Status::Offline); // allows this player to log in again without an ip restriction.
+			return false;
+		}
+		case OP_ZoneChange:
+		{
+			// HoT sends this to world while zoning and wants it echoed back.
+			return HandleZoneChangePacket(app);
+		}
+		case OP_LoginUnknown1:
+		case OP_LoginUnknown2:
+		case OP_CrashDump:
+		case OP_WearChange:
+		case OP_LoginComplete:
+		case OP_ApproveWorld:
+		case OP_WorldClientReady:
+		{
+			// Essentially we are just 'eating' these packets, indicating
+			// they are handled.
+			return true;
+		}
+		case OP_CharacterSetRequest:
+		{
+			return HandleCharacterSetRequest(app);
+		}
+		case OP_CharacterSetCreateRequest:
+		{
+			HandleCharacterSetCreateRequest(app);
+			return true;
+		}
+		case OP_CharacterSetMoveRequest:
+		{
+			HandleCharacterSetMoveRequest(app);
+			return true;
+		}
+		case OP_CharacterSetUnlockRequest:
+		{
+			HandleCharacterSetUnlockRequest(app);
+			return true;
+		}
+		default:
+		{
+			LogNetcode("Received unknown EQApplicationPacket");
+			return true;
+		}
 	}
 	return true;
 }

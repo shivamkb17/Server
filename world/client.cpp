@@ -2622,17 +2622,16 @@ void Client::SetClassLanguages(PlayerProfile_Struct *pp)
 bool Client::StoreCharacter(
 	uint32 account_id,
 	PlayerProfile_Struct *p_player_profile_struct,
-	EQ::InventoryProfile *p_inventory_profile)
+	EQ::InventoryProfile *p_inventory_profile
+)
 {
 	const uint32 character_id = database.GetCharacterID(p_player_profile_struct->name);
-	if (!character_id)
-	{
+	if (!character_id) {
 		return false;
 	}
 
-	const std::string &zone_name = zone_store.GetZoneName(p_player_profile_struct->zone_id, true);
-	if (Strings::EqualFold(zone_name, "UNKNOWN"))
-	{
+	const std::string& zone_name = zone_store.GetZoneName(p_player_profile_struct->zone_id, true);
+	if (Strings::EqualFold(zone_name, "UNKNOWN")) {
 		p_player_profile_struct->zone_id = Zones::QEYNOS;
 	}
 
@@ -2644,42 +2643,35 @@ bool Client::StoreCharacter(
 
 	e.character_id = character_id;
 
-	for (int16 slot_id = EQ::invslot::EQUIPMENT_BEGIN; slot_id <= EQ::invbag::BANK_BAGS_END;)
-	{
+	for (int16 slot_id = EQ::invslot::EQUIPMENT_BEGIN; slot_id <= EQ::invbag::BANK_BAGS_END;) {
 		const auto inst = p_inventory_profile->GetItem(slot_id);
-		if (inst)
-		{
-			e.slot_id = slot_id;
-			e.item_id = inst->GetItem()->ID;
-			e.charges = inst->GetCharges();
-			e.color = inst->GetColor();
-			e.augment_one = inst->GetAugmentItemID(EQ::invaug::SOCKET_BEGIN);
-			e.augment_two = inst->GetAugmentItemID(EQ::invaug::SOCKET_BEGIN + 1);
-			e.augment_three = inst->GetAugmentItemID(EQ::invaug::SOCKET_BEGIN + 2);
-			e.augment_four = inst->GetAugmentItemID(EQ::invaug::SOCKET_BEGIN + 3);
-			e.augment_five = inst->GetAugmentItemID(EQ::invaug::SOCKET_BEGIN + 4);
-			e.augment_six = inst->GetAugmentItemID(EQ::invaug::SOCKET_END);
-			e.instnodrop = inst->IsAttuned() ? 1 : 0;
-			e.ornament_icon = inst->GetOrnamentationIcon();
-			e.ornament_idfile = inst->GetOrnamentationIDFile();
+		if (inst) {
+			e.slot_id             = slot_id;
+			e.item_id             = inst->GetItem()->ID;
+			e.charges             = inst->GetCharges();
+			e.color               = inst->GetColor();
+			e.augment_one         = inst->GetAugmentItemID(EQ::invaug::SOCKET_BEGIN);
+			e.augment_two         = inst->GetAugmentItemID(EQ::invaug::SOCKET_BEGIN + 1);
+			e.augment_three       = inst->GetAugmentItemID(EQ::invaug::SOCKET_BEGIN + 2);
+			e.augment_four        = inst->GetAugmentItemID(EQ::invaug::SOCKET_BEGIN + 3);
+			e.augment_five        = inst->GetAugmentItemID(EQ::invaug::SOCKET_BEGIN + 4);
+			e.augment_six         = inst->GetAugmentItemID(EQ::invaug::SOCKET_END);
+			e.instnodrop          = inst->IsAttuned() ? 1 : 0;
+			e.ornament_icon       = inst->GetOrnamentationIcon();
+			e.ornament_idfile     = inst->GetOrnamentationIDFile();
 			e.ornament_hero_model = inst->GetOrnamentHeroModel();
-			e.guid = inst->GetSerialNumber();
+			e.guid                = inst->GetSerialNumber();
 
 			v.emplace_back(e);
 		}
 
-		if (slot_id == EQ::invslot::slotCursor)
-		{
+		if (slot_id == EQ::invslot::slotCursor) {
 			slot_id = EQ::invbag::GENERAL_BAGS_BEGIN;
 			continue;
-		}
-		else if (slot_id == EQ::invbag::CURSOR_BAG_END)
-		{
+		} else if (slot_id == EQ::invbag::CURSOR_BAG_END) {
 			slot_id = EQ::invslot::BANK_BEGIN;
 			continue;
-		}
-		else if (slot_id == EQ::invslot::BANK_END)
-		{
+		} else if (slot_id == EQ::invslot::BANK_END) {
 			slot_id = EQ::invbag::BANK_BAGS_BEGIN;
 			continue;
 		}
@@ -2687,18 +2679,16 @@ bool Client::StoreCharacter(
 		slot_id++;
 	}
 
-	if (!v.empty())
-	{
+	if (!v.empty()) {
 		InventoryRepository::InsertMany(database, v);
 	}
 
 	return true;
 }
 
-void Client::RecordPossibleHack(const std::string &message)
+void Client::RecordPossibleHack(const std::string& message)
 {
-	if (player_event_logs.IsEventEnabled(PlayerEvent::POSSIBLE_HACK))
-	{
+	if (player_event_logs.IsEventEnabled(PlayerEvent::POSSIBLE_HACK)) {
 		auto event = PlayerEvent::PossibleHackEvent{.message = message};
 		std::stringstream ss;
 		{
@@ -2707,12 +2697,12 @@ void Client::RecordPossibleHack(const std::string &message)
 		}
 
 		auto e = PlayerEventLogsRepository::NewEntity();
-		e.character_id = charid;
-		e.account_id = GetCLE() ? GetAccountID() : 0;
-		e.event_type_id = PlayerEvent::POSSIBLE_HACK;
+		e.character_id    = charid;
+		e.account_id      = GetCLE() ? GetAccountID() : 0;
+		e.event_type_id   = PlayerEvent::POSSIBLE_HACK;
 		e.event_type_name = PlayerEvent::EventName[PlayerEvent::POSSIBLE_HACK];
-		e.event_data = ss.str();
-		e.created_at = std::time(nullptr);
+		e.event_data      = ss.str();
+		e.created_at      = std::time(nullptr);
 		PlayerEventLogsRepository::InsertOne(database, e);
 	}
 }
@@ -2720,24 +2710,22 @@ void Client::RecordPossibleHack(const std::string &message)
 void Client::SendGuildTributeFavorAndTimer(uint32 favor, uint32 time_remaining)
 {
 	auto cle = GetCLE();
-	if (!cle)
-	{
+	if (!cle) {
 		return;
 	}
 
 	auto guild = guild_mgr.GetGuildByGuildID(GetCLE()->GuildID());
-	if (guild)
-	{
+	if (guild) {
 		guild->tribute.favor = favor;
 		guild->tribute.time_remaining = time_remaining;
 
 		auto outapp = new EQApplicationPacket(OP_GuildTributeFavorAndTimer, sizeof(GuildTributeFavorTimer_Struct));
-		auto gtsa = (GuildTributeFavorTimer_Struct *)outapp->pBuffer;
+		auto gtsa   = (GuildTributeFavorTimer_Struct *)outapp->pBuffer;
 
-		gtsa->guild_id = GetCLE()->GuildID();
-		gtsa->guild_favor = guild->tribute.favor;
+		gtsa->guild_id      = GetCLE()->GuildID();
+		gtsa->guild_favor   = guild->tribute.favor;
 		gtsa->tribute_timer = guild->tribute.time_remaining;
-		gtsa->trophy_timer = 0; // not yet implemented
+		gtsa->trophy_timer  = 0; //not yet implemented
 
 		QueuePacket(outapp);
 		safe_delete(outapp);
@@ -2747,47 +2735,47 @@ void Client::SendGuildTributeFavorAndTimer(uint32 favor, uint32 time_remaining)
 void Client::SendGuildTributeOptInToggle(const GuildTributeMemberToggle *in)
 {
 	auto outapp = new EQApplicationPacket(OP_GuildOptInOut, sizeof(GuildTributeOptInOutReply_Struct));
-	auto data = (GuildTributeOptInOutReply_Struct *)outapp->pBuffer;
+	auto data   = (GuildTributeOptInOutReply_Struct *)outapp->pBuffer;
 
-	data->guild_id = in->guild_id;
-	data->no_donations = in->no_donations;
-	data->tribute_toggle = in->tribute_toggle;
-	data->tribute_trophy_toggle = 0; // not yet implemented
-	data->time = time(nullptr);
-	data->command = in->command;
+	data->guild_id              = in->guild_id;
+	data->no_donations          = in->no_donations;
+	data->tribute_toggle        = in->tribute_toggle;
+	data->tribute_trophy_toggle = 0; //not yet implemented
+	data->time                  = time(nullptr);
+	data->command               = in->command;
 	strn0cpy(data->player_name, in->player_name, sizeof(data->player_name));
 
 	QueuePacket(outapp);
 	safe_delete(outapp);
 }
 
-void Client::SendUnsupportedClientPacket(const std::string &message)
+void Client::SendUnsupportedClientPacket(const std::string& message)
 {
 	EQApplicationPacket packet(OP_SendCharInfo, sizeof(CharacterSelect_Struct) + sizeof(CharacterSelectEntry_Struct));
 
-	unsigned char *buff_ptr = packet.pBuffer;
-	auto cs = (CharacterSelect_Struct *)buff_ptr;
+	unsigned char* buff_ptr = packet.pBuffer;
+	auto cs = (CharacterSelect_Struct*) buff_ptr;
 
-	cs->CharCount = 1;
+	cs->CharCount  = 1;
 	cs->TotalChars = 1;
 
 	buff_ptr += sizeof(CharacterSelect_Struct);
 
-	auto e = (CharacterSelectEntry_Struct *)buff_ptr;
+	auto e = (CharacterSelectEntry_Struct*) buff_ptr;
 
 	strcpy(e->Name, message.c_str());
 
-	e->Race = Race::Human;
-	e->Class = Class::Warrior;
-	e->Level = 1;
+	e->Race        = Race::Human;
+	e->Class       = Class::Warrior;
+	e->Level       = 1;
 	e->ShroudClass = e->Class;
-	e->ShroudRace = e->Race;
-	e->Zone = std::numeric_limits<uint16>::max();
-	e->Instance = 0;
-	e->Gender = Gender::Male;
-	e->GoHome = 0;
-	e->Tutorial = 0;
-	e->Enabled = 0;
+	e->ShroudRace  = e->Race;
+	e->Zone        = std::numeric_limits<uint16>::max();
+	e->Instance    = 0;
+	e->Gender      = Gender::Male;
+	e->GoHome      = 0;
+	e->Tutorial    = 0;
+	e->Enabled     = 0;
 
 	QueuePacket(&packet);
 }

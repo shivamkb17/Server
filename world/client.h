@@ -91,12 +91,14 @@ public:
 	bool DeleteCharacterSetIfEmptyFromCache(uint32 set_id);
 	bool RenameCharacterSetInCache(uint32 set_id, const std::string& new_name);
 	void RemoveCharacterFromSetInCache(uint32 character_id, uint32 set_id);
-
 	uint32 GetMaxCharacterSets();
-	uint32 GetAvailableEoMUnlocks();
-	bool UnlockCharacterSetWithEoM();
-	bool UnlockCharacterSetWithBonus();
 	bool CanCreateMoreCharacterSets();
+	uint32 GetMaxCharacterSlots();
+	uint32 GetAvailableSlotUnlocks();
+	uint32 GetAvailableSetUnlocks();
+	bool CanCreateNewCharacter();
+	bool GrantBonusCharacterSets(uint32 quantity);
+	bool GrantBonusCharacterSlots(uint32 quantity);
 
 private:
 
@@ -151,6 +153,9 @@ private:
 	bool ChecksumVerificationCRCEQGame(uint64 checksum);
 	bool ChecksumVerificationCRCSkillCaps(uint64 checksum);
 	bool ChecksumVerificationCRCBaseData(uint64 checksum);
+
+	bool HandleSetUnlock(uint32 quantity);
+	bool HandleSlotUnlock(uint32 quantity);
 
 	EQStreamInterface* eqs;
 	bool CanTradeFVNoDropItem();

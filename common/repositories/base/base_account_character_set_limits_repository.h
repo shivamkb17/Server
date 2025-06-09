@@ -23,6 +23,8 @@ public:
 		int32_t eom_sets;
 		int32_t bonus_sets;
 		int32_t default_set;
+		int32_t eom_slots;
+		int32_t bonus_slots;
 	};
 
 	static std::string PrimaryKey()
@@ -37,6 +39,8 @@ public:
 			"eom_sets",
 			"bonus_sets",
 			"default_set",
+			"eom_slots",
+			"bonus_slots",
 		};
 	}
 
@@ -47,6 +51,8 @@ public:
 			"eom_sets",
 			"bonus_sets",
 			"default_set",
+			"eom_slots",
+			"bonus_slots",
 		};
 	}
 
@@ -91,6 +97,8 @@ public:
 		e.eom_sets    = 0;
 		e.bonus_sets  = 0;
 		e.default_set = 0;
+		e.eom_slots   = 0;
+		e.bonus_slots = 0;
 
 		return e;
 	}
@@ -131,6 +139,8 @@ public:
 			e.eom_sets    = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
 			e.bonus_sets  = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
 			e.default_set = row[3] ? static_cast<int32_t>(atoi(row[3])) : 0;
+			e.eom_slots   = row[4] ? static_cast<int32_t>(atoi(row[4])) : 0;
+			e.bonus_slots = row[5] ? static_cast<int32_t>(atoi(row[5])) : 0;
 
 			return e;
 		}
@@ -168,6 +178,8 @@ public:
 		v.push_back(columns[1] + " = " + std::to_string(e.eom_sets));
 		v.push_back(columns[2] + " = " + std::to_string(e.bonus_sets));
 		v.push_back(columns[3] + " = " + std::to_string(e.default_set));
+		v.push_back(columns[4] + " = " + std::to_string(e.eom_slots));
+		v.push_back(columns[5] + " = " + std::to_string(e.bonus_slots));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -193,6 +205,8 @@ public:
 		v.push_back(std::to_string(e.eom_sets));
 		v.push_back(std::to_string(e.bonus_sets));
 		v.push_back(std::to_string(e.default_set));
+		v.push_back(std::to_string(e.eom_slots));
+		v.push_back(std::to_string(e.bonus_slots));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -226,6 +240,8 @@ public:
 			v.push_back(std::to_string(e.eom_sets));
 			v.push_back(std::to_string(e.bonus_sets));
 			v.push_back(std::to_string(e.default_set));
+			v.push_back(std::to_string(e.eom_slots));
+			v.push_back(std::to_string(e.bonus_slots));
 
 			insert_chunks.push_back("(" + Strings::Implode(",", v) + ")");
 		}
@@ -263,6 +279,8 @@ public:
 			e.eom_sets    = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
 			e.bonus_sets  = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
 			e.default_set = row[3] ? static_cast<int32_t>(atoi(row[3])) : 0;
+			e.eom_slots   = row[4] ? static_cast<int32_t>(atoi(row[4])) : 0;
+			e.bonus_slots = row[5] ? static_cast<int32_t>(atoi(row[5])) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -291,6 +309,8 @@ public:
 			e.eom_sets    = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
 			e.bonus_sets  = row[2] ? static_cast<int32_t>(atoi(row[2])) : 0;
 			e.default_set = row[3] ? static_cast<int32_t>(atoi(row[3])) : 0;
+			e.eom_slots   = row[4] ? static_cast<int32_t>(atoi(row[4])) : 0;
+			e.bonus_slots = row[5] ? static_cast<int32_t>(atoi(row[5])) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -369,6 +389,8 @@ public:
 		v.push_back(std::to_string(e.eom_sets));
 		v.push_back(std::to_string(e.bonus_sets));
 		v.push_back(std::to_string(e.default_set));
+		v.push_back(std::to_string(e.eom_slots));
+		v.push_back(std::to_string(e.bonus_slots));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -395,6 +417,8 @@ public:
 			v.push_back(std::to_string(e.eom_sets));
 			v.push_back(std::to_string(e.bonus_sets));
 			v.push_back(std::to_string(e.default_set));
+			v.push_back(std::to_string(e.eom_slots));
+			v.push_back(std::to_string(e.bonus_slots));
 
 			insert_chunks.push_back("(" + Strings::Implode(",", v) + ")");
 		}

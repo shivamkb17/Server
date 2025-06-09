@@ -216,10 +216,13 @@ struct CharacterSetList_Struct
 	uint32 default_set;
 	uint32 set_count;
 	uint32 character_count;
-	uint32 max_sets;
+	uint32 max_character_sets;
+	uint32 max_character_slots;
 	uint32 eom_available;
-    uint32 eom_cost;
-    uint32 unlocks_available;
+	uint32 character_slot_cost;
+	uint32 character_set_cost;
+	uint32 available_slot_unlocks;
+	uint32 available_set_unlocks;
 	CharacterSet_Struct sets[64];
 	CharacterEntry_Struct characters[];
 };
@@ -244,7 +247,8 @@ struct CharacterSetMoveRequest_Struct
 
 struct CharacterSetUnlockRequest_Struct
 {
-    uint32_t quantity;
+	uint32 type; // 0 for set, 1 for slot
+    uint32 quantity;
 };
 
 /* End Character Sets */

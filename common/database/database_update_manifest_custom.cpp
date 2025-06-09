@@ -320,13 +320,15 @@ CREATE TABLE `account_character_set_members` (
 		.condition = "empty",
 		.match = "",
 		.sql = R"(
-	CREATE TABLE `account_character_set_limits` (
-		`account_id` int(11) NOT NULL,
-		`eom_sets` int(11) NOT NULL DEFAULT 0,
-		`bonus_sets` int(11) NOT NULL DEFAULT 0,
-		`default_set` int(11) NOT NULL DEFAULT 0,
-		PRIMARY KEY (`account_id`)
-	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `account_character_set_limits` (
+	`account_id` int(11) NOT NULL,
+	`eom_sets` int(11) NOT NULL DEFAULT 0,
+	`bonus_sets` int(11) NOT NULL DEFAULT 0,
+	`default_set` int(11) NOT NULL DEFAULT 0,
+	`eom_slots` int(11) NOT NULL DEFAULT 0,
+	`bonus_slots` int(11) NOT NULL DEFAULT 0,
+	PRIMARY KEY (`account_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 	)",
 		.content_schema_update = false,
 	},

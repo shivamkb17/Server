@@ -1254,30 +1254,25 @@ bool Client::HandleCharacterSetUnlockRequest(const EQApplicationPacket *app) {
 
     CharacterSetUnlockRequest_Struct* csur = (CharacterSetUnlockRequest_Struct*) app->pBuffer;
 
-    uint32_t total_cost = csur->quantity * RuleI(Custom, EoMUnlockCharacterSetCost);
+    bool success = false;
 
-    if (m_eom_available >= total_cost) {
-        m_eom_available -= total_cost;
-
-        AccountAltCurrencyRepository::UpdateByAccountAndCurrency(
-            database,
-            GetAccountID(),
-            6,
-            m_eom_available
-        );
-
-        m_character_set_meta.eom_sets += csur->quantity;
-		AccountCharacterSetLimitsRepository::UpdateAccountSetMeta(database, m_character_set_meta);
-
-        LogCharacterSets("Account [{}] unlocked {} character sets for {} EoM", GetAccountID(), csur->quantity, total_cost);
-
-		SendCharacterSetInfo();
-
-        return true;
-    } else {
-        LogError("Account [{}] attempted to unlock {} character sets but only has {} EoM (needs {})", GetAccountID(), csur->quantity, m_eom_available, total_cost);
-        return false;
+    switch (csur->type) {
+        case 0: // Character Set unlock
+            success = HandleSetUnlock(csur->quantity);
+            break;
+        case 1: // Character Slot unlock
+            success = HandleSlotUnlock(csur->quantity);
+            break;
+        default:
+            LogError("Account [{}] sent invalid unlock type [{}]", GetAccountID(), csur->type);
+            return false;
     }
+
+    if (success) {
+        SendCharacterSetInfo();
+    }
+
+    return success;
 }
 
 bool Client::HandleZoneChangePacket(const EQApplicationPacket *app) {
@@ -1897,8 +1892,12 @@ void Client::SendApproveWorld()
 	safe_delete(outapp);
 }
 
-bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
-{
+bool Client::OPCharCreate(char *name, CharCreate_Struct *cc) {
+    if (!CanCreateNewCharacter()) {
+        LogInfo("Account [{}] attempted to create character but has reached slot limit", GetAccountID());
+        return false;
+    }
+
 	PlayerProfile_Struct pp;
 	EQ::InventoryProfile inv;
 
@@ -2836,11 +2835,15 @@ void Client::SendCharacterSetInfo() {
 
     l->set_count = std::min(sets.size(), static_cast<size_t>(64));
     l->character_count = characters.size();
-    l->max_sets = GetMaxCharacterSets();
 
-	l->eom_available = m_eom_available;
-	l->eom_cost = 10;
-	l->unlocks_available = RuleI(Custom, EoMUnlockCharacterSets) - m_character_set_meta.eom_sets;
+    // NEW PACKET FIELDS:
+    l->max_character_sets = GetMaxCharacterSets();
+    l->max_character_slots = GetMaxCharacterSlots();  // Total account character limit
+    l->eom_available = m_eom_available;
+    l->character_slot_cost = RuleI(Custom, EoMUnlockCharacterSlotCost);
+    l->character_set_cost = RuleI(Custom, EoMUnlockCharacterSetCost);
+    l->available_slot_unlocks = GetAvailableSlotUnlocks();
+    l->available_set_unlocks = GetAvailableSetUnlocks();
 
     for (size_t i = 0; i < l->set_count; ++i) {
         const auto &set = sets[i];
@@ -3049,39 +3052,139 @@ uint32 Client::GetMaxCharacterSets() {
 	return std::min(total, 64u);
 }
 
-uint32 Client::GetAvailableEoMUnlocks() {
-	int32 max_eom = RuleI(Custom, EoMUnlockCharacterSets);
-	if (max_eom == -1) {
-		uint32 current_max = GetMaxCharacterSets();
-		return (current_max >= 64) ? 0 : (64 - current_max);
-	}
-	return (m_character_set_meta.eom_sets >= max_eom) ? 0 : (max_eom - m_character_set_meta.eom_sets);
-}
-
-bool Client::UnlockCharacterSetWithEoM() {
-	if (GetMaxCharacterSets() >= 64) {
-		return false;
-	}
-
-	if (RuleI(Custom, EoMUnlockCharacterSets) != -1 && GetAvailableEoMUnlocks() == 0) {
-		return false;
-	}
-
-	m_character_set_meta.eom_sets++;
-	LogCharacterSets("Account [{}] unlocked EoM character set, now has [{}] EoM sets", GetAccountID(), m_character_set_meta.eom_sets);
-	return true;
-}
-
-bool Client::UnlockCharacterSetWithBonus() {
-	if (GetMaxCharacterSets() >= 64) {
-		return false;
-	}
-
-	m_character_set_meta.bonus_sets++;
-	LogCharacterSets("Account [{}] unlocked bonus character set, now has [{}] bonus sets", GetAccountID(), m_character_set_meta.bonus_sets);
-	return true;
-}
-
 bool Client::CanCreateMoreCharacterSets() {
 	return m_character_sets.size() < GetMaxCharacterSets();
+}
+
+bool Client::CanCreateNewCharacter() {
+    uint32 character_count = 0;
+    for (const auto& ch : m_account_characters) {
+        if (ch.deleted_at <= 0) {
+            character_count++;
+        }
+    }
+
+    uint32 max_slots = GetMaxCharacterSlots();
+
+    LogCharacterSets("Account [{}] has {} characters, max slots: {}",
+                    GetAccountID(), character_count, max_slots);
+
+    return character_count < max_slots;
+}
+
+uint32 Client::GetMaxCharacterSlots() {
+    uint32 base_slots = RuleI(Custom, BaseCharacterSlots);
+    return base_slots + m_character_set_meta.eom_slots + m_character_set_meta.bonus_slots;
+}
+
+uint32 Client::GetAvailableSlotUnlocks() {
+    int32 max_eom_slots = RuleI(Custom, EoMUnlockCharacterSlots);
+    if (max_eom_slots == -1) {
+        return 999;
+    }
+    return (m_character_set_meta.eom_slots >= max_eom_slots) ? 0 : (max_eom_slots - m_character_set_meta.eom_slots);
+}
+
+uint32 Client::GetAvailableSetUnlocks() {
+    int32 max_eom_sets = RuleI(Custom, EoMUnlockCharacterSets);
+    if (max_eom_sets == -1) {
+        uint32 current_max = GetMaxCharacterSets();
+        return (current_max >= 64) ? 0 : (64 - current_max);
+    }
+    return (m_character_set_meta.eom_sets >= max_eom_sets) ? 0 : (max_eom_sets - m_character_set_meta.eom_sets);
+}
+
+bool Client::CanCreateNewCharacter() {
+    uint32 character_count = 0;
+    for (const auto& ch : m_account_characters) {
+        if (ch.deleted_at <= 0) {
+            character_count++;
+        }
+    }
+
+    uint32 max_slots = GetMaxCharacterSlots();
+
+    LogCharacterSets("Account [{}] has {} characters, max slots: {}",
+                    GetAccountID(), character_count, max_slots);
+
+    return character_count < max_slots;
+}
+
+bool Client::GrantBonusCharacterSets(uint32 quantity) {
+    m_character_set_meta.bonus_sets += quantity;
+    AccountCharacterSetLimitsRepository::UpdateAccountSetMeta(database, m_character_set_meta);
+
+    LogCharacterSets("Account [{}] granted {} bonus character sets, now has [{}] bonus sets",
+                    GetAccountID(), quantity, m_character_set_meta.bonus_sets);
+    return true;
+}
+
+bool Client::GrantBonusCharacterSlots(uint32 quantity) {
+    m_character_set_meta.bonus_slots += quantity;
+    AccountCharacterSetLimitsRepository::UpdateAccountSetMeta(database, m_character_set_meta);
+
+    LogCharacterSets("Account [{}] granted {} bonus character slots, now has [{}] bonus slots",
+                    GetAccountID(), quantity, m_character_set_meta.bonus_slots);
+    return true;
+}
+
+bool Client::HandleSetUnlock(uint32 quantity) {
+    if (GetMaxCharacterSets() >= 64) {
+        LogError("Account [{}] attempted to unlock character sets but already at maximum (64)", GetAccountID());
+        return false;
+    }
+
+    if (RuleI(Custom, EoMUnlockCharacterSets) != -1 && GetAvailableSetUnlocks() < quantity) {
+        LogError("Account [{}] attempted to unlock {} character sets but only {} unlocks available",
+                GetAccountID(), quantity, GetAvailableSetUnlocks());
+        return false;
+    }
+
+    uint32 cost_per_set = RuleI(Custom, EoMUnlockCharacterSetCost);
+    uint32 total_cost = quantity * cost_per_set;
+
+    if (m_eom_available < total_cost) {
+        LogError("Account [{}] attempted to unlock {} character sets for {} EoM but only has {} EoM",
+                GetAccountID(), quantity, total_cost, m_eom_available);
+        return false;
+    }
+
+    m_eom_available -= total_cost;
+    AccountAltCurrencyRepository::UpdateByAccountAndCurrency(database, GetAccountID(), 6, m_eom_available);
+
+    m_character_set_meta.eom_sets += quantity;
+    AccountCharacterSetLimitsRepository::UpdateAccountSetMeta(database, m_character_set_meta);
+
+    LogCharacterSets("Account [{}] unlocked {} character sets for {} EoM, now has [{}] EoM sets",
+                    GetAccountID(), quantity, total_cost, m_character_set_meta.eom_sets);
+
+    return true;
+}
+
+bool Client::HandleSlotUnlock(uint32 quantity) {
+    if (RuleI(Custom, EoMUnlockCharacterSlots) != -1 && GetAvailableSlotUnlocks() < quantity) {
+        LogError("Account [{}] attempted to unlock {} character slots but only {} unlocks available",
+                GetAccountID(), quantity, GetAvailableSlotUnlocks());
+        return false;
+    }
+
+    uint32 cost_per_slot = RuleI(Custom, EoMUnlockCharacterSlotCost);
+    uint32 total_cost = quantity * cost_per_slot;
+
+    if (m_eom_available < total_cost) {
+        LogError("Account [{}] attempted to unlock {} character slots for {} EoM but only has {} EoM",
+                GetAccountID(), quantity, total_cost, m_eom_available);
+        return false;
+    }
+
+    m_eom_available -= total_cost;
+    AccountAltCurrencyRepository::UpdateByAccountAndCurrency(database, GetAccountID(), 6, m_eom_available);
+
+    m_character_set_meta.eom_slots += quantity;
+    AccountCharacterSetLimitsRepository::UpdateAccountSetMeta(database, m_character_set_meta);
+
+    LogCharacterSets("Account [{}] unlocked {} character slots for {} EoM, now has [{}] EoM slots",
+                    GetAccountID(), quantity, total_cost, m_character_set_meta.eom_slots);
+
+    return true;
 }

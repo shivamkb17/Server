@@ -528,13 +528,17 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk, bool is_riposte
 		}
 	}
 
+	if (ca_atk->m_atk == EQ::invslot::slotRange) {
+		return;
+	}
+
 	// check range for all these abilities, they are all close combat stuff
 	if (!CombatRange(GetTarget())) {
 		return;
 	}
 
 	if (!p_timers.Expired(&database, timer, false) && !is_riposte) {
-		if (!EntityVariableExists("auto_skill")) {
+		if (!EntityVariableExists("auto_skill") ) {
 			Message(Chat::Red, "Ability recovery time not yet met.");
 		}
 		return;

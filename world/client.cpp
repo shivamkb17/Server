@@ -3094,22 +3094,6 @@ uint32 Client::GetAvailableSetUnlocks() {
     return (m_character_set_meta.eom_sets >= max_eom_sets) ? 0 : (max_eom_sets - m_character_set_meta.eom_sets);
 }
 
-bool Client::CanCreateNewCharacter() {
-    uint32 character_count = 0;
-    for (const auto& ch : m_account_characters) {
-        if (ch.deleted_at <= 0) {
-            character_count++;
-        }
-    }
-
-    uint32 max_slots = GetMaxCharacterSlots();
-
-    LogCharacterSets("Account [{}] has {} characters, max slots: {}",
-                    GetAccountID(), character_count, max_slots);
-
-    return character_count < max_slots;
-}
-
 bool Client::GrantBonusCharacterSets(uint32 quantity) {
     m_character_set_meta.bonus_sets += quantity;
     AccountCharacterSetLimitsRepository::UpdateAccountSetMeta(database, m_character_set_meta);

@@ -411,6 +411,13 @@ void DynamicZone::TryAddClient(Client* client, const std::string& inviter, const
 		return;
 	}
 
+	if (client->IsSolo()) {
+		auto solo_reject_string = "Solo characters may not join groups or raids.";
+		client->Message(Chat::Red, solo_reject_string);
+		client->SendMarqueeMessage(Chat::Red, solo_reject_string, 5000);
+		return;
+	}
+
 	LogExpeditions("Adding [{}] to [{}] by [{}] swap [{}]", client->GetName(), GetID(), inviter, swap_name);
 
 	// null leader client handled by ProcessAddConflicts/SendLeaderMessage fallbacks
@@ -441,6 +448,13 @@ void DynamicZone::DzAddPlayer(Client* client, const std::string& add_name, const
 	}
 
 	bool invite_failed = false;
+
+	if (client->IsSolo()) {
+		auto solo_reject_string = "Solo characters may not join groups or raids.";
+		client->Message(Chat::Red, solo_reject_string);
+		client->SendMarqueeMessage(Chat::Red, solo_reject_string, 5000);
+		return;
+	}
 
 	if (IsLocked())
 	{
@@ -478,6 +492,13 @@ void DynamicZone::DzAddPlayer(Client* client, const std::string& add_name, const
 
 	if (Client* add_client = entity_list.GetClientByName(add_name.c_str()))
 	{
+		if (add_client->IsSolo()) {
+			auto solo_reject_string = "Solo characters may not join groups or raids.";
+			client->Message(Chat::Red, solo_reject_string);
+			client->SendMarqueeMessage(Chat::Red, solo_reject_string, 5000);
+			return;
+		}
+
 		// client is online in this zone
 		TryAddClient(add_client, client->GetName(), swap_name, client);
 	}

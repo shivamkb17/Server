@@ -70,6 +70,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "../common/repositories/account_kill_counts_repository.h"
 #include "../common/repositories/character_pet_name_repository.h"
 #include "../common/repositories/tradeskill_recipe_entries_repository.h"
+#include "../common/repositories/character_data_extra_repository.h"
 
 #include "../common/events/player_event_logs.h"
 #include "../common/repositories/character_stats_record_repository.h"
@@ -643,10 +644,6 @@ void Client::CompleteConnect()
 	if (RuleB(Custom, MulticlassingEnabled)) {
 		m_pp.classes = Strings::ToInt(GetBucket("GestaltClasses"), GetPlayerClassBit(m_pp.class_));
 	}
-
-	m_hardcore = Strings::ToBool(GetBucket("PlayMode.Hardcore"));
-	m_self_found = Strings::ToBool(GetBucket("PlayMode.SelfFound"));
-	m_solo = Strings::ToBool(GetBucket("PlayMode.Solo"));
 
 	LogDebug("Hardcore: [{}], Self Found: [{}], Solo: [{}]", m_hardcore, m_self_found, m_solo);
 

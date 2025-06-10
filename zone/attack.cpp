@@ -2271,8 +2271,6 @@ bool Client::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::Skil
 
 	if (IsHardcore()) {
 		SetHardcore(false);
-		SetTitleSuffix("");
-		SetAATitle("");
 	}
 
 	return true;

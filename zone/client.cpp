@@ -881,6 +881,8 @@ void Client::SendZoneInPackets()
 		SendAppearancePacket(AppearanceType::PVP, true, true, false);
 	}
 
+	SendAppearancePacket(AppearanceType::NameColorCustom, GetPlayModeColorPack(), true, false);
+
 	//Send AA Exp packet:
 	if (GetLevel() >= 51 || RuleB(Custom, MulticlassingEnabled)) {
 		SendAlternateAdvancementStats();
@@ -4457,7 +4459,7 @@ void Client::SetPVP(bool toggle, bool message) {
 		}
 	}
 
-	//SendAppearancePacket(AppearanceType::PVP, GetPVP());
+	SendAppearancePacket(AppearanceType::PVP, GetPVP());
 	Save();
 }
 

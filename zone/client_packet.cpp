@@ -348,7 +348,6 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_PlayerStateRemove] = &Client::Handle_OP_PlayerStateRemove;
 	ConnectedOpcodes[OP_PickPocket] = &Client::Handle_OP_PickPocket;
 	ConnectedOpcodes[OP_PickZone] = &Client::Handle_OP_PickZone;
-	ConnectedOpcodes[OP_PlayModeInit] = &Client::Handle_OP_PlayModeInit;
 	ConnectedOpcodes[OP_PopupResponse] = &Client::Handle_OP_PopupResponse;
 	ConnectedOpcodes[OP_PotionBelt] = &Client::Handle_OP_PotionBelt;
 	ConnectedOpcodes[OP_PurchaseLeadershipAA] = &Client::Handle_OP_PurchaseLeadershipAA;
@@ -11694,43 +11693,6 @@ void Client::Handle_OP_PickZone(const EQApplicationPacket *app)
 	}
 
 	// handle
-}
-
-void Client::Handle_OP_PlayModeInit(const EQApplicationPacket *app)
-{
-    if (app->size != sizeof(PlayModeInit_Struct)) {
-        LogDebug("Size mismatch in OP_PlayModeInit expected [{}] got [{}]", sizeof(PlayModeInit_Struct), app->size);
-        DumpPacket(app);
-        return;
-    }
-
-    PlayModeInit_Struct *pm = (PlayModeInit_Struct *)app->pBuffer;
-
-    if (GetLevel() == 1) {
-        // Set the play mode flags
-        SetHardcore(pm->hardcore);
-        SetSelfFound(pm->self_found);
-        SetSolo(pm->solo);
-
-        LogDebug("Setting Hardcore [{}], Self Found [{}], Solo [{}]", pm->hardcore, pm->self_found, pm->solo);
-
-        // Initialize only the suffix title based on the most specialized combination
-        if (IsHardcore() && IsSelfFound() && IsSolo()) {
-            SetTitleSuffix("the Indomitable");
-        } else if (IsHardcore() && IsSelfFound()) {
-            SetTitleSuffix("the Unyielding Scrapper");
-        } else if (IsHardcore() && IsSolo()) {
-            SetTitleSuffix("the Undying Loner");
-        } else if (IsSelfFound() && IsSolo()) {
-            SetTitleSuffix("the Resourceful Wanderer");
-        } else if (IsHardcore()) {
-            SetTitleSuffix("the Hardcore");
-        } else if (IsSelfFound()) {
-            SetTitleSuffix("the Self-Reliant");
-        } else if (IsSolo()) {
-            SetTitleSuffix("the Adventurer");
-        }
-    }
 }
 
 void Client::Handle_OP_PopupResponse(const EQApplicationPacket *app)

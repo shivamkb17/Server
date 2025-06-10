@@ -7695,11 +7695,18 @@ void Client::Handle_OP_GroupFollow2(const EQApplicationPacket *app)
 	}
 
 	GroupGeneric_Struct* gf = (GroupGeneric_Struct*)app->pBuffer;
-	Mob* inviter = entity_list.GetClientByName(gf->name1);
+	auto inviter = entity_list.GetClientByName(gf->name1);
 
 	if (inviter && inviter->IsClient() && IsSeasonal() != inviter->CastToClient()->IsSeasonal()) {
 		Message(Chat::Red, "Seasonal characters may only group with other Seasonal characters.");
 		inviter->Message(Chat::Red, "Seasonal characters may only group with other Seasonal characters.");
+		return;
+	}
+
+	if (IsSolo() || (inviter && inviter->IsSolo())) {
+		auto solo_reject_string = "Solo characters may not join groups or raids.";
+		inviter->Message(Chat::Red, solo_reject_string);
+		inviter->SendMarqueeMessage(Chat::Red, solo_reject_string, 5000);
 		return;
 	}
 
@@ -7761,18 +7768,25 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 		invitee = entity_list.GetMob(gis->invitee_name);
 	}
 
-	if (invitee == this) {
-		MessageString(Chat::LightGray, GROUP_INVITEE_SELF);
-		return;
-	}
-
-	if (invitee && invitee->IsClient() && IsSeasonal() != invitee->CastToClient()->IsSeasonal()) {
-		Message(Chat::Red, "Seasonal characters may only group with other Seasonal characters.");
-		return;
-	}
-
 	if (invitee) {
 		if (invitee->IsClient()) {
+			if (invitee == this) {
+				MessageString(Chat::LightGray, GROUP_INVITEE_SELF);
+				return;
+			}
+
+			if (IsSeasonal() != invitee->CastToClient()->IsSeasonal()) {
+				Message(Chat::Red, "Seasonal characters may only group with other Seasonal characters.");
+				return;
+			}
+
+			if (IsSolo() || (invitee->CastToClient()->IsSolo())) {
+				auto solo_reject_string = "Solo characters may not join groups or raids.";
+				Message(Chat::Red, solo_reject_string);
+				SendMarqueeMessage(Chat::Red, solo_reject_string, 5000);
+				return;
+			}
+
 			if (invitee->CastToClient()->MercOnlyOrNoGroup() && !invitee->IsRaidGrouped()) {
 				if (app->GetOpcode() == OP_GroupInvite2) {
 					//Make a new packet using all the same information but make sure it's a fixed GroupInvite opcode so we
@@ -12054,6 +12068,13 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket* app)
 
 			if (player_to_invite && IsSeasonal() != player_to_invite->IsSeasonal()) {
 				Message(Chat::Red, "Seasonal characters may only group with other Seasonal characters.");
+				return;
+			}
+
+			if (IsSolo() || (player_to_invite && player_to_invite->IsSolo())) {
+				auto solo_reject_string = "Solo characters may not join groups or raids.";
+				Message(Chat::Red, solo_reject_string);
+				SendMarqueeMessage(Chat::Red, solo_reject_string, 5000);
 				return;
 			}
 

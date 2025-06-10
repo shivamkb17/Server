@@ -1315,7 +1315,8 @@ public:
 		return appearance.parameter;
 	}
 
-	// Item methods	void UseAugmentContainer(int container_slot);
+	// Item methods
+	void UseAugmentContainer(int container_slot);
 	void ValidateAugments(EQ::ItemInstance* item);
 	uint32 NukeItem(uint32 itemnum, uint8 where_to_check =
 			(invWhereWorn | invWherePersonal | invWhereBank | invWhereSharedBank | invWhereTrading | invWhereCursor));

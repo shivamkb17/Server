@@ -88,7 +88,7 @@ public:
 	bool AddCharacterToSetInCache(uint32 set_id, uint32 character_id);
 	std::vector<CharacterDataRepository::CharacterData> GetCharactersForSetFromCache(uint32 set_id);
 	AccountCharacterSetsRepository::AccountCharacterSets CreateCharacterSetInCache(const std::string& set_name);
-	bool DeleteCharacterSetIfEmptyFromCache(uint32 set_id);
+	bool DeleteCharacterSet(uint32 set_id);
 	bool RenameCharacterSetInCache(uint32 set_id, const std::string& new_name);
 	void RemoveCharacterFromSetInCache(uint32 character_id, uint32 set_id);
 	uint32 GetMaxCharacterSets();
@@ -99,6 +99,7 @@ public:
 	bool CanCreateNewCharacter();
 	bool GrantBonusCharacterSets(uint32 quantity);
 	bool GrantBonusCharacterSlots(uint32 quantity);
+	void UpdateSelectedCharacterSet(uint32 set_id);
 
 private:
 

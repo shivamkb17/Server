@@ -242,47 +242,44 @@ void Client::SendExpansionInfo() {
 }
 
 void Client::SendCharInfo(uint32 character_set) {
-	if (cle) {
-		cle->SetOnline(CLE_Status::CharSelect);
-	}
+    if (cle) {
+        cle->SetOnline(CLE_Status::CharSelect);
+    }
 
-	if (m_ClientVersionBit & EQ::versions::maskRoFAndLater) {
-		SendMaxCharCreate();
-		SendMembership();
-		SendMembershipSettings();
-	}
+    if (m_ClientVersionBit & EQ::versions::maskRoFAndLater) {
+        SendMaxCharCreate();
+        SendMembership();
+        SendMembershipSettings();
+    }
 
-	seen_character_select = true;
+    seen_character_select = true;
 
-	if (!character_set)
-	{
-		m_default_character_set = m_character_set_meta.default_set;
+    if (!character_set) {
+        // Use the last selected set as default, or create one if none exists
+        if (m_character_set_meta.default_set) {
+            character_set = m_character_set_meta.default_set;
+        } else if (!m_character_sets.empty()) {
+            character_set = m_character_sets[0].set_id;
+        } else {
+            auto new_set = CreateCharacterSetInCache("Default");
+            character_set = new_set.set_id;
 
-		if (!m_default_character_set) {
-			if (!m_character_sets.empty()) {
-				m_default_character_set = m_character_sets[0].set_id;
-			} else {
-				auto new_set = CreateCharacterSetInCache("Default");
-				m_default_character_set = new_set.set_id;
+            // Populate the default set with EVERYTHING
+            auto all_characters = CharacterDataRepository::GetAllCharactersForAccount(database, GetAccountID());
+            for (const auto character : all_characters) {
+                AddCharacterToSetInCache(character_set, character.id);
+            }
+        }
 
-				// Populate the default set with EVERYTHING
-				auto all_characters = CharacterDataRepository::GetAllCharactersForAccount(database, GetAccountID());
-				for (const auto character : all_characters) {
-					AddCharacterToSetInCache(m_default_character_set, character.id);
-				}
-			}
+        // Always update default to match what we're using
+        m_character_set_meta.default_set = character_set;
+        m_default_character_set = character_set;
+        WritebackCharacterDataCache();
+    }
 
-			m_character_set_meta.default_set = m_default_character_set;
-			// Significant changes were made here, we can go ahead and write them.
-			WritebackCharacterDataCache();
-		}
+    m_selected_character_set = character_set;
 
-		character_set = m_default_character_set;
-	}
-
-	m_selected_character_set = character_set;
-
-	SendCharacterSetInfo();
+    SendCharacterSetInfo();
 
 	// Send OP_SendCharInfo
 	EQApplicationPacket *outapp = nullptr;
@@ -1129,25 +1126,29 @@ bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app) {
 }
 
 bool Client::HandleCharacterSetRequest(const EQApplicationPacket *app) {
-	if (app->size != sizeof(CharacterSetRequest_Struct)) {
-		LogError("Error: Malformed OP_CharacterSetRequest");
-		return false;
-	}
+    if (app->size != sizeof(CharacterSetRequest_Struct)) {
+        LogError("Error: Malformed OP_CharacterSetRequest");
+        return false;
+    }
 
-	CharacterSetRequest_Struct *csr = (CharacterSetRequest_Struct *)app->pBuffer;
-	if (!csr->update_default) {
-		m_selected_character_set = csr->requested_set;
-		SendCharInfo(m_selected_character_set);
-		return true;
-	} else {
-		m_character_set_meta.default_set = csr->requested_set;
-		m_default_character_set = csr->requested_set;
+    CharacterSetRequest_Struct *csr = (CharacterSetRequest_Struct *)app->pBuffer;
 
-		SendCharacterSetInfo();
+    UpdateSelectedCharacterSet(csr->requested_set);
 
-		LogCharacterSets("Account [{}] updated default character set to [{}]", GetAccountID(), csr->requested_set);
-		return true;
-	}
+    if (!csr->update_default) {
+        SendCharInfo(m_selected_character_set);
+        return true;
+    } else {
+        // Use last selected as "default" - update the default_set to match selected
+        m_character_set_meta.default_set = m_selected_character_set;
+        m_default_character_set = m_selected_character_set;
+
+        SendCharacterSetInfo();
+
+        LogCharacterSets("Account [{}] updated default character set to [{}] (last selected)",
+                        GetAccountID(), m_selected_character_set);
+        return true;
+    }
 }
 
 bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
@@ -1185,28 +1186,41 @@ bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket *app) {
     }
 
     // Delete
-    if (p->set_id && !strlen(p->name)) {
-        bool r = DeleteCharacterSetIfEmptyFromCache(m_selected_character_set);
+	if (p->set_id && !strlen(p->name)) {
+		bool r = DeleteCharacterSet(p->set_id);
 
-        if (!r) {
-            LogCharacterSetsDetail("Failed to delete Character Set ID [{}] Name [{}] for Account [{}].", p->set_id, p->name, GetAccountID());
-            return false;
-        }
+		if (!r) {
+			LogCharacterSetsDetail("Failed to delete Character Set ID [{}] for Account [{}].", p->set_id, GetAccountID());
+			return false;
+		}
 
-        SendCharInfo(m_default_character_set);
-        return true;
-    }
+		if (p->set_id == m_selected_character_set) {
+			if (!m_character_sets.empty()) {
+				m_selected_character_set = m_character_sets[0].set_id;
+				m_default_character_set = m_selected_character_set;
+				m_character_set_meta.default_set = m_selected_character_set;
+			}
+		}
+
+		SendCharInfo(m_selected_character_set);
+		return true;
+	}
 
     // Rename
-    if (p->set_id && strlen(p->name)) {
-        bool r = RenameCharacterSetInCache(m_selected_character_set, p->name);
-        if (r) {
-            LogCharacterSets("Renamed Character Set ID [{}] to [{}] for Account [{}]", m_selected_character_set, p->name, GetAccountID());
-            SendCharInfo(m_selected_character_set);
-            return true;
-        }
-        return false;
-    }
+	if (p->set_id && strlen(p->name)) {
+		LogCharacterSets("DEBUG: Rename request - set_id [{}] name [{}] m_selected_character_set [{}]",
+						p->set_id, p->name, m_selected_character_set);
+
+		// Use the set_id from the packet, not m_selected_character_set
+		bool r = RenameCharacterSetInCache(p->set_id, p->name);
+		if (r) {
+			LogCharacterSets("Renamed Character Set ID [{}] to [{}] for Account [{}]",
+							p->set_id, p->name, GetAccountID());
+			SendCharInfo(m_selected_character_set);
+			return true;
+		}
+		return false;
+	}
 
     return true;
 }
@@ -2999,23 +3013,38 @@ AccountCharacterSetsRepository::AccountCharacterSets Client::CreateCharacterSetI
     return entity;
 }
 
-bool Client::DeleteCharacterSetIfEmptyFromCache(uint32 set_id) {
-    for (const auto& m : m_character_set_members) {
-        if (m.set_id == set_id) {
-            return false;
-        }
+
+bool Client::DeleteCharacterSet(uint32 set_id) {
+	if (m_character_sets.size() <= 1) {
+        LogCharacterSets("Cannot delete the last remaining character set for account [{}]", GetAccountID());
+        return false;
     }
 
-    auto it = std::remove_if(m_character_sets.begin(), m_character_sets.end(),
+    auto it_members = std::remove_if(m_character_set_members.begin(),
+        m_character_set_members.end(),
+        [set_id](const auto& member) {
+            return member.set_id == set_id;
+        });
+
+    size_t characters_unassigned = std::distance(it_members, m_character_set_members.end());
+
+    m_character_set_members.erase(it_members, m_character_set_members.end());
+
+    auto it_sets = std::remove_if(m_character_sets.begin(), m_character_sets.end(),
         [set_id](const auto& set) {
             return set.set_id == set_id;
         });
 
-    if (it != m_character_sets.end()) {
-        m_character_sets.erase(it, m_character_sets.end());
+    if (it_sets != m_character_sets.end()) {
+        std::string set_name = it_sets->set_name; // Capture name for logging
+        m_character_sets.erase(it_sets, m_character_sets.end());
+
+        LogCharacterSets("Deleted character set [{}] (ID: {}) and unassigned {} characters",
+                        set_name, set_id, characters_unassigned);
         return true;
     }
 
+    LogCharacterSets("Failed to delete character set with ID [{}] - set not found", set_id);
     return false;
 }
 
@@ -3171,4 +3200,15 @@ bool Client::HandleSlotUnlock(uint32 quantity) {
                     GetAccountID(), quantity, total_cost, m_character_set_meta.eom_slots);
 
     return true;
+}
+
+void Client::UpdateSelectedCharacterSet(uint32 set_id) {
+    m_selected_character_set = set_id;
+
+    if (m_character_set_meta.default_set != set_id) {
+        m_character_set_meta.default_set = set_id;
+        m_default_character_set = set_id;
+    }
+
+    LogCharacterSets("Updated selected character set to [{}] (also set as default)", set_id);
 }

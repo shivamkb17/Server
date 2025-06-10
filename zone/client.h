@@ -1248,33 +1248,53 @@ public:
 		}
 	}
 
-	// Play Modes
-	bool m_hardcore;
-	bool m_self_found;
-	bool m_solo;
+	mutable int m_hardcore = -1;
+	mutable int m_self_found = -1;
+	mutable int m_solo = -1;
 
-	inline bool IsHardcore() const { return m_hardcore; }
+	bool IsHardcore() const {
+		if (m_hardcore == -1) {
+			m_hardcore = CharacterDataExtraRepository::GetPlayModeHardcore(database, CharacterID()) ? 1 : 0;
+		}
+		return m_hardcore == 1;
+	}
+
 	void SetHardcore(bool in_hardcore) {
-		if (m_hardcore != in_hardcore) {
-			CharacterDataExtraRepository::SetPlayModeHardcore(database, CharacterID(), m_hardcore);
+		int new_value = in_hardcore ? 1 : 0;
+		if (m_hardcore != new_value) {
+			CharacterDataExtraRepository::SetPlayModeHardcore(database, CharacterID(), in_hardcore);
+			m_hardcore = new_value;
 		}
-		m_hardcore = in_hardcore;
 	}
 
-	inline bool IsSelfFound() const { return m_self_found; }
+	bool IsSelfFound() const {
+		if (m_self_found == -1) {
+			m_self_found = CharacterDataExtraRepository::GetPlayModeSelfFound(database, CharacterID()) ? 1 : 0;
+		}
+		return m_self_found == 1;
+	}
+
 	void SetSelfFound(bool in_self_found) {
-		if (m_self_found != in_self_found) {
-			CharacterDataExtraRepository::SetPlayModeSelfFound(database, CharacterID(), m_self_found);
+		int new_value = in_self_found ? 1 : 0;
+		if (m_self_found != new_value) {
+			CharacterDataExtraRepository::SetPlayModeSelfFound(database, CharacterID(), in_self_found);
+			m_self_found = new_value;
 		}
-		m_self_found = in_self_found;
 	}
 
-	inline bool IsSolo() const { return m_solo; }
-	void SetSolo(bool in_solo) {
-		if (m_solo != in_solo) {
-			CharacterDataExtraRepository::SetPlayModeSolo(database, CharacterID(), m_solo);
+	bool IsSolo() const {
+		if (m_solo == -1) {
+			m_solo = CharacterDataExtraRepository::GetPlayModeSolo(database, CharacterID()) ? 1 : 0;
 		}
-		m_solo = in_solo;
+		return m_solo == 1;
+	}
+
+	void SetSolo(bool in_solo) {
+		int new_value = in_solo ? 1 : 0;
+		if (m_solo != new_value) {
+			CharacterDataExtraRepository::SetPlayModeSolo(database, CharacterID(), in_solo);
+			m_solo = new_value;
+		}
 	}
 
 	// Item methods

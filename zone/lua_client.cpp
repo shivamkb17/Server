@@ -3103,6 +3103,21 @@ luabind::object Lua_Client::GetAugmentIDsBySlotID(lua_State* L, int16 slot_id) {
 	return lua_table;
 }
 
+bool Lua_Client::IsHardcore() {
+	Lua_Safe_Call_Bool();
+	return self->IsHardcore();
+}
+
+bool Lua_Client::IsSelfFound() {
+	Lua_Safe_Call_Bool();
+	return self->IsSelfFound();
+}
+
+bool Lua_Client::IsSolo() {
+	Lua_Safe_Call_Bool();
+	return self->IsSolo();
+}
+
 bool Lua_Client::IsEXPEnabled() {
 	Lua_Safe_Call_Bool();
 	return self->IsEXPEnabled();
@@ -4069,6 +4084,9 @@ luabind::scope lua_register_client() {
 	.def("IsTaskActive", (bool(Lua_Client::*)(int))&Lua_Client::IsTaskActive)
 	.def("IsTaskActivityActive", (bool(Lua_Client::*)(int,int))&Lua_Client::IsTaskActivityActive)
 	.def("IsTaskCompleted", (bool(Lua_Client::*)(int))&Lua_Client::IsTaskCompleted)
+	.def("IsHardcore", (bool(Lua_Client::*)(void))&Lua_Client::IsHardcore)
+	.def("IsSelfFound", (bool(Lua_Client::*)(void))&Lua_Client::IsSelfFound)
+	.def("IsSolo", (bool(Lua_Client::*)(void))&Lua_Client::IsSolo)
 	.def("KeyRingAdd", (bool(Lua_Client::*)(uint32))&Lua_Client::KeyRingAdd)
 	.def("KeyRingCheck", (bool(Lua_Client::*)(uint32))&Lua_Client::KeyRingCheck)
 	.def("KeyRingClear", (bool(Lua_Client::*)(void))&Lua_Client::KeyRingClear)

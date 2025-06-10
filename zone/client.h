@@ -1297,8 +1297,25 @@ public:
 		}
 	}
 
-	// Item methods
-	void UseAugmentContainer(int container_slot);
+	uint32_t GetPlayModeColorPack() const {
+		SpawnAppearance_Struct appearance = {0};
+		appearance.colors.color0 = NameColorPalette::Default;
+
+		int colorIndex = 1;
+		if (IsHardcore() && colorIndex < 4) {
+			appearance.color_array[colorIndex++] = NameColorPalette::Hardcore;
+		}
+		if (IsSelfFound() && colorIndex < 4) {
+			appearance.color_array[colorIndex++] = NameColorPalette::SelfFound;
+		}
+		if (IsSolo() && colorIndex < 4) {
+			appearance.color_array[colorIndex++] = NameColorPalette::Solo;
+		}
+
+		return appearance.parameter;
+	}
+
+	// Item methods	void UseAugmentContainer(int container_slot);
 	void ValidateAugments(EQ::ItemInstance* item);
 	uint32 NukeItem(uint32 itemnum, uint8 where_to_check =
 			(invWhereWorn | invWherePersonal | invWhereBank | invWhereSharedBank | invWhereTrading | invWhereCursor));

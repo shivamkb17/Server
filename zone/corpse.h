@@ -241,6 +241,8 @@ public:
 	bool IsSeasonal() { return m_seasonal; }
 	void SetSeasonal(bool val) { m_seasonal = val; }
 
+
+
 	void CheckIsOwnerOnline();
 	void SetOwnerOnline(bool value) { m_is_owner_online = value; }
 	bool GetOwnerOnline() { return m_is_owner_online; }

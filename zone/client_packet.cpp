@@ -1437,8 +1437,9 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		}
 	}
 
-	if (RuleB(Character, SharedBankPlat) && !IsSeasonal())
+	if (RuleB(Character, SharedBankPlat) && (!IsSeasonal() && !IsSelfFound())) {
 		m_pp.platinum_shared = database.GetSharedPlatinum(AccountID());
+	}
 
 	database.ClearOldRecastTimestamps(cid); /* Clear out our old recast timestamps to keep the DB clean */
 	// set to full support in case they're a gm with items in disabled expansion slots...but, have their gm flag off...

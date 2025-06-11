@@ -4283,6 +4283,14 @@ bool Mob::SpellOnTarget(
 		}
 	}
 
+	if (IsBeneficialSpell(spell_id) && spelltar) {
+		auto ultimate_spell_target = spelltar->GetUltimateOwner();
+		if (ultimate_spell_target->IsClient() && ultimate_spell_target != this && ultimate_spell_target->CastToClient()->IsSolo()) {
+			spellOwner->Message(Chat::SpellFailure, "Your spell would not take hold on your target. (Solo Character)");
+			return false;
+		}
+	}
+
 	if (spelltar->IsClient() && spelltar->CastToClient()->IsTrader()) {
 		if (spellOwner->IsClient()) {
 			spellOwner->Message(Chat::SpellFailure, "Your spell would not take hold on your target.");

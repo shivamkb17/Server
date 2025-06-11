@@ -340,6 +340,68 @@ inline void LoadNPCState(Zone *zone, NPC *n, ZoneStateSpawnsRepository::ZoneStat
 	n->SetResumedFromZoneSuspend(true);
 }
 
+inline void SaveCorpseState(Corpse *c, ZoneStateSpawnsRepository::ZoneStateSpawns &s)
+{
+	// entity variables
+	std::map<std::string, std::string> variables;
+
+	for (const auto &k: c->GetEntityVariables()) {
+		variables[k] = c->GetEntityVariable(k);
+	}
+
+	if (!variables.empty()) {
+		try {
+			std::ostringstream os;
+			{
+				cereal::JSONOutputArchiveSingleLine archive(os);
+				archive(variables);
+			}
+			s.entity_variables = os.str();
+		}
+		catch (const std::exception &e) {
+			LogZoneState("Failed to serialize entity variables for corpse [{}] [{}]", c->GetNPCTypeID(), e.what());
+		}
+	}
+
+	// corpse-specific data
+	s.npc_id           = c->GetNPCTypeID();
+	s.is_corpse        = 1;
+	s.x                = c->GetX();
+	s.y                = c->GetY();
+	s.z                = c->GetZ();
+	s.heading          = c->GetHeading();
+	s.created_at       = std::time(nullptr);
+	s.loot_data        = GetLootSerialized(c);
+	s.decay_in_seconds = (int) (c->GetDecayTime() / 1000);
+}
+
+inline void LoadCorpseState(Zone *zone, NPC *n, ZoneStateSpawnsRepository::ZoneStateSpawns &s)
+{
+	// Load entity variables if they exist
+	LoadNPCEntityVariables(n, s.entity_variables);
+
+	// Set corpse position
+	n->SetPosition(s.x, s.y, s.z);
+	n->SetHeading(s.heading);
+
+	// Load loot data
+	n->SetResumedFromZoneSuspend(false);
+	LoadLootStateData(zone, n, s.loot_data);
+	n->SetResumedFromZoneSuspend(true);
+
+	// Handle corpse decay
+	auto decay_time = s.decay_in_seconds * 1000;
+	if (decay_time > 0) {
+		n->SetQueuedToCorpse();
+		entity_list.RestoreCorpse(n, decay_time);
+	}
+	else {
+		n->Depop();
+	}
+
+	n->SetResumedFromZoneSuspend(true);
+}
+
 inline std::string GetZoneVariablesSerialized(Zone *z)
 {
 	std::map<std::string, std::string> variables;
@@ -534,7 +596,11 @@ bool Zone::LoadZoneState(
 		new_spawn->Process();
 		auto n = new_spawn->GetNPC();
 		if (n) {
-			LoadNPCState(zone, n, s);
+			if (s.is_corpse) {
+				LoadCorpseState(zone, n, s);
+			} else {
+				LoadNPCState(zone, n, s);
+			}
 		}
 	}
 
@@ -631,7 +697,11 @@ bool Zone::LoadZoneState(
 
 		entity_list.AddNPC(npc, true, true);
 
-		LoadNPCState(zone, npc, s);
+		if (s.is_corpse) {
+			LoadCorpseState(zone, npc, s);
+		} else {
+			LoadNPCState(zone, npc, s);
+		}
 	}
 
 	return !spawn_states.empty();
@@ -772,17 +842,10 @@ void Zone::SaveZoneState()
 		}
 
 		auto s = ZoneStateSpawnsRepository::NewEntity();
-		s.zone_id          = GetZoneID();
-		s.instance_id      = GetInstanceID();
-		s.npc_id           = n.second->GetNPCTypeID();
-		s.is_corpse        = 1;
-		s.x                = n.second->GetX();
-		s.y                = n.second->GetY();
-		s.z                = n.second->GetZ();
-		s.heading          = n.second->GetHeading();
-		s.created_at       = std::time(nullptr);
-		s.loot_data        = GetLootSerialized(n.second);
-		s.decay_in_seconds = (int) (n.second->GetDecayTime() / 1000);
+		s.zone_id     = GetZoneID();
+		s.instance_id = GetInstanceID();
+
+		SaveCorpseState(n.second, s);
 
 		spawns.emplace_back(s);
 	}

@@ -593,8 +593,14 @@ bool Object::HandleClick(Client* sender, const ClickObject_Struct* click_object)
 		bool duplicate_lore = false;
 
 		if (m_inst && sender) {
-			if (sender->IsSeasonal() && !m_ground_spawn) {
-				sender->Message(Chat::Red, "Seasonal Characters may not pick up items left by players.");
+			if ((sender->IsSeasonal() || sender->IsSelfFound()) && !m_ground_spawn) {
+				if (sender->IsSeasonal()) {
+					sender->Message(Chat::Red, "Seasonal Characters may not pick up items left by players.");
+				}
+
+				if (sender->IsSelfFound()) {
+					sender->Message(Chat::Red, "Self-Found Characters may not pick up items left by players.");
+				}
 				return false;
 			}
 

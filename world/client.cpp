@@ -2830,7 +2830,7 @@ void Client::SendCharacterSetInfo() {
 	}
 
 	if (characters.size() > 1000) {
-		sets.resize(1000);
+		characters.resize(1000);
 	}
 
 	size_t packet_size = sizeof(CharacterSetList_Struct) +

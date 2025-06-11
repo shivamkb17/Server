@@ -242,47 +242,49 @@ void Client::SendExpansionInfo() {
 }
 
 void Client::SendCharInfo(uint32 character_set) {
-    if (cle) {
-        cle->SetOnline(CLE_Status::CharSelect);
-    }
+	if (cle) {
+		cle->SetOnline(CLE_Status::CharSelect);
+	}
 
-    if (m_ClientVersionBit & EQ::versions::maskRoFAndLater) {
-        SendMaxCharCreate();
-        SendMembership();
-        SendMembershipSettings();
-    }
+	if (m_ClientVersionBit & EQ::versions::maskRoFAndLater) {
+		SendMaxCharCreate();
+		SendMembership();
+		SendMembershipSettings();
+	}
 
-    seen_character_select = true;
+	seen_character_select = true;
 
-    if (!character_set) {
-        // Use the last selected set as default, or create one if none exists
-        if (m_character_set_meta.default_set) {
-            character_set = m_character_set_meta.default_set;
-        } else if (!m_character_sets.empty()) {
-            character_set = m_character_sets[0].set_id;
-        } else {
-            auto new_set = CreateCharacterSetInCache("Default");
-            character_set = new_set.set_id;
+	if (!character_set) {
+		// Use the last selected set as default, or create one if none exists
+		if (m_character_set_meta.default_set) {
+			character_set = m_character_set_meta.default_set;
+		}
+		else if (!m_character_sets.empty()) {
+			character_set = m_character_sets[0].set_id;
+		}
+		else {
+			auto new_set = CreateCharacterSetInCache("Default");
+			character_set = new_set.set_id;
 
-            // Populate the default set with EVERYTHING
-            auto all_characters = CharacterDataRepository::GetAllCharactersForAccount(database, GetAccountID());
-            for (const auto character : all_characters) {
-                AddCharacterToSetInCache(character_set, character.id);
-            }
-        }
+			// Populate the default set with EVERYTHING
+			auto all_characters = CharacterDataRepository::GetAllCharactersForAccount(database, GetAccountID());
+			for (const auto character : all_characters) {
+				AddCharacterToSetInCache(character_set, character.id);
+			}
+		}
 
-        // Always update default to match what we're using
-        m_character_set_meta.default_set = character_set;
-        m_default_character_set = character_set;
-        WritebackCharacterDataCache();
-    }
+		// Always update default to match what we're using
+		m_character_set_meta.default_set = character_set;
+		m_default_character_set = character_set;
+		WritebackCharacterDataCache();
+	}
 
-    m_selected_character_set = character_set;
+	m_selected_character_set = character_set;
 
-    SendCharacterSetInfo();
+	SendCharacterSetInfo();
 
 	// Send OP_SendCharInfo
-	EQApplicationPacket *outapp = nullptr;
+	EQApplicationPacket* outapp = nullptr;
 	database.GetCharSelectInfo(GetAccountID(), &outapp, m_ClientVersionBit, GetCharactersForSetFromCache(m_selected_character_set));
 
 	if (outapp) {

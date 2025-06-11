@@ -189,20 +189,17 @@ struct CharacterSelect_Struct
 
 /* Character Sets */
 
-struct CharacterSetRequest_Struct
-{
+struct CharacterSetRequest_Struct {
 	uint32 requested_set;
 	bool update_default;
 };
 
-struct CharacterSet_Struct
-{
+struct CharacterSet_Struct {
 	uint32 set_id;
 	char   name[64];
 };
 
-struct CharacterEntry_Struct
-{
+struct CharacterEntry_Struct {
 	uint32 character_id;
 	char   name[64];
 	uint32 level;
@@ -210,8 +207,7 @@ struct CharacterEntry_Struct
 	uint32 assigned_sets[64];
 };
 
-struct CharacterSetList_Struct
-{
+struct CharacterSetList_Struct {
 	uint32 selected_set;
 	uint32 default_set;
 	uint32 set_count;
@@ -227,28 +223,25 @@ struct CharacterSetList_Struct
 	CharacterEntry_Struct characters[];
 };
 
-struct CharacterSetCreateRequest_Struct
-{
+struct CharacterSetCreateRequest_Struct {
 	uint32 set_id;
 	char name[64];
 };
 
-struct CharacterSetDeleteRequest_Struct
-{
+struct CharacterSetDeleteRequest_Struct {
 	uint32 set_id;
 };
-struct CharacterSetMoveRequest_Struct
-{
+
+struct CharacterSetMoveRequest_Struct {
 	uint32 set_id;
 	char character_name[64];
-	bool AssignToSet; // true = assign to set, false = remove from set
+	bool assign_to_set; // true = assign to set, false = remove from set
 
 };
 
-struct CharacterSetUnlockRequest_Struct
-{
+struct CharacterSetUnlockRequest_Struct {
 	uint32 type; // 0 for set, 1 for slot
-    uint32 quantity;
+	uint32 quantity;
 };
 
 /* End Character Sets */

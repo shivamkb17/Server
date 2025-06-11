@@ -7,15 +7,15 @@
 #include "account_character_set_members_repository.h"
 #include "account_character_set_limits_repository.h"
 
-class AccountCharacterSetsRepository: public BaseAccountCharacterSetsRepository {
+class AccountCharacterSetsRepository : public BaseAccountCharacterSetsRepository {
 public:
 
-    static std::vector<AccountCharacterSets> GetAccountCharacterSets(Database& db, int32_t account_id) {
-        return GetWhere(
+	static std::vector<AccountCharacterSets> GetAccountCharacterSets(Database& db, int32_t account_id) {
+		return GetWhere(
 			db,
-            fmt::format("account_id = {} ORDER BY set_name", account_id)
-        );
-    }
+			fmt::format("account_id = {} ORDER BY set_name", account_id)
+		);
+	}
 
 };
 

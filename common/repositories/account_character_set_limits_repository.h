@@ -8,13 +8,13 @@
 class AccountCharacterSetLimitsRepository : public BaseAccountCharacterSetLimitsRepository {
 public:
 
-	static AccountCharacterSetLimits GetAccountSetMeta(Database &db, uint32 account_id) {
+	static AccountCharacterSetLimits GetAccountSetMeta(Database& db, uint32 account_id) {
 		auto r = FindOne(db, account_id);
 		r.account_id = account_id;
 		return r;
 	}
 
-	static void UpdateAccountSetMeta(Database &db, AccountCharacterSetLimits data) {
+	static void UpdateAccountSetMeta(Database& db, AccountCharacterSetLimits data) {
 		ReplaceOne(db, data);
 	}
 

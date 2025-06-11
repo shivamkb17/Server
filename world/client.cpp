@@ -1250,9 +1250,9 @@ bool Client::HandleCharacterSetMoveRequest(const EQApplicationPacket* app)
 		return false;
 	}
 
-	LogCharacterSets("CharacterSetMoveRequest: set_id [{}] character_name [{}] AssignToSet [{}]", p->set_id, p->character_name, p->AssignToSet);
+	LogCharacterSets("CharacterSetMoveRequest: set_id [{}] character_name [{}] AssignToSet [{}]", p->set_id, p->character_name, p->assign_to_set);
 
-	if (p->AssignToSet) {
+	if (p->assign_to_set) {
 		AddCharacterToSetInCache(p->set_id, character_id);
 	}
 	else {

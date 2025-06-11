@@ -284,8 +284,7 @@ CREATE TABLE `account_character_sets` (
 	`set_name` varchar(255) NOT NULL,
 	`created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY (`account_id`, `set_id`),
-	UNIQUE KEY `unique_account_set_name` (`account_id`, `set_name`),
-	INDEX `idx_account_id` (`account_id`)
+	UNIQUE KEY `unique_account_set_name` (`account_id`, `set_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 )",
 		.content_schema_update = false,

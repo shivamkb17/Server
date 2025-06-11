@@ -1199,7 +1199,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		}
 	}
 
-	if (!(IsSeasonal() || skipped_item)) {
+	if (!(IsSeasonal() || skipped_item || IsSelfFound())) {
 		auto temporary_merchant_list_two = zone->tmpmerchanttable[npcid];
 		temporary_merchant_list.clear();
 		for (auto ml : temporary_merchant_list_two) {
@@ -1827,8 +1827,13 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 		{
 			if (to_bucket == &m_pp.platinum_shared || from_bucket == &m_pp.platinum_shared)
 			{
-				if (IsSeasonal()) {
-					Message(Chat::Red, "WARNING: Seasonal Characters may not access the Shared Bank. Any deposited platinum visible here is a visual glitch only.");
+				if (IsSeasonal() || IsSelfFound()) {
+					if (IsSeasonal()) {
+						Message(Chat::Red, "WARNING: Seasonal Characters may not access the Shared Bank. Any deposited platinum visible here is a visual glitch only.");
+					}
+					if (IsSelfFound()) {
+						Message(Chat::Red, "WARNING: Self-Found Characters may not access the Shared Bank. Any deposited platinum visible here is a visual glitch only.");
+					}
 
 					AddPlatinum(amount_to_add, true);
 					m_pp.platinum_shared = 0;

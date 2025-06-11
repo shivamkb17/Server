@@ -854,6 +854,13 @@ void Client::DropItem(int16 slot_id, bool recurse)
 		return;
 	}
 
+	if (IsSelfFound()) {
+		Message(Chat::Red, "Self-Found Characters may not drop items.");
+		SendCursorBuffer();
+		return;
+	}
+
+
 	if (!m_inv.GetItem(slot_id)->GetCustomDataString().empty()) {
 		Message(Chat::Red, "You may not drop an item of this type.");
 		SendCursorBuffer();
@@ -1792,13 +1799,17 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 	uint32 dst_slot_check = move_in->to_slot;
 	uint32 stack_count_check = move_in->number_in_stack;
 
-	if (IsSeasonal()) {
+	if (IsSeasonal() || IsSelfFound()) {
 		if ((src_slot_check >= EQ::invslot::SHARED_BANK_BEGIN && src_slot_check <= EQ::invslot::SHARED_BANK_END) ||
 			(src_slot_check >= EQ::invbag::SHARED_BANK_BAGS_BEGIN && src_slot_check <= EQ::invbag::SHARED_BANK_BAGS_END) ||
 			(dst_slot_check >= EQ::invslot::SHARED_BANK_BEGIN && dst_slot_check <= EQ::invslot::SHARED_BANK_END) ||
 			(dst_slot_check >= EQ::invbag::SHARED_BANK_BAGS_BEGIN && dst_slot_check <= EQ::invbag::SHARED_BANK_BAGS_END))
 		{
-			Message(Chat::Red, "Seasonal characters may not access the shared bank.");
+			if (IsSeasonal()) {
+				Message(Chat::Red, "Seasonal characters may not access the shared bank.");
+			} else {
+				Message(Chat::Red, "Self-Found characters may not access the shared bank.");
+			}
 			return false;
 		}
 	}

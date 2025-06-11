@@ -277,7 +277,9 @@ void Client::DoParcelSend(const Parcel_Struct *parcel_in)
 	}
 
 	auto send_to_client = CharacterParcelsRepository::GetParcelCountAndCharacterName(database, parcel_in->send_to);
+	int  dst_character_id = database.GetCharacterID(parcel_in->send_to);
 	auto merchant       = entity_list.GetMob(parcel_in->npc_id);
+
 	if (!merchant) {
 		SendParcelAck();
 		return;
@@ -285,7 +287,7 @@ void Client::DoParcelSend(const Parcel_Struct *parcel_in)
 
 	if (RuleI(Custom, EnableSeasonalCharacters)) {
 		DataBucketKey db_key = {};
-		db_key.character_id = database.GetCharacterID(parcel_in->send_to);
+		db_key.character_id = dst_character_id;
 		db_key.key = "SeasonalCharacter";
 
 		bool dst_seasonal = (Strings::ToInt(DataBucket::GetData(db_key).value) == RuleI(Custom,EnableSeasonalCharacters));
@@ -303,6 +305,23 @@ void Client::DoParcelSend(const Parcel_Struct *parcel_in)
 			SendParcelAck();
 			return;
 		}
+	}
+
+	bool dst_character_self_found = CharacterDataExtraRepository::GetPlayModeSelfFound(database, dst_character_id);
+
+	if (IsSelfFound() || dst_character_self_found) {
+		SendParcelIconStatus();
+		Message(
+			Chat::Yellow,
+			fmt::format(
+				"{} tells you, 'Unfortunately, I cannot send your parcel. Self-Found characters may not use the parcel system.'",
+				merchant->GetCleanName(),
+				RuleI(Parcel, ParcelMaxItems)
+			).c_str()
+		);
+		DoParcelCancel();
+		SendParcelAck();
+		return;
 	}
 
 	if (parcel_in->money_flag && parcel_in->item_slot != INVALID_INDEX) {

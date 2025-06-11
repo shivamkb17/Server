@@ -36,6 +36,9 @@
 class EQApplicationPacket;
 class EQStreamInterface;
 
+constexpr uint8 MAX_CHARACTER_SETS = 64;
+constexpr uint8 EOM_CURRENCY_ID = 6;
+
 class Client {
 public:
 	Client(EQStreamInterface* ieqs);
@@ -91,7 +94,7 @@ public:
 	bool DeleteCharacterSet(uint32 set_id);
 	bool RenameCharacterSetInCache(uint32 set_id, const std::string& new_name);
 	void RemoveCharacterFromSetInCache(uint32 character_id, uint32 set_id);
-	uint32 GetMaxCharacterSets();
+	uint8 GetMaxCharacterSets();
 	bool CanCreateMoreCharacterSets();
 	uint32 GetMaxCharacterSlots();
 	uint32 GetAvailableSlotUnlocks();
@@ -100,6 +103,12 @@ public:
 	bool GrantBonusCharacterSets(uint32 quantity);
 	bool GrantBonusCharacterSlots(uint32 quantity);
 	void UpdateSelectedCharacterSet(uint32 set_id);
+	bool DeleteCharacterByNameFromCache(const std::string& character_name);
+
+	enum CharacterSetUnlockAction {
+		CHARACTER_SLOT = 1,
+		CHARACTER_SET  = 0
+	};
 
 private:
 

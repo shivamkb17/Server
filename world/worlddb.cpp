@@ -71,8 +71,6 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **o
 		auto *cs = (CharacterSelect_Struct *) (*out_app)->pBuffer;
 		cs->CharCount  = 0;
 		cs->TotalChars = character_limit;
-
-		LogDebug("Setting character_limit to [{}]", character_limit);
 		return;
 	}
 
@@ -126,8 +124,6 @@ void WorldDatabase::GetCharSelectInfo(uint32 account_id, EQApplicationPacket **o
 
 	cs->CharCount  = character_count;
 	cs->TotalChars = character_limit;
-
-	LogDebug("Setting character_limit to [{}]", character_limit);
 
 	buff_ptr += sizeof(CharacterSelect_Struct);
 	for (auto &e: characters) {

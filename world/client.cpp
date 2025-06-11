@@ -801,10 +801,8 @@ bool Client::HandleCharacterCreatePacket(const EQApplicationPacket *app) {
 
 	CharCreate_Struct *cc = (CharCreate_Struct*)app->pBuffer;
 	if(OPCharCreate(char_name, cc) == false) {
-		// This is ugly but it is the only way to keep the cache consistent that I can see.
-		WritebackCharacterDataCache();
 		database.DeleteCharacter(char_name);
-		PopulateCharacterDataCache();
+		DeleteCharacterByNameFromCache(char_name);
 		auto outapp = new EQApplicationPacket(OP_ApproveName, 1);
 		outapp->pBuffer[0] = 0;
 		QueuePacket(outapp);
@@ -1117,10 +1115,9 @@ bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app) {
 
 	uint32 char_acct_id = database.GetAccountIDByChar((char*)app->pBuffer);
 	if (char_acct_id == GetAccountID())	{
-		WritebackCharacterDataCache();
 		LogInfo("Delete character: [{}]", (const char *)app->pBuffer);
 		database.DeleteCharacter((char *)app->pBuffer);
-		PopulateCharacterDataCache();
+		DeleteCharacterByNameFromCache((char *)app->pBuffer);
 		SendCharInfo(m_selected_character_set);
 	}
 
@@ -1141,17 +1138,15 @@ bool Client::HandleCharacterSetRequest(const EQApplicationPacket* app) {
 		SendCharInfo(m_selected_character_set);
 		return true;
 	}
-	else {
-		// Use last selected as "default" - update the default_set to match selected
-		m_character_set_meta.default_set = m_selected_character_set;
-		m_default_character_set = m_selected_character_set;
 
-		SendCharacterSetInfo();
+	// Use last selected as "default" - update the default_set to match selected
+	m_character_set_meta.default_set = m_selected_character_set;
+	m_default_character_set = m_selected_character_set;
 
-		LogCharacterSets("Account [{}] updated default character set to [{}] (last selected)",
-			GetAccountID(), m_selected_character_set);
-		return true;
-	}
+	SendCharacterSetInfo();
+
+	LogCharacterSets("Account [{}] updated default character set to [{}] (last selected)", GetAccountID(), m_selected_character_set);
+	return true;
 }
 
 bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket* app) {
@@ -1164,8 +1159,12 @@ bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket* app) {
 
 	int set_count = m_character_sets.size();
 	int max_sets = GetMaxCharacterSets();
-	// Create
-	if (!p->set_id) {
+
+	bool create_set = !p->set_id;
+	bool delete_set = p->set_id && !strlen(p->name);
+	bool rename_set = p->set_id && strlen(p->name);
+
+	if (create_set) {
 		if (set_count >= max_sets) {
 			LogCharacterSets("Account [{}] has reached the maximum number of character sets [{}]", GetAccountID(), max_sets);
 			return false;
@@ -1188,8 +1187,7 @@ bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket* app) {
 		return true;
 	}
 
-	// Delete
-	if (p->set_id && !strlen(p->name)) {
+	if (delete_set) {
 		bool r = DeleteCharacterSet(p->set_id);
 
 		if (!r) {
@@ -1197,23 +1195,17 @@ bool Client::HandleCharacterSetCreateRequest(const EQApplicationPacket* app) {
 			return false;
 		}
 
-		if (p->set_id == m_selected_character_set) {
-			if (!m_character_sets.empty()) {
-				m_selected_character_set = m_character_sets[0].set_id;
-				m_default_character_set = m_selected_character_set;
-				m_character_set_meta.default_set = m_selected_character_set;
-			}
+		if (p->set_id == m_selected_character_set && !m_character_sets.empty()) {
+			m_selected_character_set = m_character_sets[0].set_id;
+			m_default_character_set = m_selected_character_set;
+			m_character_set_meta.default_set = m_selected_character_set;
 		}
 
 		SendCharInfo(m_selected_character_set);
 		return true;
 	}
 
-	// Rename
-	if (p->set_id && strlen(p->name)) {
-		LogCharacterSets("DEBUG: Rename request - set_id [{}] name [{}] m_selected_character_set [{}]",
-			p->set_id, p->name, m_selected_character_set);
-
+	if (rename_set) {
 		// Use the set_id from the packet, not m_selected_character_set
 		bool r = RenameCharacterSetInCache(p->set_id, p->name);
 		if (r) {
@@ -1245,12 +1237,10 @@ bool Client::HandleCharacterSetMoveRequest(const EQApplicationPacket* app)
 		}
 	}
 
-	if (character_id == 0) {
+	if (!character_id) {
 		LogError("Character [{}] not found for account [{}]", p->character_name, GetAccountID());
 		return false;
 	}
-
-	LogCharacterSets("CharacterSetMoveRequest: set_id [{}] character_name [{}] AssignToSet [{}]", p->set_id, p->character_name, p->assign_to_set);
 
 	if (p->assign_to_set) {
 		AddCharacterToSetInCache(p->set_id, character_id);
@@ -1275,10 +1265,10 @@ bool Client::HandleCharacterSetUnlockRequest(const EQApplicationPacket* app) {
 	bool success = false;
 
 	switch (csur->type) {
-	case 0: // Character Set unlock
+	case CharacterSetUnlockAction::CHARACTER_SET:
 		success = HandleSetUnlock(csur->quantity);
 		break;
-	case 1: // Character Slot unlock
+	case CharacterSetUnlockAction::CHARACTER_SLOT:
 		success = HandleSlotUnlock(csur->quantity);
 		break;
 	default:
@@ -1416,18 +1406,15 @@ bool Client::HandlePacket(const EQApplicationPacket *app) {
 		}
 		case OP_CharacterSetCreateRequest:
 		{
-			HandleCharacterSetCreateRequest(app);
-			return true;
+			return HandleCharacterSetCreateRequest(app);
 		}
 		case OP_CharacterSetMoveRequest:
 		{
-			HandleCharacterSetMoveRequest(app);
-			return true;
+			return HandleCharacterSetMoveRequest(app);
 		}
 		case OP_CharacterSetUnlockRequest:
 		{
-			HandleCharacterSetUnlockRequest(app);
-			return true;
+			return HandleCharacterSetUnlockRequest(app);
 		}
 		default:
 		{
@@ -2152,7 +2139,6 @@ bool Client::OPCharCreate(char* name, CharCreate_Struct* cc) {
 	{
 		int char_id = database.GetCharacterID(pp.name);
 		AddCharacterToSetInCache(m_selected_character_set, char_id);
-		LogDebug("Assigned character_id: [{}] to character_set [{}]", char_id, m_selected_character_set);
 	}
 
 	LogInfo("Character creation {} for [{}]", success ? "succeeded" : "failed", pp.name);
@@ -2839,6 +2825,14 @@ void Client::SendCharacterSetInfo() {
 		}
 	}
 
+	if (sets.size() > MAX_CHARACTER_SETS) {
+		sets.resize(MAX_CHARACTER_SETS);
+	}
+
+	if (characters.size() > 1000) {
+		sets.resize(1000);
+	}
+
 	size_t packet_size = sizeof(CharacterSetList_Struct) +
 		(sizeof(CharacterEntry_Struct) * characters.size());
 
@@ -2851,7 +2845,7 @@ void Client::SendCharacterSetInfo() {
 	l->selected_set = m_selected_character_set;
 	l->default_set = m_default_character_set;
 
-	l->set_count = std::min(sets.size(), static_cast<size_t>(64));
+	l->set_count = std::min(sets.size(), static_cast<size_t>(MAX_CHARACTER_SETS));
 	l->character_count = characters.size();
 
 	// NEW PACKET FIELDS:
@@ -2885,7 +2879,7 @@ void Client::SendCharacterSetInfo() {
 		e->classes = char_classes[ch.id];
 
 		const auto& csl = char_sets[ch.id];
-		size_t cnt = std::min(csl.size(), static_cast<size_t>(64));
+		size_t cnt = std::min(csl.size(), static_cast<size_t>(MAX_CHARACTER_SETS));
 		for (size_t j = 0; j < cnt; ++j) {
 			e->assigned_sets[j] = csl[j];
 		}
@@ -2908,7 +2902,7 @@ void Client::PopulateCharacterDataCache() {
 		m_selected_character_set = m_default_character_set;
 	}
 
-	m_eom_available = AccountAltCurrencyRepository::FindByAccountAndCurrency(database, GetAccountID(), 6).amount;
+	m_eom_available = AccountAltCurrencyRepository::FindByAccountAndCurrency(database, GetAccountID(), EOM_CURRENCY_ID).amount;
 }
 
 void Client::WritebackCharacterDataCache() {
@@ -2958,7 +2952,7 @@ bool Client::AddCharacterToSetInCache(uint32 set_id, uint32 character_id) {
 		}
 	}
 
-	if (current_count >= 12) {
+	if (current_count >= EQ::constants::CHARACTER_CREATION_LIMIT) {
 		return false;
 	}
 
@@ -2992,7 +2986,7 @@ std::vector<CharacterDataRepository::CharacterData> Client::GetCharactersForSetF
 
 	std::sort(result.begin(), result.end(), [](const auto& a, const auto& b) {
 		return a.name < b.name;
-		});
+	});
 
 	LogCharacterSets("Returning [{}] characters for set [{}]", result.size(), set_id);
 	return result;
@@ -3078,11 +3072,11 @@ void Client::RemoveCharacterFromSetInCache(uint32 character_id, uint32 set_id) {
 	m_character_set_members.erase(it, m_character_set_members.end());
 }
 
-uint32 Client::GetMaxCharacterSets() {
-	uint32 total = RuleI(Custom, BaseCharacterSets) +
+uint8 Client::GetMaxCharacterSets() {
+	uint8 total = RuleI(Custom, BaseCharacterSets) +
 		m_character_set_meta.eom_sets +
 		m_character_set_meta.bonus_sets;
-	return std::min(total, 64u);
+	return std::min(total, MAX_CHARACTER_SETS);
 }
 
 bool Client::CanCreateMoreCharacterSets() {
@@ -3122,7 +3116,7 @@ uint32 Client::GetAvailableSetUnlocks() {
 	int32 max_eom_sets = RuleI(Custom, EoMUnlockCharacterSets);
 	if (max_eom_sets == -1) {
 		uint32 current_max = GetMaxCharacterSets();
-		return (current_max >= 64) ? 0 : (64 - current_max);
+		return (current_max >= MAX_CHARACTER_SETS) ? 0 : (MAX_CHARACTER_SETS - current_max);
 	}
 	return (m_character_set_meta.eom_sets >= max_eom_sets) ? 0 : (max_eom_sets - m_character_set_meta.eom_sets);
 }
@@ -3146,8 +3140,8 @@ bool Client::GrantBonusCharacterSlots(uint32 quantity) {
 }
 
 bool Client::HandleSetUnlock(uint32 quantity) {
-	if (GetMaxCharacterSets() >= 64) {
-		LogError("Account [{}] attempted to unlock character sets but already at maximum (64)", GetAccountID());
+	if (GetMaxCharacterSets() >= MAX_CHARACTER_SETS) {
+		LogError("Account [{}] attempted to unlock character sets but already at maximum ({})", GetAccountID(), MAX_CHARACTER_SETS);
 		return false;
 	}
 
@@ -3167,7 +3161,7 @@ bool Client::HandleSetUnlock(uint32 quantity) {
 	}
 
 	m_eom_available -= total_cost;
-	AccountAltCurrencyRepository::UpdateByAccountAndCurrency(database, GetAccountID(), 6, m_eom_available);
+	AccountAltCurrencyRepository::UpdateByAccountAndCurrency(database, GetAccountID(), EOM_CURRENCY_ID, m_eom_available);
 
 	m_character_set_meta.eom_sets += quantity;
 	AccountCharacterSetLimitsRepository::UpdateAccountSetMeta(database, m_character_set_meta);
@@ -3195,7 +3189,7 @@ bool Client::HandleSlotUnlock(uint32 quantity) {
 	}
 
 	m_eom_available -= total_cost;
-	AccountAltCurrencyRepository::UpdateByAccountAndCurrency(database, GetAccountID(), 6, m_eom_available);
+	AccountAltCurrencyRepository::UpdateByAccountAndCurrency(database, GetAccountID(), EOM_CURRENCY_ID, m_eom_available);
 
 	m_character_set_meta.eom_slots += quantity;
 	AccountCharacterSetLimitsRepository::UpdateAccountSetMeta(database, m_character_set_meta);
@@ -3215,4 +3209,26 @@ void Client::UpdateSelectedCharacterSet(uint32 set_id) {
 	}
 
 	LogCharacterSets("Updated selected character set to [{}] (also set as default)", set_id);
+}
+
+bool Client::DeleteCharacterByNameFromCache(const std::string& character_name) {
+	auto character_it = std::find_if(m_account_characters.begin(), m_account_characters.end(),
+		[&character_name](const auto& character) {
+			return character.name == character_name && character.deleted_at <= 0;
+		});
+
+	if (character_it == m_account_characters.end()) {
+		LogCharacterSets("Character [{}] not found for account [{}]",
+			character_name, GetAccountID());
+		return false;
+	}
+
+	uint32 character_id = character_it->id;
+
+	m_account_characters.erase(character_it);
+
+	LogCharacterSets("Removed character [{}] (ID: {}) from cache for account [{}]",
+		character_name, character_id, GetAccountID());
+
+	return true;
 }

@@ -1907,7 +1907,7 @@ void Client::SellToBuyer(const EQApplicationPacket *app)
 					}
 				}
 
-				if (!buyer->DoBarterBuyerChecks(sell_line)) {
+				if (!DoBarterBuyerChecks(sell_line)) {
 					return;
 				}
 
@@ -3892,7 +3892,7 @@ bool Client::DoBarterBuyerChecks(BuyerLineSellItem_Struct &sell_line)
 		return false;
 	}
 
-	auto buyer_time = BuyerRepository::GetTransactionDate(database, sell_line.buyer_id);
+	auto buyer_time = BuyerRepository::GetTransactionDate(database, buyer->CharacterID());
 	if (buyer_time > GetBarterTime()) {
 		if (sell_line.purchase_method == BarterByVendor) {
 			SendBarterBuyerClientMessage(

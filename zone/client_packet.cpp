@@ -15301,9 +15301,11 @@ void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app)
 				return;
 			}
 
+			int seller_character_id =  database.GetCharacterID(in->seller_name);
+
 			if (RuleI(Custom, EnableSeasonalCharacters)) {
 				DataBucketKey db_key = {};
-				db_key.character_id = database.GetCharacterID(in->seller_name);
+				db_key.character_id = seller_character_id;
 				db_key.key = "SeasonalCharacter";
 
 				bool dst_seasonal = (Strings::ToInt(DataBucket::GetData(db_key).value) == RuleI(Custom,EnableSeasonalCharacters));
@@ -15318,6 +15320,18 @@ void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app)
 					TradeRequestFailed(app);
 					return;
 				}
+			}
+
+			if (IsSelfFound()) {
+				SendParcelIconStatus();
+					Message(
+					Chat::Yellow,
+					"Self-Found characters may not purchase items from other characters."
+				);
+				in->method     = BazaarByParcel;
+				in->sub_action = Failed;
+				TradeRequestFailed(app);
+				return;
 			}
 
 			LogTrading("Buy item by parcel delivery <green>[{}] item_id <green>[{}] quantity <green>[{}] "
@@ -15364,6 +15378,17 @@ void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app)
 				}
 			}
 
+			if (IsSelfFound()) {
+				SendParcelIconStatus();
+					Message(
+					Chat::Yellow,
+					"Self-Found characters may not purchase items from other characters."
+				);
+				in->method     = BazaarByParcel;
+				in->sub_action = Failed;
+				TradeRequestFailed(app);
+				return;
+			}
 
 			LogTrading("Buy item by direct inventory delivery <green>[{}] item_id <green>[{}] quantity <green>[{}] "
 					   "serial_number <green>[{}]",
@@ -15411,6 +15436,11 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 		}
 
 		if (IsSeasonal() != tradee->CastToClient()->IsSeasonal()) {
+			Message(Chat::Red, "Seasonal Characters may not trade with other players who are not Seasonal.");
+			return;
+		}
+
+		if (IsSelfFound() || tradee->CastToClient()->IsSelfFound()) {
 			Message(Chat::Red, "Seasonal Characters may not trade with other players who are not Seasonal.");
 			return;
 		}
@@ -15481,7 +15511,14 @@ void Client::Handle_OP_TraderShop(const EQApplicationPacket *app)
 				if (trader_client->IsSeasonal() != IsSeasonal()) {
 					Message(Chat::Red, "Seasonal characters may only buy from Seasonal traders.");
 					data->Approval = 0;
-				} else {
+				}
+
+				else if (IsSelfFound()) {
+					Message(Chat::Red, "Self-Found characters may not purchase items from other characters.");
+					data->Approval = 0;
+				}
+
+				else {
 					data->Approval = trader_client->WithCustomer(GetID());
 					LogTrading("Client::Handle_OP_TraderShop: Shop Request ([{}]) to ([{}]) with Approval: [{}]",
 						   GetCleanName(),
@@ -15503,6 +15540,10 @@ void Client::Handle_OP_TraderShop(const EQApplicationPacket *app)
 			data->Unknown008 = 0x3f800000;
 			QueuePacket(outapp.get());
 
+			if (IsSelfFound()) {
+				break;
+			}
+
 			if (data->Approval) {
 				BulkSendTraderInventory(trader_client->CharacterID());
 				trader_client->Trader_CustomerBrowsing(this);
@@ -15513,9 +15554,7 @@ void Client::Handle_OP_TraderShop(const EQApplicationPacket *app)
 				);
 			}
 			else {
-				if (trader_client->IsSeasonal() == IsSeasonal()) {
-					MessageString(Chat::Yellow, TRADER_BUSY);
-				}
+				MessageString(Chat::Yellow, TRADER_BUSY);
 				LogTrading("Client::Handle_OP_TraderShop: Trader Busy");
 			}
 

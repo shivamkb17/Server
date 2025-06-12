@@ -374,6 +374,65 @@ KEY `play_mode_hardcore` (`play_mode_hardcore`)
 		.content_schema_update = false,
 	},
 
+// Create progression_flags table
+	ManifestEntry{
+		.version = 19,
+		.description = "2025_06_12_create_progression_flags_table",
+		.check = "SHOW TABLES LIKE 'progression_flags'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+CREATE TABLE `progression_flags` (
+  `flag_id` int(10) NOT NULL,
+  `flag_name` varchar(64) NOT NULL,
+  `flag_description` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`flag_id`),
+  UNIQUE KEY `flag_name` (`flag_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
+		.content_schema_update = true,
+	},
+
+	// Create progression_stages table
+	ManifestEntry{
+		.version = 20,
+		.description = "2025_06_12_create_progression_stages_table",
+		.check = "SHOW TABLES LIKE 'progression_stages'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+CREATE TABLE `progression_stages` (
+  `stage_id` int(10) NOT NULL,
+  `stage_name` varchar(64) NOT NULL,
+  `flag_id` int(10) NOT NULL,
+  PRIMARY KEY (`stage_id`),
+  KEY `flag_id` (`flag_id`),
+  KEY `stage_name` (`stage_name`,`flag_id`),
+  FOREIGN KEY (`flag_id`) REFERENCES `progression_flags`(`flag_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
+		.content_schema_update = true,
+	},
+
+	// Create progression_atlas table
+	ManifestEntry{
+		.version = 21,
+		.description = "2025_06_12_create_progression_atlas_table",
+		.check = "SHOW TABLES LIKE 'progression_atlas'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+CREATE TABLE `progression_atlas` (
+  `zone_id` int(10) NOT NULL,
+  `flag_id` int(10) NOT NULL,
+  PRIMARY KEY (`zone_id`),
+  KEY `flag_id` (`flag_id`),
+  FOREIGN KEY (`flag_id`) REFERENCES `progression_flags`(`flag_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
+		.content_schema_update = true,
+	},
+
 	// Used for testing
 	//	ManifestEntry{
 	//		.version = 9229,

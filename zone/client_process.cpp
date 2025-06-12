@@ -782,7 +782,7 @@ bool Client::Process() {
 				}
 
 				if (buffs[buffs_i].expiration_timer.Check(false)) {
-					LogSpells("Buff [{}] in slot [{}] has expired during fast tic. Fading", buffs[buffs_i].spellid, buffs_i);
+					LogDebug("Buff [{}] in slot [{}] has expired during fast tic. Fading", buffs[buffs_i].spellid, buffs_i);
 					BuffFadeBySlot(buffs_i);
 				}
 			}

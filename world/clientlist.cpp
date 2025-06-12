@@ -36,6 +36,8 @@
 #include "../common/zone_store.h"
 #include <set>
 
+#include "../common/repositories/character_data_extra_repository.h"
+
 extern WebInterfaceList web_interface;
 
 extern ZSList			zoneserver_list;
@@ -818,7 +820,6 @@ void ClientList::SendWhoAll(uint32 fromid,const char* to, int16 admin, Who_All_S
 				char plname[64]={0};
 				strcpy(plname,cle->name());
 
-				// Send different info for multiclass strings. Requires clientside support.
 				if (RuleB(Custom, MulticlassingEnabled)) {
 					std::string query = StringFormat("SELECT `value` FROM `data_buckets` WHERE `key` = 'GestaltClasses' AND `character_id` = %d", cle->CharID());
 					auto results = database.QueryDatabase(query);
@@ -835,6 +836,13 @@ void ClientList::SendWhoAll(uint32 fromid,const char* to, int16 admin, Who_All_S
 					if (!found) {
 						plclass_ = GetPlayerClassBit(cle->class_());
 					}
+
+					auto [is_solo, is_self_found, is_hardcore] = CharacterDataExtraRepository::GetAllPlayModes(database, cle->CharID());
+
+					// Pack the play mode booleans into the upper bits of plclass_
+					plclass_ |= (static_cast<uint32>(is_solo) << 31);
+					plclass_ |= (static_cast<uint32>(is_self_found) << 30);
+					plclass_ |= (static_cast<uint32>(is_hardcore) << 29);
 				}
 
 				char placcount[30]={0};

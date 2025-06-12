@@ -4995,7 +4995,18 @@ void EntityList::ZoneWho(Client *c, Who_All_Struct *Who)
 			}
 
 			if (RuleB(Custom, MulticlassingEnabled)) {
-				PlayerClass = ClientEntry->GetClassesBits();
+				bool s = ClientEntry->IsSolo();
+				bool sf = ClientEntry->IsSelfFound();
+				bool hc = ClientEntry->IsHardcore();
+
+				uint32_t base = ClientEntry->GetClassesBits();
+
+				// Shift booleans into MSB positions and OR them into base
+				base |= (static_cast<uint32_t>(s)  << 31);
+				base |= (static_cast<uint32_t>(sf) << 30);
+				base |= (static_cast<uint32_t>(hc) << 29);
+
+				PlayerClass = base;
 			}
 
 			WhoAllPlayerPart1* WAPP1 = (WhoAllPlayerPart1*)Buffer;

@@ -205,6 +205,7 @@ struct CharacterEntry_Struct {
 	uint32 level;
 	uint32 classes;
 	uint32 assigned_sets[64];
+	uint32 play_mode_bitmask;
 };
 
 struct CharacterSetList_Struct {

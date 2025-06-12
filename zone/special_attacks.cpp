@@ -535,7 +535,7 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk, bool is_riposte
 
 	if (!p_timers.Expired(&database, timer, false) && !is_riposte) {
 		if (!EntityVariableExists("auto_skill")) {
-			Message(Chat::Red, "Ability recovery time not yet met.");
+			Message(Chat::Red, "Ability recovery time not yet met. ({}, {}, {})", ca_atk->m_skill, ca_atk->m_target, ca_atk->m_atk);
 		}
 		return;
 	}
@@ -1061,7 +1061,7 @@ int Mob::GetWeaponBackstabDamage(EQ::ItemInstance* inst, Mob *target) {
 				base += target->CheckBaneDamage(inst);
 			}
 		}
-	}	
+	}
 	if (RuleB(Character, ItemExtraSkillDamageCalcAsPercent) && GetSkillDmgAmt(EQ::skills::SkillBackstab) > 0) {
 		return static_cast<int>(static_cast<float>(base) * (skill_bonus + 2.0f)) * std::abs(GetSkillDmgAmt(EQ::skills::SkillBackstab) / 100);
 	}

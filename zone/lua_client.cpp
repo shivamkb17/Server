@@ -3754,6 +3754,26 @@ bool Lua_Client::KeyRingRemove(uint32 item_id)
 	return self->KeyRingRemove(item_id);
 }
 
+bool Lua_Client::IsProgressionStageUnlocked(std::string& stage_name) {
+	Lua_Safe_Call_Bool();
+	return self->IsProgressionStageUnlocked(stage_name);
+}
+
+bool Lua_Client::IsProgressionFlagUnlocked(std::string& flag_name) {
+	Lua_Safe_Call_Bool();
+	return self->IsProgressionFlagUnlocked(flag_name);
+}
+
+bool Lua_Client::UnlockProgressionStage(std::string& stage_name) {
+	Lua_Safe_Call_Bool();
+	return self->UnlockProgressionStage(stage_name);
+}
+
+bool Lua_Client::IsZoneUnlockedByProgression(int zone_id) {
+	Lua_Safe_Call_Bool();
+	return self->IsZoneUnlockedByProgression(zone_id);
+}
+
 luabind::scope lua_register_client() {
 	return luabind::class_<Lua_Client, Lua_Mob>("Client")
 	.def(luabind::constructor<>())
@@ -4078,6 +4098,8 @@ luabind::scope lua_register_client() {
 	.def("IsLD", (bool(Lua_Client::*)(void))&Lua_Client::IsLD)
 	.def("IsMedding", (bool(Lua_Client::*)(void))&Lua_Client::IsMedding)
 	.def("IsNameChangeAllowed", &Lua_Client::IsNameChangeAllowed)
+	.def("IsProgressionFlagUnlocked", &Lua_Client::IsProgressionFlagUnlocked)
+	.def("IsProgressionStageUnlocked", &Lua_Client::IsProgressionStageUnlocked)
 	.def("IsRaidGrouped", (bool(Lua_Client::*)(void))&Lua_Client::IsRaidGrouped)
 	.def("IsSitting", (bool(Lua_Client::*)(void))&Lua_Client::IsSitting)
 	.def("IsStanding", (bool(Lua_Client::*)(void))&Lua_Client::IsStanding)
@@ -4087,6 +4109,7 @@ luabind::scope lua_register_client() {
 	.def("IsHardcore", (bool(Lua_Client::*)(void))&Lua_Client::IsHardcore)
 	.def("IsSelfFound", (bool(Lua_Client::*)(void))&Lua_Client::IsSelfFound)
 	.def("IsSolo", (bool(Lua_Client::*)(void))&Lua_Client::IsSolo)
+	.def("IsZoneUnlockedByProgression", &Lua_Client::IsZoneUnlockedByProgression)
 	.def("KeyRingAdd", (bool(Lua_Client::*)(uint32))&Lua_Client::KeyRingAdd)
 	.def("KeyRingCheck", (bool(Lua_Client::*)(uint32))&Lua_Client::KeyRingCheck)
 	.def("KeyRingClear", (bool(Lua_Client::*)(void))&Lua_Client::KeyRingClear)
@@ -4353,6 +4376,7 @@ luabind::scope lua_register_client() {
 	.def("TrainDisc", (void(Lua_Client::*)(int))&Lua_Client::TrainDisc)
 	.def("TrainDiscBySpellID", (void(Lua_Client::*)(int32))&Lua_Client::TrainDiscBySpellID)
 	.def("UnFreeze", (void(Lua_Client::*)(void))&Lua_Client::UnFreeze)
+	.def("UnlockProgressionStage", &Lua_Client::UnlockProgressionStage)
 	.def("Undye", (void(Lua_Client::*)(void))&Lua_Client::Undye)
 	.def("UnmemSpell", (void(Lua_Client::*)(int))&Lua_Client::UnmemSpell)
 	.def("UnmemSpell", (void(Lua_Client::*)(int,bool))&Lua_Client::UnmemSpell)

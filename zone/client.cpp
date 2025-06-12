@@ -15128,3 +15128,43 @@ void Client::CheckItemDiscoverability(uint32 item_id)
 
 	DiscoverItem(item_id);
 }
+
+bool Client::IsProgressionStageUnlocked(const std::string& stage_name) const {
+	auto pm = zone->GetProgressionManager();
+
+	if (!RuleB(Character, UseAccountProgression)) {
+		return pm.IsStageUnlockedByCharacter(CharacterID(), stage_name);
+	}
+
+	return pm.IsStageUnlockedByAccount(AccountID(), stage_name);
+}
+
+bool Client::IsProgressionFlagUnlocked(const std::string& flag_name) const {
+	auto pm = zone->GetProgressionManager();
+
+	if (!RuleB(Character, UseAccountProgression)) {
+		return pm.IsFlagUnlockedByCharacter(CharacterID(), flag_name);
+	}
+
+	return pm.IsFlagUnlockedByAccount(AccountID(), flag_name);
+}
+
+bool Client::IsZoneUnlockedByProgression(const int zone_id) const {
+	auto pm = zone->GetProgressionManager();
+
+	if (!RuleB(Character, UseAccountProgression)) {
+		return pm.IsZoneAvailableByCharacter(CharacterID(), zone_id);
+	}
+
+	return pm.IsZoneAvailableByAccount(AccountID(), zone_id);
+}
+
+bool Client::UnlockProgressionStage(const std::string& stage_name) {
+	auto pm = zone->GetProgressionManager();
+
+	if (!RuleB(Character, UseAccountProgression)) {
+		return pm.UnlockStageByCharacter(CharacterID(), stage_name);
+	}
+
+	return pm.UnlockStageByAccount(AccountID(), stage_name);
+}

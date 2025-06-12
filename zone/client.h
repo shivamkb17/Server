@@ -2689,6 +2689,11 @@ public:
 	bool IsFilteredAFKPacket(const EQApplicationPacket *p);
 	void CheckAutoIdleAFK(PlayerPositionUpdateClient_Struct *p);
 	void SyncWorldPositionsToClient(bool ignore_idle = false);
+
+	bool IsProgressionStageUnlocked(const std::string& stage_name) const;
+	bool IsProgressionFlagUnlocked(const std::string& flag_name) const;
+	bool UnlockProgressionStage(const std::string& stage_name);
+	bool IsZoneUnlockedByProgression(const int zone_id) const;
 };
 
 #endif

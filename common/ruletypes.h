@@ -240,6 +240,7 @@ RULE_INT(Character, SecondsBeforeIdleCombatZone, 600, "Seconds before a player i
 RULE_INT(Character, SecondsBeforeIdleNonCombatZone, 60, "Seconds before a player is considered idle in non-combat zones (60 = 1 minute)")
 RULE_INT(Character, SecondsBeforeAFKCombatZone, 1800, "Seconds before a player is considered AFK in combat zones (1800 = 30 minutes)")
 RULE_INT(Character, SecondsBeforeAFKNonCombatZone, 600, "Seconds before a player is considered AFK in non-combat zones (600 = 10 minutes)")
+RULE_BOOL(Character, UseAccountProgression, false, "If enabled, ProgressionManager flags use Account scope instead of Character.")
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Mercs)

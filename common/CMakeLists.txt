@@ -77,6 +77,7 @@ SET(common_sources
     process.cpp
     proc_launcher.cpp
     profanity_manager.cpp
+    progression_manager.cpp
     ptimer.cpp
     races.cpp
     rdtsc.cpp
@@ -296,6 +297,9 @@ SET(repositories
     repositories/base/base_player_event_speech_repository.h
     repositories/base/base_player_event_trade_repository.h
     repositories/base/base_player_event_trade_entries_repository.h
+    repositories/base/base_progression_atlas_repository.h
+    repositories/base/base_progression_flags_repository.h
+    repositories/base/base_progression_stages_repository.h
     repositories/base/base_quest_globals_repository.h
     repositories/base/base_raid_details_repository.h
     repositories/base/base_raid_members_repository.h
@@ -492,6 +496,9 @@ SET(repositories
     repositories/player_event_speech_repository.h
     repositories/player_event_trade_repository.h
     repositories/player_event_trade_entries_repository.h
+    repositories/progression_atlas_repository.h
+    repositories/progression_flags_repository.h
+    repositories/progression_stages_repository.h
     repositories/quest_globals_repository.h
     repositories/raid_details_repository.h
     repositories/raid_members_repository.h

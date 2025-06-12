@@ -961,6 +961,7 @@ void ZSList::SendServerReload(ServerReload::Type type, uchar *packet)
 		ServerReload::Type::Logs,
 		ServerReload::Type::Commands,
 		ServerReload::Type::PerlExportSettings,
+		ServerReload::Type::ProgressionData,
 		ServerReload::Type::DataBucketsCache,
 		ServerReload::Type::Quests,
 		ServerReload::Type::QuestsTimerReset,

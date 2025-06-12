@@ -407,8 +407,7 @@ CREATE TABLE `progression_stages` (
   `flag_id` int(10) NOT NULL,
   PRIMARY KEY (`stage_id`),
   KEY `flag_id` (`flag_id`),
-  KEY `stage_name` (`stage_name`,`flag_id`),
-  FOREIGN KEY (`flag_id`) REFERENCES `progression_flags`(`flag_id`) ON DELETE CASCADE
+  KEY `stage_name` (`stage_name`,`flag_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 )",
 		.content_schema_update = true,
@@ -426,8 +425,7 @@ CREATE TABLE `progression_atlas` (
   `zone_id` int(10) NOT NULL,
   `flag_id` int(10) NOT NULL,
   PRIMARY KEY (`zone_id`),
-  KEY `flag_id` (`flag_id`),
-  FOREIGN KEY (`flag_id`) REFERENCES `progression_flags`(`flag_id`) ON DELETE CASCADE
+  KEY `flag_id` (`flag_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 )",
 		.content_schema_update = true,

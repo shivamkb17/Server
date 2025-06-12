@@ -613,6 +613,11 @@ public:
 	bool IsNameChangeAllowed();
 	bool ClearNameChange();
 
+	bool IsProgressionStageUnlocked(std::string& stage_name);
+	bool IsProgressionFlagUnlocked(std::string& flag_name);
+	bool UnlockProgressionStage(std::string& stage_name);
+	bool IsZoneUnlockedByProgression(int zone_id);
+
 	Lua_Expedition  CreateExpedition(luabind::object expedition_info);
 	Lua_Expedition  CreateExpedition(std::string zone_name, uint32 version, uint32 duration, std::string expedition_name, uint32 min_players, uint32 max_players);
 	Lua_Expedition  CreateExpedition(std::string zone_name, uint32 version, uint32 duration, std::string expedition_name, uint32 min_players, uint32 max_players, bool disable_messages);

@@ -26,6 +26,7 @@
 #include "../common/strings.h"
 #include "zonedb.h"
 #include "../common/zone_store.h"
+#include "../common/progression_manager.h"
 #include "../common/repositories/grid_repository.h"
 #include "../common/repositories/grid_entries_repository.h"
 #include "../common/repositories/zone_points_repository.h"
@@ -486,6 +487,8 @@ public:
 	static void ClearZoneState(uint32 zone_id, uint32 instance_id);
 	void ReloadMaps();
 
+	ProgressionManager& GetProgressionManager();
+
 private:
 	bool      allow_mercs;
 	bool      can_bind;
@@ -522,6 +525,8 @@ private:
 	bool      m_idle_when_empty;
 	uint32    m_seconds_before_idle;
 	bool      m_save_zone_state;
+
+	ProgressionManager m_progression_manager;
 
 	GlobalLootManager                   m_global_loot;
 	LinkedList<ZoneClientAuth_Struct *> client_auth_list;

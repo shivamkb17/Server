@@ -3336,6 +3336,22 @@ bool Perl_Client_KeyRingRemove(Client* self, uint32 item_id)
 	return self->KeyRingRemove(item_id);
 }
 
+bool Perl_Client_IsProgressionStageUnlocked(Client* self, std::string stage_name) {
+	return self->IsProgressionStageUnlocked(stage_name);
+}
+
+bool Perl_Client_IsProgressionFlagUnlocked(Client* self, std::string flag_name) {
+	return self->IsProgressionFlagUnlocked(flag_name);
+}
+
+bool Perl_Client_IsZoneUnlockedByProgression(Client* self, int zone_id) {
+	return self->IsZoneUnlockedByProgression(zone_id);
+}
+
+bool Perl_Client_UnlockProgressionStage(Client* self, std::string stage_name) {
+	return self->UnlockProgressionStage(stage_name);
+}
+
 void perl_register_client()
 {
 	perl::interpreter perl(PERL_GET_THX);
@@ -3655,12 +3671,15 @@ void perl_register_client()
 	package.add("IsLD", &Perl_Client_IsLD);
 	package.add("IsMedding", &Perl_Client_IsMedding);
 	package.add("IsNameChangeAllowed", (bool(*)(Client*))&Perl_Client_IsNameChangeAllowed);
+	package.add("IsProgressionFlagUnlocked", (bool(*)(Client*, std::string))&Perl_Client_IsProgressionFlagUnlocked);
+	package.add("IsProgressionStageUnlocked", (bool(*)(Client*, std::string))&Perl_Client_IsProgressionStageUnlocked);
 	package.add("IsRaidGrouped", &Perl_Client_IsRaidGrouped);
 	package.add("IsSitting", &Perl_Client_IsSitting);
 	package.add("IsStanding", &Perl_Client_IsStanding);
 	package.add("IsTaskActive", &Perl_Client_IsTaskActive);
 	package.add("IsTaskActivityActive", &Perl_Client_IsTaskActivityActive);
 	package.add("IsTaskCompleted", &Perl_Client_IsTaskCompleted);
+	package.add("IsZoneUnlockedByProgression", (bool(*)(Client*, int))&Perl_Client_IsZoneUnlockedByProgression);
 	package.add("KeyRingAdd", &Perl_Client_KeyRingAdd);
 	package.add("KeyRingCheck", &Perl_Client_KeyRingCheck);
 	package.add("KeyRingClear", &Perl_Client_KeyRingClear);
@@ -3910,6 +3929,7 @@ void perl_register_client()
 	package.add("TrainDiscBySpellID", &Perl_Client_TrainDiscBySpellID);
 	package.add("UnFreeze", &Perl_Client_UnFreeze);
 	package.add("Undye", &Perl_Client_Undye);
+	package.add("UnlockProgressionStage", (bool(*)(Client*, std::string))&Perl_Client_UnlockProgressionStage);
 	package.add("UnmemSpell", (void(*)(Client*, int))&Perl_Client_UnmemSpell);
 	package.add("UnmemSpell", (void(*)(Client*, int, bool))&Perl_Client_UnmemSpell);
 	package.add("UnmemSpellAll", (void(*)(Client*))&Perl_Client_UnmemSpellAll);

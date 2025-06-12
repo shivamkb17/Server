@@ -7112,6 +7112,57 @@ ADD COLUMN `first_login` int(11) UNSIGNED NOT NULL DEFAULT 0 AFTER `xtargets`;
 )",
 		.content_schema_update = false
 	},
+ManifestEntry{
+		.version = 9324,
+		.description = "2025_06_12_create_progression_flags_table",
+		.check = "SHOW TABLES LIKE 'progression_flags'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+CREATE TABLE `progression_flags` (
+  `id` int(10) NOT NULL,
+  `name` varchar(64) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
+		.content_schema_update = true,
+	},
+	ManifestEntry{
+		.version = 9325,
+		.description = "2025_06_12_create_progression_stages_table",
+		.check = "SHOW TABLES LIKE 'progression_stages'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+CREATE TABLE `progression_stages` (
+  `id` int(10) NOT NULL,
+  `name` varchar(64) NOT NULL,
+  `flag_id` int(10) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`),
+  KEY `flag_id` (`flag_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
+		.content_schema_update = true,
+	},
+	ManifestEntry{
+		.version = 9326,
+		.description = "2025_06_12_create_progression_atlas_table",
+		.check = "SHOW TABLES LIKE 'progression_atlas'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+CREATE TABLE `progression_atlas` (
+  `zone_id` int(10) NOT NULL,
+  `flag_id` int(10) NOT NULL,
+  PRIMARY KEY (`zone_id`),
+  KEY `flag_id` (`flag_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+)",
+		.content_schema_update = true,
+	},
 // -- template; copy/paste this when you need to create a new entry
 //	ManifestEntry{
 //		.version = 9228,

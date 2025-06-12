@@ -4622,6 +4622,10 @@ void WorldServer::ProcessReload(const ServerReload::Request& request)
 			parse->LoadPerlEventExportSettings(parse->perl_event_export_settings);
 			break;
 
+		case ServerReload::Type::ProgressionData:
+			zone->GetProgressionManager().Reload();
+			break;
+
 		case ServerReload::Type::Rules:
 			RuleManager::Instance()->LoadRules(&database, RuleManager::Instance()->GetActiveRuleset(), true);
 			break;

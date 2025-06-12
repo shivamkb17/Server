@@ -495,9 +495,6 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk, bool is_riposte
 	// allready do their checking in conjunction with the attack timer
 	// throwing weapons
 	if (ca_atk->m_atk == EQ::invslot::slotRange && ranged_timer.Check(false)) {
-		if (GetAttackMode() == AttackMode::RANGED) {
-			return;
-		}
 		if (ca_atk->m_skill == EQ::skills::SkillThrowing) {
 			SetAttackTimer();
 			ThrowingAttack(GetTarget());
@@ -528,6 +525,10 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk, bool is_riposte
 		}
 	}
 
+	if (ca_atk->m_atk == EQ::invslot::slotRange && GetAttackMode() == AttackMode::RANGED && (AutoAttackEnabled() || AutoFireEnabled())) {
+		return;
+	}
+
 	// check range for all these abilities, they are all close combat stuff
 	if (!CombatRange(GetTarget())) {
 		return;
@@ -535,7 +536,7 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk, bool is_riposte
 
 	if (!p_timers.Expired(&database, timer, false) && !is_riposte) {
 		if (!EntityVariableExists("auto_skill")) {
-			Message(Chat::Red, fmt::format("Ability recovery time not yet met. ({}, {}, {})", ca_atk->m_skill, ca_atk->m_target, ca_atk->m_atk).c_str());
+			Message(Chat::Red, "Ability recovery time not yet met");
 		}
 		return;
 	}

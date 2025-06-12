@@ -535,7 +535,7 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk, bool is_riposte
 
 	if (!p_timers.Expired(&database, timer, false) && !is_riposte) {
 		if (!EntityVariableExists("auto_skill")) {
-			Message(Chat::Red, "Ability recovery time not yet met. ({}, {}, {})", ca_atk->m_skill, ca_atk->m_target, ca_atk->m_atk);
+			Message(Chat::Red, fmt::format("Ability recovery time not yet met. ({}, {}, {})", ca_atk->m_skill, ca_atk->m_target, ca_atk->m_atk).c_str());
 		}
 		return;
 	}

@@ -77,13 +77,6 @@ namespace NameColorPalette {
     constexpr uint32_t Hardcore  = 4; // Hardcore mode - Dark Grey
 }
 
-enum PlayModeFlags : uint8_t
-{
-    SOLO_MODE = 0x01,
-    SELF_FOUND_MODE = 0x02,
-    HARDCORE_MODE = 0x04
-};
-
 namespace Animation {
 	constexpr uint32 Standing  = 100;
 	constexpr uint32 Freeze    = 102;

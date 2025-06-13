@@ -286,12 +286,6 @@ public:
 	bool IsEXPEnabled() const;
 	void SetEXPEnabled(bool is_exp_enabled);
 
-	// Progression stuff
-	bool GetProgSubflag(const std::string& subflag_name);
-	bool GetProgSubflag(const int subflag_id);
-	bool GetProgFlag(const std::string& flag_name);
-	bool GetProgFlag(const int flag_id);
-
 	std::vector<EXPModifier> GetEXPModifiers();
 	void SetEXPModifiers(std::vector<EXPModifier> exp_modifiers);
 

@@ -131,7 +131,6 @@ private:
 	std::vector<AccountCharacterSetsRepository::AccountCharacterSets> m_character_sets;
 	std::vector<AccountCharacterSetMembersRepository::AccountCharacterSetMembers> m_character_set_members;
 	std::vector<CharacterDataRepository::CharacterData> m_account_characters;
-	std::unordered_map<uint32, uint32> m_character_play_modes;
 
 	bool StartInTutorial;
 	EQ::versions::ClientVersion m_ClientVersion;

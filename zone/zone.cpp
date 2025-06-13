@@ -997,8 +997,6 @@ Zone::Zone(uint32 in_zoneid, uint32 in_instanceid, const char* in_short_name)
 	qGlobals = nullptr;
 	default_ruleset = 0;
 
-	ReloadProgressionData();
-
 	is_zone_time_localized = false;
 	quest_idle_override = false;
 
@@ -3362,13 +3360,6 @@ void Zone::ReloadMaps()
 	zonemap  = Map::LoadMapFile(map_name);
 	watermap = WaterMap::LoadWaterMapfile(map_name);
 	pathing  = IPathfinder::Load(map_name);
-}
-
-void Zone::ReloadProgressionData() {
-	LogDebug("Reloaded Progression Data");
-	m_progression_data.atlas = ProgressionAtlasRepository::All(database);
-	m_progression_data.flags = ProgressionFlagsRepository::All(database);
-	m_progression_data.stages = ProgressionStagesRepository::All(database);
 }
 
 #include "zone_loot.cpp"

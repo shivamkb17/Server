@@ -51,20 +51,11 @@
 #include "../common/repositories/spawn2_disabled_repository.h"
 #include "../common/repositories/player_titlesets_repository.h"
 #include "../common/repositories/thj_waypoints_repository.h"
-#include "../common/repositories/progression_atlas_repository.h"
-#include "../common/repositories/progression_flags_repository.h"
-#include "../common/repositories/progression_stages_repository.h"
 
 struct EXPModifier
 {
 	float aa_modifier;
 	float exp_modifier;
-};
-
-struct ProgressionData {
-	std::vector<ProgressionAtlasRepository::ProgressionAtlas> atlas;
-	std::vector<ProgressionFlagsRepository::ProgressionFlags> flags;
-	std::vector<ProgressionStagesRepository::ProgressionStages> stages;
 };
 
 class DynamicZone;
@@ -121,9 +112,6 @@ public:
 
 	Zone(uint32 in_zoneid, uint32 in_instanceid, const char *in_short_name);
 	~Zone();
-
-	ProgressionData m_progression_data;
-	void ReloadProgressionData();
 
 	AA::Ability *GetAlternateAdvancementAbility(int id);
 	AA::Ability *GetAlternateAdvancementAbilityByRank(int rank_id);

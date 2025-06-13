@@ -90,6 +90,45 @@ public:
 		);
 	}
 
+		static uint32 GetPlayModesBitMask(Database& db, int character_id)
+	{
+		auto entry = FindOne(db, character_id);
+		return (entry.play_mode_solo != 0 ? SOLO_MODE : 0) |
+			(entry.play_mode_self_found != 0 ? SELF_FOUND_MODE : 0) |
+			(entry.play_mode_hardcore != 0 ? HARDCORE_MODE : 0);
+	}
+
+	static std::unordered_map<uint, uint32> GetPlayModesBitMask(Database& db, const std::vector<int>& character_ids)
+	{
+		std::unordered_map<uint32, uint32> result;
+
+		if (character_ids.empty()) {
+			return result;
+		}
+
+		std::string id_list;
+		for (size_t i = 0; i < character_ids.size(); ++i) {
+			if (i > 0) {
+				id_list += ",";
+			}
+			id_list += std::to_string(character_ids[i]);
+		}
+
+		std::string where_filter = fmt::format("character_id IN ({})", id_list);
+		auto entries = GetWhere(db, where_filter);
+
+		result.reserve(entries.size());
+
+		for (const auto& entry : entries) {
+			uint32 bitmask = (entry.play_mode_solo != 0 ? SOLO_MODE : 0) |
+							(entry.play_mode_self_found != 0 ? SELF_FOUND_MODE : 0) |
+							(entry.play_mode_hardcore != 0 ? HARDCORE_MODE : 0);
+			result[entry.character_id] = bitmask;
+		}
+
+		return result;
+	}
+
 	static int SetAllPlayModes(Database& db, int character_id, bool solo, bool self_found, bool hardcore)
 	{
 		auto entry = FindOne(db, character_id);

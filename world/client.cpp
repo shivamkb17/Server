@@ -2897,6 +2897,7 @@ void Client::SendCharacterSetInfo() {
 		e->name[sizeof(e->name) - 1] = '\0';
 		e->level = ch.level;
 		e->classes = char_classes[ch.id];
+		e->play_mode_bitmask = m_character_play_modes[e->character_id];
 
 		const auto& csl = char_sets[ch.id];
 		size_t cnt = std::min(csl.size(), static_cast<size_t>(MAX_CHARACTER_SETS));
@@ -2921,6 +2922,15 @@ void Client::PopulateCharacterDataCache() {
 	if (!m_selected_character_set) {
 		m_selected_character_set = m_default_character_set;
 	}
+
+	std::vector<int> character_ids;
+	character_ids.reserve(m_account_characters.size());
+	for (const auto& character : m_account_characters) {
+		character_ids.push_back(character.id);
+	}
+
+	m_character_play_modes = CharacterDataExtraRepository::GetPlayModesBitMask(database, character_ids);
+
 
 	m_eom_available = AccountAltCurrencyRepository::FindByAccountAndCurrency(database, GetAccountID(), EOM_CURRENCY_ID).amount;
 }

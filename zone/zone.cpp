@@ -1232,6 +1232,8 @@ bool Zone::Init(bool is_static) {
 	LoadMerchants();
 	LoadTempMerchantData();
 
+	m_progression_manager.Reload();
+
 	// Merc data
 	if (RuleB(Mercs, AllowMercs)) {
 		LoadMercenaryTemplates();

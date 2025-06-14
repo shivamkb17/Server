@@ -20,6 +20,7 @@ class BaseSharedbankRepository {
 public:
 	struct Sharedbank {
 		uint32_t    account_id;
+		int8_t      hardcore;
 		uint32_t    slot_id;
 		uint32_t    item_id;
 		uint16_t    charges;
@@ -46,6 +47,7 @@ public:
 	{
 		return {
 			"account_id",
+			"hardcore",
 			"slot_id",
 			"item_id",
 			"charges",
@@ -68,6 +70,7 @@ public:
 	{
 		return {
 			"account_id",
+			"hardcore",
 			"slot_id",
 			"item_id",
 			"charges",
@@ -124,6 +127,7 @@ public:
 		Sharedbank e{};
 
 		e.account_id          = 0;
+		e.hardcore            = 0;
 		e.slot_id             = 0;
 		e.item_id             = 0;
 		e.charges             = 0;
@@ -176,21 +180,22 @@ public:
 			Sharedbank e{};
 
 			e.account_id          = row[0] ? static_cast<uint32_t>(strtoul(row[0], nullptr, 10)) : 0;
-			e.slot_id             = row[1] ? static_cast<uint32_t>(strtoul(row[1], nullptr, 10)) : 0;
-			e.item_id             = row[2] ? static_cast<uint32_t>(strtoul(row[2], nullptr, 10)) : 0;
-			e.charges             = row[3] ? static_cast<uint16_t>(strtoul(row[3], nullptr, 10)) : 0;
-			e.color               = row[4] ? static_cast<uint32_t>(strtoul(row[4], nullptr, 10)) : 0;
-			e.augment_one         = row[5] ? static_cast<uint32_t>(strtoul(row[5], nullptr, 10)) : 0;
-			e.augment_two         = row[6] ? static_cast<uint32_t>(strtoul(row[6], nullptr, 10)) : 0;
-			e.augment_three       = row[7] ? static_cast<uint32_t>(strtoul(row[7], nullptr, 10)) : 0;
-			e.augment_four        = row[8] ? static_cast<uint32_t>(strtoul(row[8], nullptr, 10)) : 0;
-			e.augment_five        = row[9] ? static_cast<uint32_t>(strtoul(row[9], nullptr, 10)) : 0;
-			e.augment_six         = row[10] ? static_cast<uint32_t>(strtoul(row[10], nullptr, 10)) : 0;
-			e.custom_data         = row[11] ? row[11] : "";
-			e.ornament_icon       = row[12] ? static_cast<uint32_t>(strtoul(row[12], nullptr, 10)) : 0;
-			e.ornament_idfile     = row[13] ? static_cast<uint32_t>(strtoul(row[13], nullptr, 10)) : 0;
-			e.ornament_hero_model = row[14] ? static_cast<int32_t>(atoi(row[14])) : 0;
-			e.guid                = row[15] ? strtoull(row[15], nullptr, 10) : 0;
+			e.hardcore            = row[1] ? static_cast<int8_t>(atoi(row[1])) : 0;
+			e.slot_id             = row[2] ? static_cast<uint32_t>(strtoul(row[2], nullptr, 10)) : 0;
+			e.item_id             = row[3] ? static_cast<uint32_t>(strtoul(row[3], nullptr, 10)) : 0;
+			e.charges             = row[4] ? static_cast<uint16_t>(strtoul(row[4], nullptr, 10)) : 0;
+			e.color               = row[5] ? static_cast<uint32_t>(strtoul(row[5], nullptr, 10)) : 0;
+			e.augment_one         = row[6] ? static_cast<uint32_t>(strtoul(row[6], nullptr, 10)) : 0;
+			e.augment_two         = row[7] ? static_cast<uint32_t>(strtoul(row[7], nullptr, 10)) : 0;
+			e.augment_three       = row[8] ? static_cast<uint32_t>(strtoul(row[8], nullptr, 10)) : 0;
+			e.augment_four        = row[9] ? static_cast<uint32_t>(strtoul(row[9], nullptr, 10)) : 0;
+			e.augment_five        = row[10] ? static_cast<uint32_t>(strtoul(row[10], nullptr, 10)) : 0;
+			e.augment_six         = row[11] ? static_cast<uint32_t>(strtoul(row[11], nullptr, 10)) : 0;
+			e.custom_data         = row[12] ? row[12] : "";
+			e.ornament_icon       = row[13] ? static_cast<uint32_t>(strtoul(row[13], nullptr, 10)) : 0;
+			e.ornament_idfile     = row[14] ? static_cast<uint32_t>(strtoul(row[14], nullptr, 10)) : 0;
+			e.ornament_hero_model = row[15] ? static_cast<int32_t>(atoi(row[15])) : 0;
+			e.guid                = row[16] ? strtoull(row[16], nullptr, 10) : 0;
 
 			return e;
 		}
@@ -225,21 +230,22 @@ public:
 		auto columns = Columns();
 
 		v.push_back(columns[0] + " = " + std::to_string(e.account_id));
-		v.push_back(columns[1] + " = " + std::to_string(e.slot_id));
-		v.push_back(columns[2] + " = " + std::to_string(e.item_id));
-		v.push_back(columns[3] + " = " + std::to_string(e.charges));
-		v.push_back(columns[4] + " = " + std::to_string(e.color));
-		v.push_back(columns[5] + " = " + std::to_string(e.augment_one));
-		v.push_back(columns[6] + " = " + std::to_string(e.augment_two));
-		v.push_back(columns[7] + " = " + std::to_string(e.augment_three));
-		v.push_back(columns[8] + " = " + std::to_string(e.augment_four));
-		v.push_back(columns[9] + " = " + std::to_string(e.augment_five));
-		v.push_back(columns[10] + " = " + std::to_string(e.augment_six));
-		v.push_back(columns[11] + " = '" + Strings::Escape(e.custom_data) + "'");
-		v.push_back(columns[12] + " = " + std::to_string(e.ornament_icon));
-		v.push_back(columns[13] + " = " + std::to_string(e.ornament_idfile));
-		v.push_back(columns[14] + " = " + std::to_string(e.ornament_hero_model));
-		v.push_back(columns[15] + " = " + std::to_string(e.guid));
+		v.push_back(columns[1] + " = " + std::to_string(e.hardcore));
+		v.push_back(columns[2] + " = " + std::to_string(e.slot_id));
+		v.push_back(columns[3] + " = " + std::to_string(e.item_id));
+		v.push_back(columns[4] + " = " + std::to_string(e.charges));
+		v.push_back(columns[5] + " = " + std::to_string(e.color));
+		v.push_back(columns[6] + " = " + std::to_string(e.augment_one));
+		v.push_back(columns[7] + " = " + std::to_string(e.augment_two));
+		v.push_back(columns[8] + " = " + std::to_string(e.augment_three));
+		v.push_back(columns[9] + " = " + std::to_string(e.augment_four));
+		v.push_back(columns[10] + " = " + std::to_string(e.augment_five));
+		v.push_back(columns[11] + " = " + std::to_string(e.augment_six));
+		v.push_back(columns[12] + " = '" + Strings::Escape(e.custom_data) + "'");
+		v.push_back(columns[13] + " = " + std::to_string(e.ornament_icon));
+		v.push_back(columns[14] + " = " + std::to_string(e.ornament_idfile));
+		v.push_back(columns[15] + " = " + std::to_string(e.ornament_hero_model));
+		v.push_back(columns[16] + " = " + std::to_string(e.guid));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -262,6 +268,7 @@ public:
 		std::vector<std::string> v;
 
 		v.push_back(std::to_string(e.account_id));
+		v.push_back(std::to_string(e.hardcore));
 		v.push_back(std::to_string(e.slot_id));
 		v.push_back(std::to_string(e.item_id));
 		v.push_back(std::to_string(e.charges));
@@ -307,6 +314,7 @@ public:
 			std::vector<std::string> v;
 
 			v.push_back(std::to_string(e.account_id));
+			v.push_back(std::to_string(e.hardcore));
 			v.push_back(std::to_string(e.slot_id));
 			v.push_back(std::to_string(e.item_id));
 			v.push_back(std::to_string(e.charges));
@@ -356,21 +364,22 @@ public:
 			Sharedbank e{};
 
 			e.account_id          = row[0] ? static_cast<uint32_t>(strtoul(row[0], nullptr, 10)) : 0;
-			e.slot_id             = row[1] ? static_cast<uint32_t>(strtoul(row[1], nullptr, 10)) : 0;
-			e.item_id             = row[2] ? static_cast<uint32_t>(strtoul(row[2], nullptr, 10)) : 0;
-			e.charges             = row[3] ? static_cast<uint16_t>(strtoul(row[3], nullptr, 10)) : 0;
-			e.color               = row[4] ? static_cast<uint32_t>(strtoul(row[4], nullptr, 10)) : 0;
-			e.augment_one         = row[5] ? static_cast<uint32_t>(strtoul(row[5], nullptr, 10)) : 0;
-			e.augment_two         = row[6] ? static_cast<uint32_t>(strtoul(row[6], nullptr, 10)) : 0;
-			e.augment_three       = row[7] ? static_cast<uint32_t>(strtoul(row[7], nullptr, 10)) : 0;
-			e.augment_four        = row[8] ? static_cast<uint32_t>(strtoul(row[8], nullptr, 10)) : 0;
-			e.augment_five        = row[9] ? static_cast<uint32_t>(strtoul(row[9], nullptr, 10)) : 0;
-			e.augment_six         = row[10] ? static_cast<uint32_t>(strtoul(row[10], nullptr, 10)) : 0;
-			e.custom_data         = row[11] ? row[11] : "";
-			e.ornament_icon       = row[12] ? static_cast<uint32_t>(strtoul(row[12], nullptr, 10)) : 0;
-			e.ornament_idfile     = row[13] ? static_cast<uint32_t>(strtoul(row[13], nullptr, 10)) : 0;
-			e.ornament_hero_model = row[14] ? static_cast<int32_t>(atoi(row[14])) : 0;
-			e.guid                = row[15] ? strtoull(row[15], nullptr, 10) : 0;
+			e.hardcore            = row[1] ? static_cast<int8_t>(atoi(row[1])) : 0;
+			e.slot_id             = row[2] ? static_cast<uint32_t>(strtoul(row[2], nullptr, 10)) : 0;
+			e.item_id             = row[3] ? static_cast<uint32_t>(strtoul(row[3], nullptr, 10)) : 0;
+			e.charges             = row[4] ? static_cast<uint16_t>(strtoul(row[4], nullptr, 10)) : 0;
+			e.color               = row[5] ? static_cast<uint32_t>(strtoul(row[5], nullptr, 10)) : 0;
+			e.augment_one         = row[6] ? static_cast<uint32_t>(strtoul(row[6], nullptr, 10)) : 0;
+			e.augment_two         = row[7] ? static_cast<uint32_t>(strtoul(row[7], nullptr, 10)) : 0;
+			e.augment_three       = row[8] ? static_cast<uint32_t>(strtoul(row[8], nullptr, 10)) : 0;
+			e.augment_four        = row[9] ? static_cast<uint32_t>(strtoul(row[9], nullptr, 10)) : 0;
+			e.augment_five        = row[10] ? static_cast<uint32_t>(strtoul(row[10], nullptr, 10)) : 0;
+			e.augment_six         = row[11] ? static_cast<uint32_t>(strtoul(row[11], nullptr, 10)) : 0;
+			e.custom_data         = row[12] ? row[12] : "";
+			e.ornament_icon       = row[13] ? static_cast<uint32_t>(strtoul(row[13], nullptr, 10)) : 0;
+			e.ornament_idfile     = row[14] ? static_cast<uint32_t>(strtoul(row[14], nullptr, 10)) : 0;
+			e.ornament_hero_model = row[15] ? static_cast<int32_t>(atoi(row[15])) : 0;
+			e.guid                = row[16] ? strtoull(row[16], nullptr, 10) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -396,21 +405,22 @@ public:
 			Sharedbank e{};
 
 			e.account_id          = row[0] ? static_cast<uint32_t>(strtoul(row[0], nullptr, 10)) : 0;
-			e.slot_id             = row[1] ? static_cast<uint32_t>(strtoul(row[1], nullptr, 10)) : 0;
-			e.item_id             = row[2] ? static_cast<uint32_t>(strtoul(row[2], nullptr, 10)) : 0;
-			e.charges             = row[3] ? static_cast<uint16_t>(strtoul(row[3], nullptr, 10)) : 0;
-			e.color               = row[4] ? static_cast<uint32_t>(strtoul(row[4], nullptr, 10)) : 0;
-			e.augment_one         = row[5] ? static_cast<uint32_t>(strtoul(row[5], nullptr, 10)) : 0;
-			e.augment_two         = row[6] ? static_cast<uint32_t>(strtoul(row[6], nullptr, 10)) : 0;
-			e.augment_three       = row[7] ? static_cast<uint32_t>(strtoul(row[7], nullptr, 10)) : 0;
-			e.augment_four        = row[8] ? static_cast<uint32_t>(strtoul(row[8], nullptr, 10)) : 0;
-			e.augment_five        = row[9] ? static_cast<uint32_t>(strtoul(row[9], nullptr, 10)) : 0;
-			e.augment_six         = row[10] ? static_cast<uint32_t>(strtoul(row[10], nullptr, 10)) : 0;
-			e.custom_data         = row[11] ? row[11] : "";
-			e.ornament_icon       = row[12] ? static_cast<uint32_t>(strtoul(row[12], nullptr, 10)) : 0;
-			e.ornament_idfile     = row[13] ? static_cast<uint32_t>(strtoul(row[13], nullptr, 10)) : 0;
-			e.ornament_hero_model = row[14] ? static_cast<int32_t>(atoi(row[14])) : 0;
-			e.guid                = row[15] ? strtoull(row[15], nullptr, 10) : 0;
+			e.hardcore            = row[1] ? static_cast<int8_t>(atoi(row[1])) : 0;
+			e.slot_id             = row[2] ? static_cast<uint32_t>(strtoul(row[2], nullptr, 10)) : 0;
+			e.item_id             = row[3] ? static_cast<uint32_t>(strtoul(row[3], nullptr, 10)) : 0;
+			e.charges             = row[4] ? static_cast<uint16_t>(strtoul(row[4], nullptr, 10)) : 0;
+			e.color               = row[5] ? static_cast<uint32_t>(strtoul(row[5], nullptr, 10)) : 0;
+			e.augment_one         = row[6] ? static_cast<uint32_t>(strtoul(row[6], nullptr, 10)) : 0;
+			e.augment_two         = row[7] ? static_cast<uint32_t>(strtoul(row[7], nullptr, 10)) : 0;
+			e.augment_three       = row[8] ? static_cast<uint32_t>(strtoul(row[8], nullptr, 10)) : 0;
+			e.augment_four        = row[9] ? static_cast<uint32_t>(strtoul(row[9], nullptr, 10)) : 0;
+			e.augment_five        = row[10] ? static_cast<uint32_t>(strtoul(row[10], nullptr, 10)) : 0;
+			e.augment_six         = row[11] ? static_cast<uint32_t>(strtoul(row[11], nullptr, 10)) : 0;
+			e.custom_data         = row[12] ? row[12] : "";
+			e.ornament_icon       = row[13] ? static_cast<uint32_t>(strtoul(row[13], nullptr, 10)) : 0;
+			e.ornament_idfile     = row[14] ? static_cast<uint32_t>(strtoul(row[14], nullptr, 10)) : 0;
+			e.ornament_hero_model = row[15] ? static_cast<int32_t>(atoi(row[15])) : 0;
+			e.guid                = row[16] ? strtoull(row[16], nullptr, 10) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -486,6 +496,7 @@ public:
 		std::vector<std::string> v;
 
 		v.push_back(std::to_string(e.account_id));
+		v.push_back(std::to_string(e.hardcore));
 		v.push_back(std::to_string(e.slot_id));
 		v.push_back(std::to_string(e.item_id));
 		v.push_back(std::to_string(e.charges));
@@ -524,6 +535,7 @@ public:
 			std::vector<std::string> v;
 
 			v.push_back(std::to_string(e.account_id));
+			v.push_back(std::to_string(e.hardcore));
 			v.push_back(std::to_string(e.slot_id));
 			v.push_back(std::to_string(e.item_id));
 			v.push_back(std::to_string(e.charges));

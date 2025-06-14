@@ -57,6 +57,7 @@
 #include "repositories/inventory_repository.h"
 #include "repositories/books_repository.h"
 #include "repositories/sharedbank_repository.h"
+#include "repositories/character_data_extra_repository.h"
 
 namespace ItemField
 {
@@ -475,6 +476,7 @@ bool SharedDatabase::UpdateSharedBankSlot(uint32 char_id, const EQ::ItemInstance
 	auto e = SharedbankRepository::NewEntity();
 
 	e.account_id          = account_id;
+	e.hardcore			  = CharacterDataExtraRepository::GetPlayModeHardcore(*this, char_id);
 	e.slot_id             = slot_id;
 	e.item_id             = inst->GetID();
 	e.charges             = charges;
@@ -550,9 +552,10 @@ bool SharedDatabase::DeleteSharedBankSlot(uint32 char_id, int16 slot_id)
 	const int deleted = SharedbankRepository::DeleteWhere(
 		*this,
 		fmt::format(
-			"`account_id` = {} AND `slot_id` = {}",
+			"`account_id` = {} AND `hardcore` = {} AND `slot_id` = {}",
 			account_id,
-			slot_id
+			slot_id,
+			CharacterDataExtraRepository::GetPlayModeHardcore(*this, char_id)
 		)
 	);
 
@@ -569,10 +572,11 @@ bool SharedDatabase::DeleteSharedBankSlot(uint32 char_id, int16 slot_id)
 	return SharedbankRepository::DeleteWhere(
 		*this,
 		fmt::format(
-			"`account_id` = {} AND `slot_id` BETWEEN {} AND {}",
+			"`account_id` = {} AND `hardcore` = {} AND `slot_id` BETWEEN {} AND {}",
 			account_id,
 			base_slot_id,
-			base_slot_id + (EQ::invbag::SLOT_COUNT - 1)
+			base_slot_id + (EQ::invbag::SLOT_COUNT - 1),
+			CharacterDataExtraRepository::GetPlayModeHardcore(*this, char_id)
 		)
 	);
 }
@@ -705,11 +709,16 @@ bool SharedDatabase::GetSharedBank(uint32 id, EQ::InventoryProfile *inv, bool is
 		return false;
 	}
 
+	if (is_charid && CharacterDataExtraRepository::GetPlayModeSelfFound(*this, id)) {
+		return true;
+	}
+
 	const auto& l = SharedbankRepository::GetWhere(
 		*this,
 		fmt::format(
-			"`account_id` = {}",
-			account_id
+			"`account_id` = {} AND `hardcore` = {}",
+			account_id,
+			CharacterDataExtraRepository::GetPlayModeHardcore(*this, id)
 		)
 	);
 

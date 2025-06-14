@@ -374,6 +374,23 @@ KEY `play_mode_hardcore` (`play_mode_hardcore`)
 		.content_schema_update = false,
 	},
 
+	ManifestEntry{
+		.version = 19,
+		.description = "2025_06_14_add_hardcore_column_to_sharedbank",
+		.check = "SHOW COLUMNS FROM `sharedbank` LIKE 'hardcore'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+	ALTER TABLE `sharedbank`
+		DROP PRIMARY KEY,
+		ADD COLUMN `hardcore` tinyint(4) NOT NULL DEFAULT 0 AFTER `account_id`,
+		ADD PRIMARY KEY (`account_id`, `hardcore`, `slot_id`),
+		DROP KEY `account`,
+		ADD UNIQUE KEY `account` (`account_id`, `hardcore`, `slot_id`)
+	)",
+		.content_schema_update = false,
+	},
+
 	// Used for testing
 	//	ManifestEntry{
 	//		.version = 9229,

@@ -2434,6 +2434,16 @@ public:
 	bool IsProgressionFlagUnlocked(const std::string& flag_name) const;
 	bool UnlockProgressionStage(const std::string& stage_name);
 	bool IsZoneUnlockedByProgression(const int zone_id) const;
+
+	std::vector<ProgressionFlagsRepository::ProgressionFlags> GetProgressionFlagsList() const;
+	std::vector<ProgressionStagesRepository::ProgressionStages> GetProgressionStagesList() const;
+
+	std::string GetProgressionFlagDescription(const std::string& flag_name) const;
+	std::vector<ProgressionStagesRepository::ProgressionStages> GetProgressionStagesForFlag(const std::string& flag_name) const;
+	std::string GetProgressionFlagForStage(const std::string& stage_name) const;
+	bool DoesProgressionStageExist(const std::string& stage_name) const;
+	bool DoesProgressionFlagExist(const std::string& flag_name) const;
+	std::string GetProgressionFlagForZone(const int zone_id) const;
 };
 
 #endif

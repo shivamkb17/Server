@@ -13293,3 +13293,43 @@ bool Client::UnlockProgressionStage(const std::string& stage_name) {
 
 	return pm.UnlockStageByAccount(AccountID(), stage_name);
 }
+
+std::vector<ProgressionFlagsRepository::ProgressionFlags> Client::GetProgressionFlagsList() const {
+    auto pm = zone->GetProgressionManager();
+    return pm.GetFlagsList();
+}
+
+std::vector<ProgressionStagesRepository::ProgressionStages> Client::GetProgressionStagesList() const {
+    auto pm = zone->GetProgressionManager();
+    return pm.GetStagesList();
+}
+
+std::string Client::GetProgressionFlagDescription(const std::string& flag_name) const {
+    auto pm = zone->GetProgressionManager();
+    return pm.GetFlagDescription(flag_name);
+}
+
+std::vector<ProgressionStagesRepository::ProgressionStages> Client::GetProgressionStagesForFlag(const std::string& flag_name) const {
+    auto pm = zone->GetProgressionManager();
+    return pm.GetStagesForFlag(flag_name);
+}
+
+std::string Client::GetProgressionFlagForStage(const std::string& stage_name) const {
+    auto pm = zone->GetProgressionManager();
+    return pm.GetFlagForStage(stage_name);
+}
+
+bool Client::DoesProgressionStageExist(const std::string& stage_name) const {
+    auto pm = zone->GetProgressionManager();
+    return pm.DoesStageExist(stage_name);
+}
+
+bool Client::DoesProgressionFlagExist(const std::string& flag_name) const {
+    auto pm = zone->GetProgressionManager();
+    return pm.DoesFlagExist(flag_name);
+}
+
+std::string Client::GetProgressionFlagForZone(const int zone_id) const {
+    auto pm = zone->GetProgressionManager();
+    return pm.GetFlagForZone(zone_id);
+}

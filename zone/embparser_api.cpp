@@ -6030,6 +6030,76 @@ bool Perl__handin(perl::reference handin_ref)
 	return quest_manager.handin(handin_map);
 }
 
+perl::array Perl__GetProgressionFlagsList() // @categories Account and Character
+{
+	perl::array result;
+	auto flags = zone->GetProgressionFlagsList();
+	for (const auto& flag : flags)
+	{
+		perl::hash flag_hash;
+		flag_hash["id"] = flag.id;
+		flag_hash["name"] = flag.name;
+		flag_hash["description"] = flag.description;
+		result.push_back(perl::reference(flag_hash));
+	}
+	return result;
+}
+
+perl::array Perl__GetProgressionStagesList() // @categories Account and Character
+{
+	perl::array result;
+	auto stages = zone->GetProgressionStagesList();
+	for (const auto& stage : stages)
+	{
+		perl::hash stage_hash;
+		stage_hash["id"] = stage.id;
+		stage_hash["name"] = stage.name;
+		stage_hash["flag_id"] = stage.flag_id;
+		result.push_back(perl::reference(stage_hash));
+	}
+	return result;
+}
+
+std::string Perl__GetProgressionFlagDescription(std::string flag_name) // @categories Account and Character
+{
+	return zone->GetProgressionFlagDescription(flag_name);
+}
+
+perl::array Perl__GetProgressionStagesForFlag(std::string flag_name) // @categories Account and Character
+{
+	perl::array result;
+	auto stages = zone->GetProgressionStagesForFlag(flag_name);
+	for (const auto& stage : stages)
+	{
+		perl::hash stage_hash;
+		stage_hash["id"] = stage.id;
+		stage_hash["name"] = stage.name;
+		stage_hash["flag_id"] = stage.flag_id;
+		result.push_back(perl::reference(stage_hash));
+	}
+	return result;
+}
+
+std::string Perl__GetProgressionFlagForStage(std::string stage_name) // @categories Account and Character
+{
+	return zone->GetProgressionFlagForStage(stage_name);
+}
+
+bool Perl__DoesProgressionStageExist(std::string stage_name) // @categories Account and Character
+{
+	return zone->DoesProgressionStageExist(stage_name);
+}
+
+bool Perl__DoesProgressionFlagExist(std::string flag_name) // @categories Account and Character
+{
+	return zone->DoesProgressionFlagExist(flag_name);
+}
+
+std::string Perl__GetProgressionFlagForZone(int zone_id) // @categories Account and Character
+{
+	return zone->GetProgressionFlagForZone(zone_id);
+}
+
 void perl_register_quest()
 {
 	perl::interpreter perl(PERL_GET_THX);
@@ -6649,6 +6719,8 @@ void perl_register_quest()
 	package.add("do_augment_slots_match", &Perl__do_augment_slots_match);
 	package.add("does_augment_fit", (int8(*)(EQ::ItemInstance*, uint32))&Perl__does_augment_fit);
 	package.add("does_augment_fit_slot", (int8(*)(EQ::ItemInstance*, uint32, uint8))&Perl__does_augment_fit_slot);
+	package.add("DoesProgressionFlagExist", &Perl__DoesProgressionFlagExist);
+	package.add("DoesProgressionStageExist", &Perl__DoesProgressionStageExist);
 	package.add("echo", &Perl__echo);
 	package.add("emote", &Perl__emote);
 	package.add("enable_proximity_say", &Perl__enable_proximity_say);
@@ -6742,6 +6814,12 @@ void perl_register_quest()
 	package.add("getplayerburiedcorpsecount", &Perl__getplayerburiedcorpsecount);
 	package.add("getplayercorpsecount", &Perl__getplayercorpsecount);
 	package.add("getplayercorpsecountbyzoneid", &Perl__getplayercorpsecountbyzoneid);
+	package.add("GetProgressionFlagDescription", &Perl__GetProgressionFlagDescription);
+	package.add("GetProgressionFlagForStage", &Perl__GetProgressionFlagForStage);
+	package.add("GetProgressionFlagForZone", &Perl__GetProgressionFlagForZone);
+	package.add("GetProgressionFlagsList", &Perl__GetProgressionFlagsList);
+	package.add("GetProgressionStagesForFlag", &Perl__GetProgressionStagesForFlag);
+	package.add("GetProgressionStagesList", &Perl__GetProgressionStagesList);
 	package.add("getrecipemadecount", &Perl__getrecipemadecount);
 	package.add("getrecipename", &Perl__getrecipename);
 	package.add("gettaskactivitydonecount", &Perl__gettaskactivitydonecount);

@@ -3774,85 +3774,6 @@ bool Lua_Client::IsZoneUnlockedByProgression(int zone_id) {
 	return self->IsZoneUnlockedByProgression(zone_id);
 }
 
-luabind::object Lua_Client::GetProgressionFlagsList(lua_State* L) {
-	auto lua_table = luabind::newtable(L);
-	if (d_) {
-		auto self = reinterpret_cast<NativeType*>(d_);
-		auto flags = self->GetProgressionFlagsList();
-		int index = 1;
-		for (const auto& flag : flags) {
-			auto flag_hash = luabind::newtable(L);
-			flag_hash["id"] = flag.id;
-			flag_hash["name"] = flag.name;
-			flag_hash["description"] = flag.description;
-			lua_table[index] = flag_hash;
-			index++;
-		}
-	}
-	return lua_table;
-}
-
-luabind::object Lua_Client::GetProgressionStagesList(lua_State* L) {
-	auto lua_table = luabind::newtable(L);
-	if (d_) {
-		auto self = reinterpret_cast<NativeType*>(d_);
-		auto stages = self->GetProgressionStagesList();
-		int index = 1;
-		for (const auto& stage : stages) {
-			auto stage_hash = luabind::newtable(L);
-			stage_hash["id"] = stage.id;
-			stage_hash["name"] = stage.name;
-			stage_hash["flag_id"] = stage.flag_id;
-			lua_table[index] = stage_hash;
-			index++;
-		}
-	}
-	return lua_table;
-}
-
-std::string Lua_Client::GetProgressionFlagDescription(std::string flag_name) {
-	Lua_Safe_Call_String();
-	return self->GetProgressionFlagDescription(flag_name);
-}
-
-luabind::object Lua_Client::GetProgressionStagesForFlag(lua_State* L, std::string flag_name) {
-	auto lua_table = luabind::newtable(L);
-	if (d_) {
-		auto self = reinterpret_cast<NativeType*>(d_);
-		auto stages = self->GetProgressionStagesForFlag(flag_name);
-		int index = 1;
-		for (const auto& stage : stages) {
-			auto stage_hash = luabind::newtable(L);
-			stage_hash["id"] = stage.id;
-			stage_hash["name"] = stage.name;
-			stage_hash["flag_id"] = stage.flag_id;
-			lua_table[index] = stage_hash;
-			index++;
-		}
-	}
-	return lua_table;
-}
-
-std::string Lua_Client::GetProgressionFlagForStage(std::string stage_name) {
-	Lua_Safe_Call_String();
-	return self->GetProgressionFlagForStage(stage_name);
-}
-
-bool Lua_Client::DoesProgressionStageExist(std::string stage_name) {
-	Lua_Safe_Call_Bool();
-	return self->DoesProgressionStageExist(stage_name);
-}
-
-bool Lua_Client::DoesProgressionFlagExist(std::string flag_name) {
-	Lua_Safe_Call_Bool();
-	return self->DoesProgressionFlagExist(flag_name);
-}
-
-std::string Lua_Client::GetProgressionFlagForZone(int zone_id) {
-	Lua_Safe_Call_String();
-	return self->GetProgressionFlagForZone(zone_id);
-}
-
 luabind::scope lua_register_client() {
 	return luabind::class_<Lua_Client, Lua_Mob>("Client")
 	.def(luabind::constructor<>())
@@ -3960,8 +3881,6 @@ luabind::scope lua_register_client() {
 	.def("Duck", (void(Lua_Client::*)(void))&Lua_Client::Duck)
 	.def("DyeArmorBySlot", (void(Lua_Client::*)(uint8,uint8,uint8,uint8))&Lua_Client::DyeArmorBySlot)
 	.def("DyeArmorBySlot", (void(Lua_Client::*)(uint8,uint8,uint8,uint8,uint8))&Lua_Client::DyeArmorBySlot)
-	.def("DoesProgressionFlagExist", (bool(Lua_Client::*)(std::string))&Lua_Client::DoesProgressionFlagExist)
-	.def("DoesProgressionStageExist", (bool(Lua_Client::*)(std::string))&Lua_Client::DoesProgressionStageExist)
 	.def("EnableAreaEndRegen", &Lua_Client::EnableAreaEndRegen)
 	.def("EnableAreaHPRegen", &Lua_Client::EnableAreaHPRegen)
 	.def("EnableAreaManaRegen", &Lua_Client::EnableAreaManaRegen)
@@ -4111,12 +4030,6 @@ luabind::scope lua_register_client() {
 	.def("GetPotionBeltItemIcon", (uint32(Lua_Client::*)(uint8))&Lua_Client::GetPotionBeltItemIcon)
 	.def("GetPotionBeltItemID", (uint32(Lua_Client::*)(uint8))&Lua_Client::GetPotionBeltItemID)
 	.def("GetPotionBeltItemName", (std::string(Lua_Client::*)(uint8))&Lua_Client::GetPotionBeltItemName)
-	.def("GetProgressionFlagDescription", (std::string(Lua_Client::*)(std::string))&Lua_Client::GetProgressionFlagDescription)
-	.def("GetProgressionFlagForStage", (std::string(Lua_Client::*)(std::string))&Lua_Client::GetProgressionFlagForStage)
-	.def("GetProgressionFlagForZone", (std::string(Lua_Client::*)(int))&Lua_Client::GetProgressionFlagForZone)
-	.def("GetProgressionFlagsList", (luabind::object(Lua_Client::*)(lua_State*))&Lua_Client::GetProgressionFlagsList)
-	.def("GetProgressionStagesForFlag", (luabind::object(Lua_Client::*)(lua_State*, std::string))&Lua_Client::GetProgressionStagesForFlag)
-	.def("GetProgressionStagesList", (luabind::object(Lua_Client::*)(lua_State*))&Lua_Client::GetProgressionStagesList)
 	.def("GetPVP", (bool(Lua_Client::*)(void))&Lua_Client::GetPVP)
 	.def("GetPVPPoints", (uint32(Lua_Client::*)(void))&Lua_Client::GetPVPPoints)
 	.def("GetRaceBitmask", (uint16(Lua_Client::*)(void))&Lua_Client::GetRaceBitmask)

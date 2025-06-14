@@ -5865,6 +5865,77 @@ std::string get_rules(int rule) {
 	return RuleManager::Instance()->GetStringRule((RuleManager::StringType)rule);
 }
 
+luabind::object GetProgressionFlagsList(lua_State* L) {
+	auto lua_table = luabind::newtable(L);
+	if (zone) {
+		auto flags = zone->GetProgressionFlagsList();
+		int index = 1;
+		for (const auto& flag : flags) {
+			auto flag_hash = luabind::newtable(L);
+			flag_hash["id"] = flag.id;
+			flag_hash["name"] = flag.name;
+			flag_hash["description"] = flag.description;
+			lua_table[index] = flag_hash;
+			index++;
+		}
+	}
+	return lua_table;
+}
+
+luabind::object GetProgressionStagesList(lua_State* L) {
+	auto lua_table = luabind::newtable(L);
+	if (zone) {
+		auto stages = zone->GetProgressionStagesList();
+		int index = 1;
+		for (const auto& stage : stages) {
+			auto stage_hash = luabind::newtable(L);
+			stage_hash["id"] = stage.id;
+			stage_hash["name"] = stage.name;
+			stage_hash["flag_id"] = stage.flag_id;
+			lua_table[index] = stage_hash;
+			index++;
+		}
+	}
+	return lua_table;
+}
+
+luabind::object GetProgressionStagesForFlag(lua_State* L, std::string flag_name) {
+	auto lua_table = luabind::newtable(L);
+	if (zone) {
+		auto stages = zone->GetProgressionStagesForFlag(flag_name);
+		int index = 1;
+		for (const auto& stage : stages) {
+			auto stage_hash = luabind::newtable(L);
+			stage_hash["id"] = stage.id;
+			stage_hash["name"] = stage.name;
+			stage_hash["flag_id"] = stage.flag_id;
+			lua_table[index] = stage_hash;
+			index++;
+		}
+	}
+	return lua_table;
+}
+
+std::string GetProgressionFlagDescription(std::string flag_name) {
+	return zone->GetProgressionFlagDescription(flag_name);
+}
+
+std::string GetProgressionFlagForStage(std::string stage_name) {
+	return zone->GetProgressionFlagForStage(stage_name);
+}
+
+bool DoesProgressionStageExist(std::string stage_name) {
+	return zone->DoesProgressionStageExist(stage_name);
+}
+
+bool DoesProgressionFlagExist(std::string flag_name) {
+	return zone->DoesProgressionFlagExist(flag_name);
+}
+
+std::string GetProgressionFlagForZone(int zone_id) {
+	return zone->GetProgressionFlagForZone(zone_id);
+}
+
 luabind::scope lua_register_general() {
 	return luabind::namespace_("eq")
 	[(
@@ -5971,6 +6042,12 @@ luabind::scope lua_register_general() {
 		luabind::def("get_player_corpse_count", &lua_get_player_corpse_count),
 		luabind::def("get_player_corpse_count_by_zone_id", &lua_get_player_corpse_count_by_zone_id),
 		luabind::def("get_player_buried_corpse_count", &lua_get_player_buried_corpse_count),
+		luabind::def("GetProgressionFlagDescription", &GetProgressionFlagDescription),
+		luabind::def("GetProgressionFlagForStage", &GetProgressionFlagForStage),
+		luabind::def("GetProgressionFlagForZone", &GetProgressionFlagForZone),
+		luabind::def("GetProgressionFlagsList", &GetProgressionFlagsList),
+		luabind::def("GetProgressionStagesForFlag", &GetProgressionStagesForFlag),
+		luabind::def("GetProgressionStagesList", &GetProgressionStagesList),
 		luabind::def("bury_player_corpse", &lua_bury_player_corpse),
 		luabind::def("task_selector", (void(*)(luabind::adl::object))&lua_task_selector),
 		luabind::def("task_selector", (void(*)(luabind::adl::object, bool))&lua_task_selector),
@@ -6214,6 +6291,8 @@ luabind::scope lua_register_general() {
 		luabind::def("do_augment_slots_match", &lua_do_augment_slots_match),
 		luabind::def("does_augment_fit", (int8(*)(Lua_ItemInst, uint32))&lua_does_augment_fit),
 		luabind::def("does_augment_fit_slot", (int8(*)(Lua_ItemInst, uint32, uint8))&lua_does_augment_fit_slot),
+		luabind::def("DoesProgressionFlagExist", &DoesProgressionFlagExist),
+		luabind::def("DoesProgressionStageExist", &DoesProgressionStageExist),
 		luabind::def("get_recipe_component_item_ids", (luabind::object(*)(lua_State*,uint32))&lua_get_recipe_component_item_ids),
 		luabind::def("get_recipe_container_item_ids", (luabind::object(*)(lua_State*,uint32))&lua_get_recipe_container_item_ids),
 		luabind::def("get_recipe_fail_item_ids", (luabind::object(*)(lua_State*,uint32))&lua_get_recipe_fail_item_ids),

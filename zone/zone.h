@@ -487,7 +487,16 @@ public:
 	static void ClearZoneState(uint32 zone_id, uint32 instance_id);
 	void ReloadMaps();
 
+	std::vector<ProgressionFlagsRepository::ProgressionFlags> GetProgressionFlagsList() const;
+	std::vector<ProgressionStagesRepository::ProgressionStages> GetProgressionStagesList() const;
+
 	ProgressionManager& GetProgressionManager();
+	std::string GetProgressionFlagDescription(const std::string& flag_name) const;
+	std::vector<ProgressionStagesRepository::ProgressionStages> GetProgressionStagesForFlag(const std::string& flag_name) const;
+	std::string GetProgressionFlagForStage(const std::string& stage_name) const;
+	bool DoesProgressionStageExist(const std::string& stage_name) const;
+	bool DoesProgressionFlagExist(const std::string& flag_name) const;
+	std::string GetProgressionFlagForZone(const int zone_id) const;
 
 private:
 	bool      allow_mercs;

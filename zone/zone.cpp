@@ -3312,4 +3312,44 @@ ProgressionManager& Zone::GetProgressionManager() {
 	return m_progression_manager;
 }
 
+std::vector<ProgressionFlagsRepository::ProgressionFlags> Zone::GetProgressionFlagsList() const {
+    auto pm = zone->GetProgressionManager();
+    return pm.GetFlagsList();
+}
+
+std::vector<ProgressionStagesRepository::ProgressionStages> Zone::GetProgressionStagesList() const {
+    auto pm = zone->GetProgressionManager();
+    return pm.GetStagesList();
+}
+
+std::string Zone::GetProgressionFlagDescription(const std::string& flag_name) const {
+    auto pm = zone->GetProgressionManager();
+    return pm.GetFlagDescription(flag_name);
+}
+
+std::vector<ProgressionStagesRepository::ProgressionStages> Zone::GetProgressionStagesForFlag(const std::string& flag_name) const {
+    auto pm = zone->GetProgressionManager();
+    return pm.GetStagesForFlag(flag_name);
+}
+
+std::string Zone::GetProgressionFlagForStage(const std::string& stage_name) const {
+    auto pm = zone->GetProgressionManager();
+    return pm.GetFlagForStage(stage_name);
+}
+
+bool Zone::DoesProgressionStageExist(const std::string& stage_name) const {
+    auto pm = zone->GetProgressionManager();
+    return pm.DoesStageExist(stage_name);
+}
+
+bool Zone::DoesProgressionFlagExist(const std::string& flag_name) const {
+    auto pm = zone->GetProgressionManager();
+    return pm.DoesFlagExist(flag_name);
+}
+
+std::string Zone::GetProgressionFlagForZone(const int zone_id) const {
+    auto pm = zone->GetProgressionManager();
+    return pm.GetFlagForZone(zone_id);
+}
+
 #include "zone_loot.cpp"

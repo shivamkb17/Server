@@ -3566,6 +3566,76 @@ bool Perl_Client_UnlockProgressionStage(Client* self, std::string stage_name) {
 	return self->UnlockProgressionStage(stage_name);
 }
 
+perl::array Perl_Client_GetProgressionFlagsList(Client* self) // @categories Account and Character
+{
+	perl::array result;
+	auto flags = self->GetProgressionFlagsList();
+	for (const auto& flag : flags)
+	{
+		perl::hash flag_hash;
+		flag_hash["id"] = flag.id;
+		flag_hash["name"] = flag.name;
+		flag_hash["description"] = flag.description;
+		result.push_back(perl::reference(flag_hash));
+	}
+	return result;
+}
+
+perl::array Perl_Client_GetProgressionStagesList(Client* self) // @categories Account and Character
+{
+	perl::array result;
+	auto stages = self->GetProgressionStagesList();
+	for (const auto& stage : stages)
+	{
+		perl::hash stage_hash;
+		stage_hash["id"] = stage.id;
+		stage_hash["name"] = stage.name;
+		stage_hash["flag_id"] = stage.flag_id;
+		result.push_back(perl::reference(stage_hash));
+	}
+	return result;
+}
+
+std::string Perl_Client_GetProgressionFlagDescription(Client* self, std::string flag_name) // @categories Account and Character
+{
+	return self->GetProgressionFlagDescription(flag_name);
+}
+
+perl::array Perl_Client_GetProgressionStagesForFlag(Client* self, std::string flag_name) // @categories Account and Character
+{
+	perl::array result;
+	auto stages = self->GetProgressionStagesForFlag(flag_name);
+	for (const auto& stage : stages)
+	{
+		perl::hash stage_hash;
+		stage_hash["id"] = stage.id;
+		stage_hash["name"] = stage.name;
+		stage_hash["flag_id"] = stage.flag_id;
+		result.push_back(perl::reference(stage_hash));
+	}
+	return result;
+}
+
+std::string Perl_Client_GetProgressionFlagForStage(Client* self, std::string stage_name) // @categories Account and Character
+{
+	return self->GetProgressionFlagForStage(stage_name);
+}
+
+bool Perl_Client_DoesProgressionStageExist(Client* self, std::string stage_name) // @categories Account and Character
+{
+	return self->DoesProgressionStageExist(stage_name);
+}
+
+bool Perl_Client_DoesProgressionFlagExist(Client* self, std::string flag_name) // @categories Account and Character
+{
+	return self->DoesProgressionFlagExist(flag_name);
+}
+
+std::string Perl_Client_GetProgressionFlagForZone(Client* self, int zone_id) // @categories Account and Character
+{
+	return self->GetProgressionFlagForZone(zone_id);
+}
+
 void perl_register_client()
 {
 	perl::interpreter perl(PERL_GET_THX);
@@ -3675,6 +3745,8 @@ void perl_register_client()
 	package.add("Duck", &Perl_Client_Duck);
 	package.add("DyeArmorBySlot", (void(*)(Client*, uint8, uint8, uint8, uint8))&Perl_Client_DyeArmorBySlot);
 	package.add("DyeArmorBySlot", (void(*)(Client*, uint8, uint8, uint8, uint8, uint8))&Perl_Client_DyeArmorBySlot);
+	package.add("DoesProgressionFlagExist", &Perl_Client_DoesProgressionFlagExist);
+	package.add("DoesProgressionStageExist", &Perl_Client_DoesProgressionStageExist);
 	package.add("EndSharedTask", (void(*)(Client*))&Perl_Client_EndSharedTask);
 	package.add("EndSharedTask", (void(*)(Client*, bool))&Perl_Client_EndSharedTask);
 	package.add("Escape", &Perl_Client_Escape);
@@ -3826,7 +3898,13 @@ void perl_register_client()
 	package.add("GetMoney", &Perl_Client_GetMoney);
 	package.add("GetPotionBeltItemIcon", &Perl_Client_GetPotionBeltItemIcon);
 	package.add("GetPotionBeltItemID", &Perl_Client_GetPotionBeltItemID);
-	package.add("GetPotionBeltItemName", &Perl_Client_GetPotionBeltItemName);
+	package.add("GetPotionBeltItemName", &Perl_Client_GetPotionBeltItemName);\
+	package.add("GetProgressionFlagDescription", &Perl_Client_GetProgressionFlagDescription);
+	package.add("GetProgressionFlagForStage", &Perl_Client_GetProgressionFlagForStage);
+	package.add("GetProgressionFlagForZone", &Perl_Client_GetProgressionFlagForZone);
+	package.add("GetProgressionFlagsList", &Perl_Client_GetProgressionFlagsList);
+	package.add("GetProgressionStagesForFlag", &Perl_Client_GetProgressionStagesForFlag);
+	package.add("GetProgressionStagesList", &Perl_Client_GetProgressionStagesList);
 	package.add("GetPVP", &Perl_Client_GetPVP);
 	package.add("GetPVPPoints", &Perl_Client_GetPVPPoints);
 	package.add("GetRaceAbbreviation", &Perl_Client_GetRaceAbbreviation);

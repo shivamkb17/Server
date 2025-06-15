@@ -2033,6 +2033,12 @@ private:
 
 	void DoSpellInterrupt(uint16 spell_id, int32 mana_cost, int my_curmana);
 	void HandleDoorOpen();
+
+public:
+	bool IsSoloEligible(Mob* attacker);
+	bool IsSelfFoundEligible(Mob* attacker);
+	bool IsHardcoreEligible(Mob* attacker);
+	bool IsPlayModeEligible(Mob* attacker);
 };
 
 #endif

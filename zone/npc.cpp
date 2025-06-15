@@ -779,9 +779,22 @@ bool NPC::Process()
 			else {
 				SetHP(GetHP() + npc_hp_regen);
 			}
-
 		}
 		else {
+			if (!IsEngaged() && !IsPet()) {
+				auto variables = GetEntityVariables();
+				for (const auto& variable : variables) {
+					if (variable.substr(0, 3) == "sf-" ||
+						variable.substr(0, 5) == "solo-" ||
+						variable.substr(0, 3) == "hc-" ||
+						variable == "sf-ineligible" ||
+						variable == "solo-ineligible" ||
+						variable == "hc-ineligible") {
+						DeleteEntityVariable(variable);
+					}
+				}
+			}
+
 			SetHP(GetHP() + npc_hp_regen + npc_sitting_regen_bonus);
 		}
 

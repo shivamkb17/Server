@@ -755,6 +755,134 @@ std::list<Mob*> EntityList::GetHatedList(Mob *attacker, Mob *exclude, bool inc_g
 	return result;
 }
 
+bool Mob::IsSelfFoundEligible(Mob* attacker) {
+	if (!attacker || !attacker->IsClient()) {
+		return true; // Non-clients always eligible
+	}
+
+	Client* client = attacker->CastToClient();
+
+	// Check if mob is claimed by Self-Found players
+	bool claimed_by_sf = false;
+	if (!EntityVariableExists("sf-ineligible")) {
+		auto variables = GetEntityVariables();
+		for (const auto& variable : variables) {
+			if (variable.substr(0, 3) == "sf-") {
+				claimed_by_sf = true;
+				break;
+			}
+		}
+	}
+
+	// If claimed by SF, attacker must be SF
+	if (claimed_by_sf && !client->IsSelfFound()) {
+		return false;
+	}
+
+	// Check if non-moded players have engaged (all modes ineligible)
+	bool non_moded_engagement = EntityVariableExists("sf-ineligible") &&
+	                           EntityVariableExists("solo-ineligible") &&
+	                           EntityVariableExists("hc-ineligible");
+
+	// If non-moded engaged first, SF players can't join
+	if (non_moded_engagement && client->IsSelfFound()) {
+		return false;
+	}
+
+	return true;
+}
+
+bool Mob::IsSoloEligible(Mob* attacker) {
+	if (!attacker || !attacker->IsClient()) {
+		return true; // Non-clients always eligible
+	}
+
+	Client* client = attacker->CastToClient();
+
+	// Check if mob is claimed by Solo players
+	bool claimed_by_solo = false;
+	bool attacker_has_solo_claim = false;
+
+	if (!EntityVariableExists("solo-ineligible")) {
+		auto variables = GetEntityVariables();
+		auto attacker_solo_key = fmt::format("solo-{}", client->GetCleanName());
+
+		for (const auto& variable : variables) {
+			if (variable.substr(0, 5) == "solo-") {
+				claimed_by_solo = true;
+				if (variable == attacker_solo_key) {
+					attacker_has_solo_claim = true;
+				}
+			}
+		}
+	}
+
+	// If claimed by Solo, ONLY the specific solo player who claimed it can attack
+	if (claimed_by_solo) {
+		if (client->IsSolo() && attacker_has_solo_claim) {
+			return true; // This specific solo player claimed it
+		} else {
+			return false; // Either not solo, or different solo player
+		}
+	}
+
+	// Check if non-moded players have engaged (all modes ineligible)
+	bool non_moded_engagement = EntityVariableExists("sf-ineligible") &&
+	                           EntityVariableExists("solo-ineligible") &&
+	                           EntityVariableExists("hc-ineligible");
+
+	// If non-moded engaged first, Solo players can't join
+	if (non_moded_engagement && client->IsSolo()) {
+		return false;
+	}
+
+	return true;
+}
+
+bool Mob::IsHardcoreEligible(Mob* attacker) {
+	if (!attacker || !attacker->IsClient()) {
+		return true; // Non-clients always eligible
+	}
+
+	Client* client = attacker->CastToClient();
+
+	// Check if mob is claimed by Hardcore players
+	bool claimed_by_hc = false;
+	if (!EntityVariableExists("hc-ineligible")) {
+		auto variables = GetEntityVariables();
+		for (const auto& variable : variables) {
+			if (variable.substr(0, 3) == "hc-") {
+				claimed_by_hc = true;
+				break;
+			}
+		}
+	}
+
+	// If claimed by HC, attacker must be HC
+	if (claimed_by_hc && !client->IsHardcore()) {
+		return false;
+	}
+
+	// Check if non-moded players have engaged (all modes ineligible)
+	bool non_moded_engagement = EntityVariableExists("sf-ineligible") &&
+	                           EntityVariableExists("solo-ineligible") &&
+	                           EntityVariableExists("hc-ineligible");
+
+	// If non-moded engaged first, HC players can't join
+	if (non_moded_engagement && client->IsHardcore()) {
+		return false;
+	}
+
+	return true;
+}
+
+bool Mob::IsPlayModeEligible(Mob* attacker) {
+	// Attacker must be eligible for all applicable play modes
+	return IsSelfFoundEligible(attacker) &&
+	       IsSoloEligible(attacker) &&
+	       IsHardcoreEligible(attacker);
+}
+
 /**
  * @param target
  * @param isSpellAttack
@@ -867,6 +995,15 @@ bool Mob::IsAttackAllowed(Mob *target, bool isSpellAttack)
 	// no need to compare pets to anything
 	mob1 = our_owner ? our_owner : this;
 	mob2 = target_owner ? target_owner : target;
+
+	// Play mode eligibility checks - prevent attacks on claimed mobs
+	if (_CLIENT(mob1) && _NPC(mob2)) {
+		if (!mob2->IsPlayModeEligible(mob1)) {
+			Client* attacker = mob1->CastToClient();
+			attacker->Message(Chat::Red, "Your play modes prevent engaging this creature.");
+			return false;
+		}
+	}
 
 	reverse = 0;
 	do

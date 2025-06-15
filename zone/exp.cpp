@@ -1645,9 +1645,23 @@ void Group::SplitExp(ExpSource exp_source, const uint64 exp, Mob* other) {
 			}
 
 			if (diff >= max_diff) {
-				const uint64 tmp  = (m->GetLevel() + 3) * (m->GetLevel() + 3) * 75 * 35 / 10;
-				const uint64 tmp2 = group_experience / member_count;
-				m->CastToClient()->AddEXP(exp_source, tmp < tmp2 ? tmp : tmp2, consider_level, false, other->CastToNPC());
+				bool eligible_for_exp = true;
+
+				if (m->CastToClient()->IsSolo()) {
+					eligible_for_exp = false;
+				}
+
+				if (eligible_for_exp && m->CastToClient()->IsHardcore() && other->EntityVariableExists("hc-ineligible")) {
+					eligible_for_exp = false;
+				}
+
+				if (eligible_for_exp) {
+					const uint64 tmp  = (m->GetLevel() + 3) * (m->GetLevel() + 3) * 75 * 35 / 10;
+					const uint64 tmp2 = group_experience / member_count;
+					m->CastToClient()->AddEXP(exp_source, tmp < tmp2 ? tmp : tmp2, consider_level, false, other->CastToNPC());
+				} else {
+					m->Message(Chat::Experience, "You were not eligible to be awarded group experience.");
+				}
 			}
 		}
 	}
@@ -1696,9 +1710,23 @@ void Raid::SplitExp(ExpSource exp_source, const uint64 exp, Mob* other) {
 			}
 
 			if (diff >= max_diff) {
-				const uint64 tmp  = (m.member->GetLevel() + 3) * (m.member->GetLevel() + 3) * 75 * 35 / 10;
-				const uint64 tmp2 = (raid_experience / member_modifier) + 1;
-				m.member->AddEXP(exp_source, tmp < tmp2 ? tmp : tmp2, consider_level, false, other->CastToNPC());
+				bool eligible_for_exp = true;
+
+				if (m.member->IsSolo()) {
+					eligible_for_exp = false;
+				}
+
+				if (eligible_for_exp && m.member->IsHardcore() && other->EntityVariableExists("hc-ineligible")) {
+					eligible_for_exp = false;
+				}
+
+				if (eligible_for_exp) {
+					const uint64 tmp  = (m.member->GetLevel() + 3) * (m.member->GetLevel() + 3) * 75 * 35 / 10;
+					const uint64 tmp2 = (raid_experience / member_modifier) + 1;
+					m.member->AddEXP(exp_source, tmp < tmp2 ? tmp : tmp2, consider_level, false, other->CastToNPC());
+				} else {
+					m.member->Message(Chat::Experience, "You were not eligible to be awarded raid experience.");
+				}
 			}
 		}
 	}

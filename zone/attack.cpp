@@ -2586,6 +2586,28 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 		spell,
 		attack_skill
 	);
+	// Lambda to check if a client is eligible for rewards based on play modes
+	auto IsClientEligible = [&](Client* client, bool check_exp = true, bool check_faction = true, bool check_quest = true) -> bool {
+		if (!client) return false;
+
+		// Solo mode restrictions (exp, faction, quest)
+		if ((check_exp || check_faction || check_quest) && client->IsSolo()) {
+			auto key = fmt::format("solo-{}", client->GetCleanName());
+			if (!EntityVariableExists(key) || EntityVariableExists("solo-ineligible")) {
+				return false;
+			}
+		}
+
+		// Hardcore mode restrictions (exp, faction, quest - loot handled at corpse interaction)
+		if ((check_exp || check_faction || check_quest) && client->IsHardcore()) {
+			auto key = fmt::format("hc-{}", client->GetCleanName());
+			if (!EntityVariableExists(key) || EntityVariableExists("hc-ineligible")) {
+				return false;
+			}
+		}
+
+		return true;
+	};
 
 	Mob* owner_or_self = killer_mob ? killer_mob->GetOwnerOrSelf() : nullptr;
 
@@ -2768,7 +2790,10 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 
 	//do faction hits even if we are a merchant, so long as a player killed us
 	if (!IsCharmed() && give_exp_client && !RuleB(NPC, EnableMeritBasedFaction)) {
-		hate_list.DoFactionHits(GetNPCFactionID(), GetPrimaryFaction(), GetFactionAmount());
+		// Only do faction hits if the killer is eligible for faction changes
+		if (IsClientEligible(give_exp_client, false, true, false)) {
+			hate_list.DoFactionHits(GetNPCFactionID(), GetPrimaryFaction(), GetFactionAmount());
+		}
 	}
 
 	const bool is_ldon_treasure = GetClass() == Class::LDoNTreasure;
@@ -2781,8 +2806,8 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 
 		int64 final_exp = give_exp_client->GetExperienceForKill(this);
 
-		// handle task credit on behalf of the killer
-		if (RuleB(TaskSystem, EnableTaskSystem)) {
+		// handle task credit on behalf of the killer - only if eligible for quest credit
+		if (RuleB(TaskSystem, EnableTaskSystem) && IsClientEligible(give_exp_client, false, false, true)) {
 			LogTasksDetail(
 				"Triggering HandleUpdateTasksOnKill for [{}] npc [{}]",
 				give_exp_client->GetCleanName(),
@@ -2793,7 +2818,10 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 
 		if (killer_raid) {
 			if (!is_ldon_treasure && MerchantType == 0) {
-				killer_raid->SplitExp(ExpSource::Kill, final_exp, this);
+				// Use the existing SplitExp method but it will handle eligibility internally
+				if (final_exp > 0) {
+					killer_raid->SplitExp(ExpSource::Kill, final_exp, this);
+				}
 
 				if (killer_mob &&
 					(killer_raid->IsRaidMember(killer_mob->GetName()) ||
@@ -2802,13 +2830,13 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 				}
 			}
 
-			/* Send the EVENT_KILLED_MERIT event for all raid members */
+			/* Send the EVENT_KILLED_MERIT event and faction hits for eligible raid members only */
 			for (const auto& m : killer_raid->members) {
 				if (m.is_bot) {
 					continue;
 				}
 
-				if (m.member) {
+				if (m.member && IsClientEligible(m.member, false, true, false)) {
 					if (RuleB(NPC, EnableMeritBasedFaction)) {
 						m.member->SetFactionLevel(
 							m.member->CharacterID(),
@@ -2824,7 +2852,10 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 			}
 		} else if (give_exp_client->IsGrouped() && killer_group) {
 			if (!is_ldon_treasure && MerchantType == 0) {
-				killer_group->SplitExp(ExpSource::Kill, final_exp, this);
+				// Use the existing SplitExp method but it will handle eligibility internally
+				if (final_exp > 0) {
+					killer_group->SplitExp(ExpSource::Kill, final_exp, this);
+				}
 
 				if (killer_mob &&
 					(killer_group->IsGroupMember(killer_mob->GetName()) ||
@@ -2833,9 +2864,9 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 				}
 			}
 
-			/* Update kill tasks for all group members */
+			/* Update kill tasks and faction for eligible group members only */
 			for (const auto& m : killer_group->members) {
-				if (m && m->IsClient()) {
+				if (m && m->IsClient() && IsClientEligible(m->CastToClient(), false, true, false)) {
 					Client* c = m->CastToClient();
 
 					if (RuleB(NPC, EnableMeritBasedFaction)) {
@@ -2852,23 +2883,31 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 				}
 			}
 		} else {
+			// Solo player - check eligibility for each reward type
+			bool eligible_for_exp = IsClientEligible(give_exp_client, true, false, false);
+			bool eligible_for_faction = IsClientEligible(give_exp_client, false, true, false);
+
 			if (!is_ldon_treasure && !MerchantType) {
-				const uint32 con_level = give_exp->GetLevelCon(GetLevel());
+				if (eligible_for_exp) {
+					const uint32 con_level = give_exp->GetLevelCon(GetLevel());
 
-				if (con_level != ConsiderColor::Gray) {
-					if (!GetOwner() || (GetOwner() && !GetOwner()->IsOfClientBot())) {
-						give_exp_client->AddEXP(ExpSource::Kill, final_exp, con_level, false, this);
+					if (con_level != ConsiderColor::Gray) {
+						if (!GetOwner() || (GetOwner() && !GetOwner()->IsOfClientBot())) {
+							give_exp_client->AddEXP(ExpSource::Kill, final_exp, con_level, false, this);
 
-						if (killer_mob &&
-							(killer_mob->GetID() == give_exp_client->GetID() ||
-							 killer_mob->GetUltimateOwner()->GetID() == give_exp_client->GetID())) {
-							should_trigger_spell_on_kill = true;
+							if (killer_mob &&
+								(killer_mob->GetID() == give_exp_client->GetID() ||
+								 killer_mob->GetUltimateOwner()->GetID() == give_exp_client->GetID())) {
+								should_trigger_spell_on_kill = true;
+							}
 						}
 					}
+				} else {
+					give_exp_client->Message(Chat::Experience, "You were not eligible to be awarded experience.");
 				}
 			}
 
-			if (RuleB(NPC, EnableMeritBasedFaction)) {
+			if (eligible_for_faction && RuleB(NPC, EnableMeritBasedFaction)) {
 				give_exp_client->SetFactionLevel(
 					give_exp_client->CharacterID(),
 					GetNPCFactionID(),
@@ -2928,7 +2967,6 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 		}
 
 		entity_list.RemoveFromAutoXTargets(this);
-
 
 		if (database.LootBuffEnabled()) {
 			for (LootItem* item : m_loot_items) {
@@ -3047,7 +3085,6 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 			LogDebug("Respawn Timer: [{}]", respawn2->RespawnTimer());
 		}
 
-
 		corpse = new Corpse(
 			this,
 			&m_loot_items,
@@ -3057,6 +3094,20 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 		);
 
 		corpse->SetSeasonal(seasonal_killer);
+
+		// Transfer play mode eligibility variables to corpse for loot eligibility checks
+		auto variables = GetEntityVariables();
+		for (const auto& variable : variables) {
+			if (variable.substr(0, 3) == "sf-" ||
+				variable.substr(0, 5) == "solo-" ||
+				variable.substr(0, 3) == "hc-" ||
+				variable == "sf-ineligible" ||
+				variable == "solo-ineligible" ||
+				variable == "hc-ineligible") {
+				auto value = GetEntityVariable(variable);
+				corpse->SetEntityVariable(variable, value);
+			}
+		}
 
 		if (killer_mob && emoteid) {
 			DoNPCEmote(EQ::constants::EmoteEventTypes::AfterDeath, emoteid, killer_mob);
@@ -3199,13 +3250,16 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 	if (give_exp_client && !IsCorpse()) {
 		const auto& v = give_exp_client->GetRaidOrGroupOrSelf(true);
 		for (const auto& m : v) {
-			m->CastToClient()->RecordKilledNPCEvent(this);
+			// Only process merit events and kill counters for eligible clients
+			if (IsClientEligible(m->CastToClient(), false, false, true)) {
+				m->CastToClient()->RecordKilledNPCEvent(this);
 
-			if (parse->HasQuestSub(GetNPCTypeID(), EVENT_KILLED_MERIT)) {
-				parse->EventNPC(EVENT_KILLED_MERIT, this, m, "killed", 0);
+				if (parse->HasQuestSub(GetNPCTypeID(), EVENT_KILLED_MERIT)) {
+					parse->EventNPC(EVENT_KILLED_MERIT, this, m, "killed", 0);
+				}
+
+				m->CastToClient()->kill_counters[GetBaseRace()]++;
 			}
-
-			m->CastToClient()->kill_counters[GetBaseRace()]++;
 		}
 	}
 
@@ -3299,6 +3353,54 @@ void Mob::AddToHateList(Mob* other, int64 hate /*= 0*/, int64 damage /*= 0*/, bo
 		if (aggro_reassigned) {
 			hate *= 0.50;
 			LogDebug("Reduced hate to [{}] because it was reassigned to a pet.", hate);
+		}
+	}
+
+	/* Play Modes */
+	auto other_ultimate_owner_mob = other->GetUltimateOwner();
+	if (other_ultimate_owner_mob->IsClient()) {
+		auto other_client = other_ultimate_owner_mob->CastToClient();
+
+		// Simply tag the player's engagement - no eligibility checking needed
+		// since IsAttackAllowed prevents incompatible players from engaging
+
+		// Self-Found tagging
+		if (other_client->IsSelfFound()) {
+			auto key = fmt::format("sf-{}", other_client->GetCleanName());
+			if (!EntityVariableExists(key)) {
+				SetEntityVariable(key, "true");
+				LogDebug("Set [{}]", key);
+			}
+		} else {
+			// Non-SF player engaging - mark SF as ineligible for rewards
+			SetEntityVariable("sf-ineligible", "true");
+			LogDebug("SF-Ineligible [{}]", other->GetCleanName());
+		}
+
+		// Solo tagging
+		if (other_client->IsSolo()) {
+			auto key = fmt::format("solo-{}", other_client->GetCleanName());
+			if (!EntityVariableExists(key)) {
+				SetEntityVariable(key, "true");
+				LogDebug("Set [{}]", key);
+			}
+		} else {
+			// Non-solo player engaging - mark solo as ineligible for rewards
+			SetEntityVariable("solo-ineligible", "true");
+			LogDebug("Solo-Ineligible [{}]", other->GetCleanName());
+		}
+
+		// Hardcore tagging
+		if (other_client->IsHardcore()) {
+			auto key = fmt::format("hc-{}", other_client->GetCleanName());
+			if (!EntityVariableExists(key)) {
+				SetEntityVariable(key, "true");
+				LogDebug("Set [{}]", key);
+			}
+		} else {
+			// Non-HC player engaging - mark HC as ineligible for rewards
+			SetEntityVariable("hc-ineligible", "true");
+			LogDebug("HC-Ineligible [{}]", other->GetCleanName());
 		}
 	}
 

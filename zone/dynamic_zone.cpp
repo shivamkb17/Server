@@ -456,6 +456,18 @@ void DynamicZone::DzAddPlayer(Client* client, const std::string& add_name, const
 		return;
 	}
 
+	if (client->IsSelfFound() != CharacterDataExtraRepository::GetPlayModeSelfFound(database, database.GetCharacterID(add_name))) {
+		auto reject = "Self-Found characters may only group with others in the same mode.";
+		client->Message(Chat::Red, reject);
+		return;
+	}
+
+	if (client->IsHardcore() != CharacterDataExtraRepository::GetPlayModeHardcore(database, database.GetCharacterID(add_name))) {
+		auto reject = "Hardcore characters may only group with others in the same mode.";
+		client->Message(Chat::Red, reject);
+		return;
+	}
+
 	if (IsLocked())
 	{
 		client->MessageString(Chat::Red, DZADD_NOT_ALLOWING);
@@ -495,7 +507,6 @@ void DynamicZone::DzAddPlayer(Client* client, const std::string& add_name, const
 		if (add_client->IsSolo()) {
 			auto solo_reject_string = "Solo characters may not join groups or raids.";
 			client->Message(Chat::Red, solo_reject_string);
-			client->SendMarqueeMessage(Chat::Red, solo_reject_string, 5000);
 			return;
 		}
 

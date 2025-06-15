@@ -7707,7 +7707,18 @@ void Client::Handle_OP_GroupFollow2(const EQApplicationPacket *app)
 	if (IsSolo() || (inviter && inviter->IsSolo())) {
 		auto solo_reject_string = "Solo characters may not join groups or raids.";
 		inviter->Message(Chat::Red, solo_reject_string);
-		inviter->SendMarqueeMessage(Chat::Red, solo_reject_string, 5000);
+		return;
+	}
+
+	if (!inviter || (inviter->IsSelfFound() != IsSelfFound())) {
+		auto reject = "Self-Found characters may only group with others in the same mode.";
+		inviter->Message(Chat::Red, reject);
+		return;
+	}
+
+	if (!inviter || (inviter->IsHardcore() != IsHardcore())) {
+		auto reject = "Hardcore characters may only group with others in the same mode.";
+		inviter->Message(Chat::Red, reject);
 		return;
 	}
 
@@ -7784,7 +7795,18 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 			if (IsSolo() || (invitee->CastToClient()->IsSolo())) {
 				auto solo_reject_string = "Solo characters may not join groups or raids.";
 				Message(Chat::Red, solo_reject_string);
-				SendMarqueeMessage(Chat::Red, solo_reject_string, 5000);
+				return;
+			}
+
+			if (!invitee || (invitee->CastToClient()->IsSelfFound() != IsSelfFound())) {
+				auto reject = "Self-Found characters may only group with others in the same mode.";
+				Message(Chat::Red, reject);
+				return;
+			}
+
+			if (!invitee || (invitee->CastToClient()->IsHardcore() != IsHardcore())) {
+				auto reject = "Hardcore characters may only group with others in the same mode.";
+				Message(Chat::Red, reject);
 				return;
 			}
 
@@ -12082,7 +12104,18 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket* app)
 			if (IsSolo() || (player_to_invite && player_to_invite->IsSolo())) {
 				auto solo_reject_string = "Solo characters may not join groups or raids.";
 				Message(Chat::Red, solo_reject_string);
-				SendMarqueeMessage(Chat::Red, solo_reject_string, 5000);
+				return;
+			}
+
+			if (!player_to_invite || (player_to_invite->IsSelfFound() != IsSelfFound())) {
+				auto reject = "Self-Found characters may only group with others in the same mode.";
+				Message(Chat::Red, reject);
+				return;
+			}
+
+			if (!player_to_invite || (player_to_invite->IsHardcore() != IsHardcore())) {
+				auto reject = "Hardcore characters may only group with others in the same mode.";
+				Message(Chat::Red, reject);
 				return;
 			}
 

@@ -3182,6 +3182,10 @@ void Zone::ApplyGlobalBuffs()
 {
 	database.LoadGlobalBuffs();
 	for (auto &e: entity_list.GetClientList()) {
+		if (e.second->IsHardcore() || e.second->IsSelfFound()) {
+			continue;
+		}
+
 		int timer = (int) Mob::RandomTimer(1000, 60000);
 		e.second->GetGlobalBuffTimer()->Start(timer);
 		e.second->Message(
@@ -3189,6 +3193,7 @@ void Zone::ApplyGlobalBuffs()
 			"Your senses are tingling. (Global buffs being applied to you in %s)",
 			Strings::ToLower(Strings::SecondsToTime(timer, true)).c_str()
 		);
+
 	}
 }
 

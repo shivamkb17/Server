@@ -10666,7 +10666,7 @@ void Client::Handle_OP_LootRequest(const EQApplicationPacket *app)
 		}
 
 		if (!ent->CastToCorpse()->IsPlayerCorpse() && !ent->CastToCorpse()->IsPlayModeEligible(this)) {
-			Message(Chat::Red, "Your play modes prevert looting this corpse.");
+			Message(Chat::Red, "Your play modes prevent looting this corpse.");
 			Corpse::SendLootReqErrorPacket(this);
 			return;
 		}

@@ -28,6 +28,7 @@
 #include "../common/path_manager.h"
 #include "../common/database/database_update.h"
 #include "../common/repositories/zone_state_spawns_repository.h"
+#include "../common/progression_manager.h"
 
 extern ZSList      zoneserver_list;
 extern WorldConfig Config;
@@ -229,6 +230,7 @@ void WorldBoot::RegisterLoginservers()
 extern SharedTaskManager   shared_task_manager;
 extern AdventureManager    adventure_manager;
 extern WorldEventScheduler event_scheduler;
+extern ProgressionManager  progression_manager;
 
 bool WorldBoot::DatabaseLoadRoutines(int argc, char **argv)
 {
@@ -409,6 +411,9 @@ bool WorldBoot::DatabaseLoadRoutines(int argc, char **argv)
 
 	LogInfo("Purging expired shared tasks");
 	shared_task_manager.PurgeExpiredSharedTasks();
+
+	progression_manager.LoadData(&database, &content_db);
+	progression_manager.Reload();
 
 	LogInfo("Cleaning up instance corpses");
 	database.CleanupInstanceCorpses();

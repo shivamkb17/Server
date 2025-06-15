@@ -165,6 +165,8 @@ private:
 	bool ChecksumVerificationCRCSkillCaps(uint64 checksum);
 	bool ChecksumVerificationCRCBaseData(uint64 checksum);
 
+	int GetHighestProgressionStage(int character_id = 0);
+
 	bool HandleSetUnlock(uint32 quantity);
 	bool HandleSlotUnlock(uint32 quantity);
 

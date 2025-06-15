@@ -3,6 +3,10 @@
 ProgressionManager::ProgressionManager() { }
 
 ProgressionManager::ProgressionManager(Database* database, Database* content_db) {
+	LoadData(database, content_db);
+}
+
+void ProgressionManager::LoadData(Database* database, Database* content_db) {
 	ProgressionManager::m_database = database;
 	ProgressionManager::m_content_database = (content_db) ? content_db : database;
 }

@@ -24,6 +24,7 @@ public:
 	ProgressionManager(Database* database, Database* content_db = nullptr);
 
 	void Reload();
+	void LoadData(Database* database, Database* content_db);
 
 	std::vector<ProgressionFlagsRepository::ProgressionFlags> GetFlagsList() const;
 	std::vector<ProgressionStagesRepository::ProgressionStages> GetStagesList() const;

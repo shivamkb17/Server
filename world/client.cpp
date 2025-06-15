@@ -61,6 +61,7 @@
 #include "../common/repositories/data_buckets_repository.h"
 #include "../common/repositories/account_alt_currency_repository.h"
 #include "../common/skill_caps.h"
+#include "../common/progression_manager.h"
 
 #include <iostream>
 #include <iomanip>
@@ -100,6 +101,7 @@ extern EQ::Random emu_random;
 extern uint32 numclients;
 extern volatile bool RunLoops;
 extern volatile bool UCSServerAvailable_;
+extern ProgressionManager progression_manager;
 
 // unused ATM, but here for reference, should match RoF2
 enum class NameApprovalResponse : int {
@@ -142,6 +144,11 @@ Client::Client(EQStreamInterface* ieqs)
 
 Client::~Client() {
 	WritebackCharacterDataCache();
+
+	DataBucket::DeleteFromCache(GetAccountID(), DataBucketLoadType::Account);
+	for (const auto& character : m_account_characters) {
+		DataBucket::DeleteFromCache(character.id, DataBucketLoadType::Client);
+	}
 
 	if (RunLoops && cle && zone_id == 0)
 		cle->SetOnline(CLE_Status::Offline);
@@ -2876,6 +2883,7 @@ void Client::SendCharacterSetInfo() {
 	l->character_set_cost = RuleI(Custom, EoMUnlockCharacterSetCost);
 	l->available_slot_unlocks = GetAvailableSlotUnlocks();
 	l->available_set_unlocks = GetAvailableSetUnlocks();
+	l->account_progression_stage = GetHighestProgressionStage();
 
 	for (size_t i = 0; i < l->set_count; ++i) {
 		const auto& set = sets[i];
@@ -2898,6 +2906,7 @@ void Client::SendCharacterSetInfo() {
 		e->level = ch.level;
 		e->classes = char_classes[ch.id];
 		e->play_mode_bitmask = m_character_play_modes[e->character_id];
+		e->character_progression_stage = GetHighestProgressionStage(ch.id);
 
 		const auto& csl = char_sets[ch.id];
 		size_t cnt = std::min(csl.size(), static_cast<size_t>(MAX_CHARACTER_SETS));
@@ -2912,18 +2921,66 @@ void Client::SendCharacterSetInfo() {
 	safe_delete(outapp);
 }
 
+int Client::GetHighestProgressionStage(int character_id) {
+	// This is gross and hardcoded, but idk a better way
+	if (!character_id) {
+		if (progression_manager.IsFlagUnlockedByAccount(GetAccountID(), "GoD")) {
+			return 5;
+		}
+
+		if (progression_manager.IsFlagUnlockedByAccount(GetAccountID(), "PoP")) {
+			return 4;
+		}
+
+		if (progression_manager.IsFlagUnlockedByAccount(GetAccountID(), "SoL")) {
+			return 3;
+		}
+
+		if (progression_manager.IsFlagUnlockedByAccount(GetAccountID(), "SoV")) {
+			return 2;
+		}
+
+		if (progression_manager.IsFlagUnlockedByAccount(GetAccountID(), "RoK")) {
+			return 5;
+		}
+	} else {
+		if (progression_manager.IsFlagUnlockedByCharacter(character_id, "GoD")) {
+			return 5;
+		}
+
+		if (progression_manager.IsFlagUnlockedByCharacter(character_id, "PoP")) {
+			return 4;
+		}
+
+		if (progression_manager.IsFlagUnlockedByCharacter(character_id, "SoL")) {
+			return 3;
+		}
+
+		if (progression_manager.IsFlagUnlockedByCharacter(character_id, "SoV")) {
+			return 2;
+		}
+
+		if (progression_manager.IsFlagUnlockedByCharacter(character_id, "RoK")) {
+			return 5;
+		}
+	}
+
+	return 0;
+}
+
 void Client::PopulateCharacterDataCache() {
 	m_account_characters = CharacterDataRepository::GetAllCharactersForAccount(database, GetAccountID());
 	m_character_sets = AccountCharacterSetsRepository::GetAccountCharacterSets(database, GetAccountID());
 	m_character_set_members = AccountCharacterSetMembersRepository::GetAccountSetMembership(database, GetAccountID());
 	m_character_set_meta = AccountCharacterSetLimitsRepository::GetAccountSetMeta(database, GetAccountID());
+	m_eom_available = AccountAltCurrencyRepository::FindByAccountAndCurrency(database, GetAccountID(), EOM_CURRENCY_ID).amount;
 
 	m_default_character_set = m_character_set_meta.default_set;
 	if (!m_selected_character_set) {
 		m_selected_character_set = m_default_character_set;
 	}
 
-	std::vector<int> character_ids;
+	std::vector<uint32> character_ids;
 	character_ids.reserve(m_account_characters.size());
 	for (const auto& character : m_account_characters) {
 		character_ids.push_back(character.id);
@@ -2931,8 +2988,8 @@ void Client::PopulateCharacterDataCache() {
 
 	m_character_play_modes = CharacterDataExtraRepository::GetPlayModesBitMask(database, character_ids);
 
-
-	m_eom_available = AccountAltCurrencyRepository::FindByAccountAndCurrency(database, GetAccountID(), EOM_CURRENCY_ID).amount;
+	DataBucket::BulkLoadEntitiesToCache(DataBucketLoadType::Client, character_ids);
+	DataBucket::BulkLoadEntitiesToCache(DataBucketLoadType::Account, {GetAccountID()});
 }
 
 void Client::WritebackCharacterDataCache() {

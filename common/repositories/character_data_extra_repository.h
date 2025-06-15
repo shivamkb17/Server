@@ -98,7 +98,7 @@ public:
 			(entry.play_mode_hardcore != 0 ? HARDCORE_MODE : 0);
 	}
 
-	static std::unordered_map<uint, uint32> GetPlayModesBitMask(Database& db, const std::vector<int>& character_ids)
+	static std::unordered_map<uint, uint32> GetPlayModesBitMask(Database& db, const std::vector<uint32>& character_ids)
 	{
 		std::unordered_map<uint32, uint32> result;
 

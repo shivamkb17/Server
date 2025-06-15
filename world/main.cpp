@@ -90,6 +90,7 @@
 #include "../common/skill_caps.h"
 #include "../common/repositories/character_parcels_repository.h"
 #include "../common/ip_util.h"
+#include "../common/progression_manager.h"
 
 SkillCaps           skill_caps;
 ZoneStore           zone_store;
@@ -114,6 +115,7 @@ WebInterfaceList    web_interface;
 PathManager         path;
 PlayerEventLogs     player_event_logs;
 EvolvingItemsManager evolving_items_manager;
+ProgressionManager progression_manager;
 
 void CatchSignal(int sig_num);
 

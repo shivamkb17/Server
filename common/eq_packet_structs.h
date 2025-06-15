@@ -206,6 +206,7 @@ struct CharacterEntry_Struct {
 	uint32 classes;
 	uint32 assigned_sets[64];
 	uint32 play_mode_bitmask;
+	uint32 character_progression_stage;
 };
 
 struct CharacterSetList_Struct {
@@ -220,6 +221,7 @@ struct CharacterSetList_Struct {
 	uint32 character_set_cost;
 	uint32 available_slot_unlocks;
 	uint32 available_set_unlocks;
+	uint32 account_progression_stage;
 	CharacterSet_Struct sets[64];
 	CharacterEntry_Struct characters[];
 };

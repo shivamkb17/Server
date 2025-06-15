@@ -362,7 +362,9 @@ void Client::WaypointTransport(uint32 zoneID, uint32 instance_id, float x, float
 
 bool Client::AllowAccountWaypoints()
 {
-	// Can adjust this for Self-Found, Hardcore, etc.
+	if (IsHardcore() || IsSelfFound()) {
+		return false;
+	}
 	return true;
 }
 

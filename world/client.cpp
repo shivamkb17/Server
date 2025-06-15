@@ -2841,14 +2841,14 @@ void Client::SendCharacterSetInfo() {
 			cids.push_back(ch.id);
 		}
 
-		if (!cids.empty()) {
-			auto b = DataBucketsRepository::GetWhere(
-				database,
-				"`key` = 'GestaltClasses' AND character_id IN (" + Strings::Join(cids, ",") + ")");
+		for (const int id : cids) {
+			DataBucketKey k = {};
+			k.character_id = id;
+			k.key = 'GestaltClasses';
 
-			for (const auto& bucket : b) {
-				char_classes[bucket.character_id] = static_cast<uint32>(Strings::ToInt(bucket.value));
-			}
+			DataBucket::GetData(k);
+
+			char_classes[id] = static_cast<uint32>(Strings::ToUnsignedInt(k.value));
 		}
 	}
 

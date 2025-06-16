@@ -2275,47 +2275,47 @@ void Corpse::CheckIsOwnerOnline()
 }
 
 void Corpse::RemoveItemByPercent(float percent, int min_delete, int max_delete) {
-    percent = std::max(0.0f, std::min(1.0f, percent));
+	percent = std::max(0.0f, std::min(1.0f, percent));
 
-    std::vector<LootItem*> items;
-    items.reserve(m_item_list.size());
-    for (auto ptr : m_item_list) {
-        if (ptr)
-            items.push_back(ptr);
-    }
+	std::vector<LootItem*> items;
+	items.reserve(m_item_list.size());
+	for (auto ptr : m_item_list) {
+		if (ptr)
+			items.push_back(ptr);
+	}
 
-    if (items.empty() || percent <= 0.0f) {
-        return;
-    }
+	if (items.empty() || percent <= 0.0f) {
+		return;
+	}
 
-    for (size_t i = items.size() - 1; i > 0; --i) {
-        int j = zone->random.Int(0, static_cast<int>(i));
-        std::swap(items[i], items[j]);
-    }
+	for (size_t i = items.size() - 1; i > 0; --i) {
+		int j = zone->random.Int(0, static_cast<int>(i));
+		std::swap(items[i], items[j]);
+	}
 
-    size_t total = items.size();
-    size_t target = static_cast<size_t>(std::floor(total * percent));
+	size_t total = items.size();
+	size_t target = static_cast<size_t>(std::floor(total * percent));
 
-    if (percent > 0.0f && target < static_cast<size_t>(min_delete)) {
-        target = static_cast<size_t>(min_delete);
-    }
-    if (max_delete >= 0 && target > static_cast<size_t>(max_delete)) {
-        target = static_cast<size_t>(max_delete);
-    }
+	if (percent > 0.0f && target < static_cast<size_t>(min_delete)) {
+		target = static_cast<size_t>(min_delete);
+	}
+	if (max_delete >= 0 && target > static_cast<size_t>(max_delete)) {
+		target = static_cast<size_t>(max_delete);
+	}
 
-    if (target > total) {
-        target = total;
-    }
+	if (target > total) {
+		target = total;
+	}
 
-    for (size_t removed = 0; removed < target; ++removed) {
-        RemoveItem(items[removed]);
-    }
+	for (size_t removed = 0; removed < target; ++removed) {
+		RemoveItem(items[removed]);
+	}
 
-    m_is_corpse_changed = true;
-    Save();
-    if (Client* looter = entity_list.GetClientByID(m_being_looted_by_entity_id)) {
-        QueryLoot(looter);
-    }
+	m_is_corpse_changed = true;
+	Save();
+	if (Client* looter = entity_list.GetClientByID(m_being_looted_by_entity_id)) {
+		QueryLoot(looter);
+	}
 }
 
 void Corpse::CastRezz(uint16 spell_id, Mob *caster)
@@ -2487,51 +2487,51 @@ Corpse *Corpse::LoadCharacterCorpse(
 }
 
 bool Corpse::IsPlayModeEligible(Client* client) {
-    if (!client) return false;
+	if (!client) return false;
 
-    if (client->IsSolo()) {
-        auto solo_key = fmt::format("solo-{}", client->GetCleanName());
-        if (!EntityVariableExists(solo_key) || EntityVariableExists("solo-ineligible")) {
-            return false;
-        }
-    }
+	if (client->IsSolo()) {
+		auto solo_key = fmt::format("solo-{}", client->GetCleanName());
+		if (!EntityVariableExists(solo_key) || EntityVariableExists("solo-ineligible")) {
+			return false;
+		}
+	}
 
-    if (client->IsSelfFound()) {
-        if (EntityVariableExists("sf-ineligible")) {
-            return false;
-        }
+	if (client->IsSelfFound()) {
+		if (EntityVariableExists("sf-ineligible")) {
+			return false;
+		}
 
-        // Check if any SF player tagged this mob
-        auto variables = GetEntityVariables();
-        bool sf_tagged = false;
-        for (const auto& variable : variables) {
-            if (variable.substr(0, 3) == "sf-") {
-                sf_tagged = true;
-                break;
-            }
-        }
-        if (!sf_tagged) {
-            return false;
-        }
-    }
+		// Check if any SF player tagged this mob
+		auto variables = GetEntityVariables();
+		bool sf_tagged = false;
+		for (const auto& variable : variables) {
+			if (variable.substr(0, 3) == "sf-") {
+				sf_tagged = true;
+				break;
+			}
+		}
+		if (!sf_tagged) {
+			return false;
+		}
+	}
 
-    if (client->IsHardcore()) {
-        if (EntityVariableExists("hc-ineligible")) {
-            return false;
-        }
+	if (client->IsHardcore()) {
+		if (EntityVariableExists("hc-ineligible")) {
+			return false;
+		}
 
-        auto variables = GetEntityVariables();
-        bool hc_tagged = false;
-        for (const auto& variable : variables) {
-            if (variable.substr(0, 3) == "hc-") {
-                hc_tagged = true;
-                break;
-            }
-        }
-        if (!hc_tagged) {
-            return false;
-        }
-    }
+		auto variables = GetEntityVariables();
+		bool hc_tagged = false;
+		for (const auto& variable : variables) {
+			if (variable.substr(0, 3) == "hc-") {
+				hc_tagged = true;
+				break;
+			}
+		}
+		if (!hc_tagged) {
+			return false;
+		}
+	}
 
-    return true;
+	return true;
 }

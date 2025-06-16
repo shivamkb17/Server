@@ -675,6 +675,8 @@ bool NPC::Process()
 			parse->EventNPC(EVENT_TICK, this, nullptr, "", 0);
 		}
 
+		CheckAndResetAbandonedMob();
+
 		if (!GetTarget() && (GetOwnerOrSelf())) {
 			auto owner = GetOwner()->CastToClient();
 			if (!owner) {

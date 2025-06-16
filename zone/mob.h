@@ -2040,6 +2040,7 @@ public:
 	bool IsHardcoreEligible(Mob* attacker);
 	bool IsPlayModeEligible(Mob* attacker);
 	void TagPlayModeEngagement(Mob* attacker);
+	bool CheckAndResetAbandonedMob();
 };
 
 #endif

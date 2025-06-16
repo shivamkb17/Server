@@ -756,77 +756,134 @@ std::list<Mob*> EntityList::GetHatedList(Mob *attacker, Mob *exclude, bool inc_g
 }
 
 bool Mob::IsSelfFoundEligible(Mob* attacker) {
-    if (!attacker || !attacker->IsClient()) {
-        return true;
-    }
+	if (!attacker || !attacker->IsClient()) {
+		return true;
+	}
 
-    Client* client = attacker->CastToClient();
+	Client* client = attacker->CastToClient();
 
-    if (EntityVariableExists("sf-ineligible")) {
-        return !client->IsSelfFound();
-    }
+	if (EntityVariableExists("sf-ineligible")) {
+		return !client->IsSelfFound();
+	}
 
-    auto variables = GetEntityVariables();
-    for (const auto& variable : variables) {
-        if (variable.substr(0, 3) == "sf-") {
-            return client->IsSelfFound();
-        }
-    }
+	auto variables = GetEntityVariables();
+	for (const auto& variable : variables) {
+		if (variable.substr(0, 3) == "sf-") {
+			return client->IsSelfFound();
+		}
+	}
 
-    return true;
+	return true;
 }
 
 bool Mob::IsSoloEligible(Mob* attacker) {
-    if (!attacker || !attacker->IsClient()) {
-        return true;
-    }
+	if (!attacker || !attacker->IsClient()) {
+		return true;
+	}
 
-    Client* client = attacker->CastToClient();
+	Client* client = attacker->CastToClient();
 
-    if (EntityVariableExists("solo-ineligible")) {
-        return !client->IsSolo();
-    }
+	if (EntityVariableExists("solo-ineligible")) {
+		return !client->IsSolo();
+	}
 
-    auto attacker_solo_key = fmt::format("solo-{}", client->GetCleanName());
-    if (EntityVariableExists(attacker_solo_key)) {
-        return true;
-    }
+	auto attacker_solo_key = fmt::format("solo-{}", client->GetCleanName());
+	if (EntityVariableExists(attacker_solo_key)) {
+		return true;
+	}
 
-    auto variables = GetEntityVariables();
-    for (const auto& variable : variables) {
-        if (variable.substr(0, 5) == "solo-") {
-            return false;
-        }
-    }
+	auto variables = GetEntityVariables();
+	for (const auto& variable : variables) {
+		if (variable.substr(0, 5) == "solo-") {
+			return false;
+		}
+	}
 
-    return true;
+	return true;
 }
 
 bool Mob::IsHardcoreEligible(Mob* attacker) {
-    if (!attacker || !attacker->IsClient()) {
-        return true;
-    }
+	if (!attacker || !attacker->IsClient()) {
+		return true;
+	}
 
-    Client* client = attacker->CastToClient();
+	Client* client = attacker->CastToClient();
 
-    if (EntityVariableExists("hc-ineligible")) {
-        return !client->IsHardcore();
-    }
+	if (EntityVariableExists("hc-ineligible")) {
+		return !client->IsHardcore();
+	}
 
-    auto variables = GetEntityVariables();
-    for (const auto& variable : variables) {
-        if (variable.substr(0, 3) == "hc-") {
-            return client->IsHardcore();
-        }
-    }
+	auto variables = GetEntityVariables();
+	for (const auto& variable : variables) {
+		if (variable.substr(0, 3) == "hc-") {
+			return client->IsHardcore();
+		}
+	}
 
-    return true;
+	return true;
 }
 
 bool Mob::IsPlayModeEligible(Mob* attacker) {
-    return IsSelfFoundEligible(attacker) &&
-           IsSoloEligible(attacker) &&
-           IsHardcoreEligible(attacker);
+	return IsSelfFoundEligible(attacker) &&
+		   IsSoloEligible(attacker) &&
+		   IsHardcoreEligible(attacker);
+}
+
+bool Mob::CheckAndResetAbandonedMob() {
+	auto ev = GetEntityVariables();
+	std::vector<std::string> n;
+
+	for (const auto& v : ev) {
+		std::string p;
+
+		if (v.substr(0, 3) == "sf-" && v.length() > 3) {
+			p = v.substr(3);
+		} else if (v.substr(0, 5) == "solo-" && v.length() > 5) {
+			p = v.substr(5);
+		} else if (v.substr(0, 3) == "hc-" && v.length() > 3) {
+			p = v.substr(3);
+		}
+
+		if (!p.empty()) {
+			n.push_back(p);
+		}
+	}
+
+	if (n.empty()) {
+		return false;
+	}
+
+
+	bool any_claimants_present = false;
+	for (const auto& name : n) {
+		Client* c = entity_list.GetClientByName(name.c_str());
+		if (c && c->GetZoneID() == GetZoneID()) {
+			any_claimants_present = true;
+			break;
+		}
+	}
+
+
+	if (!any_claimants_present) {
+		for (const auto& v : ev) {
+			if (v.substr(0, 3) == "sf-" ||
+				v.substr(0, 5) == "solo-" ||
+				v.substr(0, 3) == "hc-" ||
+				v == "sf-ineligible" ||
+				v == "solo-ineligible" ||
+				v == "hc-ineligible") {
+
+				DeleteEntityVariable(v);
+			}
+		}
+
+		SetHP(GetMaxHP());
+
+		LogDebug("Reset abandoned mob [{}] - all claimants gone", GetCleanName());
+		return true;
+	}
+
+	return false;
 }
 
 /**

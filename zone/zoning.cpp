@@ -689,6 +689,14 @@ void Client::MoveZoneInstanceRaid(uint16 instance_id, const glm::vec4 &location)
 
 void Client::ProcessMovePC(uint32 zoneID, uint32 instance_id, float x, float y, float z, float heading, uint8 ignorerestrictions, ZoneMode zm)
 {
+	if (IsHardcore() && zoneID != Zones::SHADOWREST) {
+		if (!GetBucket("Hardcore_Dead").empty()) {
+			Message(Chat::Red, "Your soul is condemned. Speak with the Keeper to seek a second chance.");
+			SendMarqueeMessage(Chat::Red, "Your soul is condemned. Speak with the Keeper to seek a second chance.");
+			return;
+		}
+	}
+
 	// From what I have read, dragged corpses should stay with the player for Intra-zone summons etc, but we can
 	// implement that later.
 	ClearDraggedCorpses();
@@ -1199,6 +1207,7 @@ void Client::GoToDeath() {
 	float y = m_pp.binds[0].y;
 	float z = m_pp.binds[0].z;
 	float h = m_pp.binds[0].heading;
+	ZoneMode zm = ZoneToBindPoint;
 
 	if (IsHardcore()) {
 		zone_id = Zones::SHADOWREST;
@@ -1207,9 +1216,10 @@ void Client::GoToDeath() {
 		y = -245.60f;
 		z = 12.0f;
 		h = 500.0f;
+		zm = ZoneSolicited;
 	}
 
-	MovePC(zone_id, instance_id, x, y, z, h, 1, ZoneToBindPoint);
+	MovePC(zone_id, instance_id, x, y, z, h, 1, zm);
 }
 
 void Client::ClearZoneFlag(uint32 zone_id)

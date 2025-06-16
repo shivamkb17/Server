@@ -3415,4 +3415,15 @@ std::string Zone::GetProgressionFlagForZone(const int zone_id) const {
     return pm.GetFlagForZone(zone_id);
 }
 
+void Zone::DeleteCharacter(const std::string& character_name) {
+	auto client = entity_list.GetClientByName(character_name.c_str());
+
+	if (!client) {
+		return;
+	}
+
+	client->OnDisconnect(true);
+	database.DeleteCharacter(character_name);
+}
+
 #include "zone_loot.cpp"

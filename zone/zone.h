@@ -510,6 +510,8 @@ public:
 	bool DoesProgressionFlagExist(const std::string& flag_name) const;
 	std::string GetProgressionFlagForZone(const int zone_id) const;
 
+	void DeleteCharacter(const std::string& character_name);
+
 private:
 	bool      allow_mercs;
 	bool      can_bind;

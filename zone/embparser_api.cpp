@@ -6100,6 +6100,11 @@ std::string Perl__GetProgressionFlagForZone(int zone_id) // @categories Account 
 	return zone->GetProgressionFlagForZone(zone_id);
 }
 
+void Perl__DeleteCharacter(std::string character_name)
+{
+	zone->DeleteCharacter(character_name);
+}
+
 void perl_register_quest()
 {
 	perl::interpreter perl(PERL_GET_THX);
@@ -7121,6 +7126,7 @@ void perl_register_quest()
 	package.add("reload_global_buffs", &Perl__reload_global_buffs);
 	package.add("add_global_buff", (uint32_t(*)(uint32, uint32))&Perl__add_global_buff_time);
 	package.add("get_global_buff", (uint32_t(*)(uint32))&Perl__get_global_buff_time);
+	package.add("DeleteCharacter", (void(*)(std::string))&Perl__DeleteCharacter);
 
 }
 

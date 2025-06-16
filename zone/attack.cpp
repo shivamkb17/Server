@@ -2277,11 +2277,7 @@ bool Client::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::Skil
 	}
 
 	if (IsHardcore()) {
-		DataBucketKey k = GetScopedBucketKeys();
-		k.key = "Hardcore_Dead";
-		k.value = std::to_string(std::time(nullptr));
-
-		DataBucket::SetData(k);
+		SetBucket("Hardcore_Dead", std::to_string(std::time(nullptr)));
 	}
 
 	return true;

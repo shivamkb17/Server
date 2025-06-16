@@ -6687,7 +6687,28 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	}
 
 	if (GetHP() <= 0) {
-		Death(0, 32000, SPELL_UNKNOWN, EQ::skills::SkillHandtoHand);
+		// Map environmental damage type to KilledByTypes
+		KilledByTypes killed_by_type;
+		switch (ed->dmgtype) {
+			case EQ::constants::EnvironmentalDamage::Lava:
+				killed_by_type = KilledByTypes::Killed_ENV_LAVA;
+				break;
+			case EQ::constants::EnvironmentalDamage::Falling:
+				killed_by_type = KilledByTypes::Killed_ENV_FALL;
+				break;
+			case EQ::constants::EnvironmentalDamage::Drowning:
+				killed_by_type = KilledByTypes::Killed_ENV_DROWN;
+				break;
+			case EQ::constants::EnvironmentalDamage::Trap:
+				killed_by_type = KilledByTypes::Killed_ENV_TRAP;
+				break;
+			default:
+				// For unknown environmental damage types, default to generic environmental
+				killed_by_type = KilledByTypes::Killed_ENV_FALL; // or choose most appropriate default
+				break;
+		}
+
+		Death(0, 32000, SPELL_UNKNOWN, EQ::skills::SkillHandtoHand, killed_by_type);
 	}
 	SendHPUpdate();
 	return;

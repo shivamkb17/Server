@@ -1876,11 +1876,12 @@ bool Client::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::Skil
 
 	if (parse->PlayerHasQuestSub(EVENT_DEATH)) {
 		const auto& export_string = fmt::format(
-			"{} {} {} {}",
+			"{} {} {} {} {}",
 			killer_mob ? killer_mob->GetID() : 0,
 			damage,
 			spell,
-			static_cast<int>(attack_skill)
+			static_cast<int>(attack_skill),
+			static_cast<int>(killed_by)
 		);
 
 		if (parse->EventPlayer(EVENT_DEATH, this, export_string, 0) != 0) {
@@ -2241,7 +2242,7 @@ bool Client::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::Skil
 		dead_timer.Start(5000, true);
 		m_pp.zone_id = m_pp.binds[0].zone_id;
 		m_pp.zoneInstance = m_pp.binds[0].instance_id;
-		database.MoveCharacterToZone(CharacterID(), m_pp.zone_id);
+		database.MoveCharacterToZone(CharacterID(), !IsHardcore() ? m_pp.zone_id : Zones::SHADOWREST);
 		Save();
 		GoToDeath();
 	}
@@ -2262,11 +2263,12 @@ bool Client::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::Skil
 
 	if (parse->PlayerHasQuestSub(EVENT_DEATH_COMPLETE)) {
 		const auto& export_string = fmt::format(
-			"{} {} {} {}",
+			"{} {} {} {} {}",
 			killer_mob ? killer_mob->GetID() : 0,
 			damage,
 			spell,
-			static_cast<int>(attack_skill)
+			static_cast<int>(attack_skill),
+			static_cast<int>(killed_by)
 		);
 
 		std::vector<std::any> args = { new_corpse };
@@ -2275,7 +2277,11 @@ bool Client::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::Skil
 	}
 
 	if (IsHardcore()) {
-		SetHardcore(false);
+		DataBucketKey k = GetScopedBucketKeys();
+		k.key = "Hardcore_Dead";
+		k.value = std::to_string(std::time(nullptr));
+
+		DataBucket::SetData(k);
 	}
 
 	return true;
@@ -2622,7 +2628,8 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 			killer_mob ? killer_mob->GetID() : 0,
 			damage,
 			spell,
-			static_cast<int>(attack_skill)
+			static_cast<int>(attack_skill),
+			static_cast<int>(killed_by)
 		);
 	};
 

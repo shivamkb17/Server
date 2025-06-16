@@ -229,7 +229,11 @@ enum class LootRequestType : uint8 {
 enum class KilledByTypes : uint8 {
 	Killed_NPC = 0,
 	Killed_DUEL = 1,
-	Killed_PVP = 2
+	Killed_PVP = 2,
+	Killed_ENV_LAVA = 3,
+	Killed_ENV_FALL = 4,
+	Killed_ENV_DROWN = 5,
+	Killed_ENV_TRAP = 6
 };
 
 namespace Journal {

@@ -959,7 +959,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 		zone_mode = zm;
 		if (zm == ZoneToBindPoint) {
 			auto outapp = new EQApplicationPacket(OP_ZonePlayerToBind,
-							      sizeof(ZonePlayerToBind_Struct) + iZoneNameLength);
+								  sizeof(ZonePlayerToBind_Struct) + iZoneNameLength);
 			ZonePlayerToBind_Struct* gmg = (ZonePlayerToBind_Struct*) outapp->pBuffer;
 
 			// If we are SoF and later and are respawning from hover, we want the real zone ID, else zero to use the old hack.
@@ -1050,7 +1050,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			}
 
 			auto outapp =
-			    new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
+				new EQApplicationPacket(OP_RequestClientZoneChange, sizeof(RequestClientZoneChange_Struct));
 			RequestClientZoneChange_Struct* gmg = (RequestClientZoneChange_Struct*) outapp->pBuffer;
 
 			gmg->zone_id = zoneID;
@@ -1193,7 +1193,23 @@ void Client::GoToBind(uint8 bind_number) {
 }
 
 void Client::GoToDeath() {
-	MovePC(m_pp.binds[0].zone_id, m_pp.binds[0].instance_id, 0.0f, 0.0f, 0.0f, 0.0f, 1, ZoneToBindPoint);
+	int zone_id = m_pp.binds[0].zone_id;
+	int instance_id = m_pp.binds[0].instance_id;
+	float x = m_pp.binds[0].x;
+	float y = m_pp.binds[0].y;
+	float z = m_pp.binds[0].z;
+	float h = m_pp.binds[0].heading;
+
+	if (IsHardcore()) {
+		zone_id = Zones::SHADOWREST;
+		instance_id = 0;
+		x = -27.30f;
+		y = -245.60f;
+		z = 12.0f;
+		h = 500.0f;
+	}
+
+	MovePC(zone_id, instance_id, x, y, z, h, 1, ZoneToBindPoint);
 }
 
 void Client::ClearZoneFlag(uint32 zone_id)

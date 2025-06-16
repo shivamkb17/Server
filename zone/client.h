@@ -2694,6 +2694,7 @@ public:
 	bool IsProgressionFlagUnlocked(const std::string& flag_name) const;
 	bool UnlockProgressionStage(const std::string& stage_name);
 	bool IsZoneUnlockedByProgression(const int zone_id) const;
+	bool AccountProgressionAllowed() const;
 };
 
 #endif

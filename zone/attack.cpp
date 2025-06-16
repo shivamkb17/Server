@@ -3306,6 +3306,57 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 	return true;
 }
 
+void Mob::TagPlayModeEngagement(Mob* attacker) {
+    auto ultimate_owner = attacker->GetUltimateOwner();
+    if (!ultimate_owner->IsClient()) {
+        return;
+    }
+
+    auto client = ultimate_owner->CastToClient();
+
+    // Self-Found tagging
+    if (client->IsSelfFound()) {
+        auto key = fmt::format("sf-{}", client->GetCleanName());
+        if (!EntityVariableExists(key) && !EntityVariableExists("sf-ineligible")) {
+            SetEntityVariable(key, "true");
+            LogDebug("Set [{}]", key);
+        }
+    } else {
+        if (!EntityVariableExists("sf-ineligible")) {
+            SetEntityVariable("sf-ineligible", "true");
+            LogDebug("SF-Ineligible [{}]", client->GetCleanName());
+        }
+    }
+
+    // Solo tagging
+    if (client->IsSolo()) {
+        auto key = fmt::format("solo-{}", client->GetCleanName());
+        if (!EntityVariableExists(key) && !EntityVariableExists("solo-ineligible")) {
+            SetEntityVariable(key, "true");
+            LogDebug("Set [{}]", key);
+        }
+    } else {
+        if (!EntityVariableExists("solo-ineligible")) {
+            SetEntityVariable("solo-ineligible", "true");
+            LogDebug("Solo-Ineligible [{}]", client->GetCleanName());
+        }
+    }
+
+    // Hardcore tagging
+    if (client->IsHardcore()) {
+        auto key = fmt::format("hc-{}", client->GetCleanName());
+        if (!EntityVariableExists(key) && !EntityVariableExists("hc-ineligible")) {
+            SetEntityVariable(key, "true");
+            LogDebug("Set [{}]", key);
+        }
+    } else {
+        if (!EntityVariableExists("hc-ineligible")) {
+            SetEntityVariable("hc-ineligible", "true");
+            LogDebug("HC-Ineligible [{}]", client->GetCleanName());
+        }
+    }
+}
+
 void Mob::AddToHateList(Mob* other, int64 hate /*= 0*/, int64 damage /*= 0*/, bool iYellForHelp /*= true*/, bool bFrenzy /*= false*/, bool iBuffTic /*= false*/, uint16 spell_id, bool pet_command)
 {
 	if (!other)
@@ -3356,53 +3407,7 @@ void Mob::AddToHateList(Mob* other, int64 hate /*= 0*/, int64 damage /*= 0*/, bo
 		}
 	}
 
-	/* Play Modes */
-	auto other_ultimate_owner_mob = other->GetUltimateOwner();
-	if (other_ultimate_owner_mob->IsClient()) {
-		auto other_client = other_ultimate_owner_mob->CastToClient();
-
-		// Simply tag the player's engagement - no eligibility checking needed
-		// since IsAttackAllowed prevents incompatible players from engaging
-
-		// Self-Found tagging
-		if (other_client->IsSelfFound()) {
-			auto key = fmt::format("sf-{}", other_client->GetCleanName());
-			if (!EntityVariableExists(key)) {
-				SetEntityVariable(key, "true");
-				LogDebug("Set [{}]", key);
-			}
-		} else {
-			// Non-SF player engaging - mark SF as ineligible for rewards
-			SetEntityVariable("sf-ineligible", "true");
-			LogDebug("SF-Ineligible [{}]", other->GetCleanName());
-		}
-
-		// Solo tagging
-		if (other_client->IsSolo()) {
-			auto key = fmt::format("solo-{}", other_client->GetCleanName());
-			if (!EntityVariableExists(key)) {
-				SetEntityVariable(key, "true");
-				LogDebug("Set [{}]", key);
-			}
-		} else {
-			// Non-solo player engaging - mark solo as ineligible for rewards
-			SetEntityVariable("solo-ineligible", "true");
-			LogDebug("Solo-Ineligible [{}]", other->GetCleanName());
-		}
-
-		// Hardcore tagging
-		if (other_client->IsHardcore()) {
-			auto key = fmt::format("hc-{}", other_client->GetCleanName());
-			if (!EntityVariableExists(key)) {
-				SetEntityVariable(key, "true");
-				LogDebug("Set [{}]", key);
-			}
-		} else {
-			// Non-HC player engaging - mark HC as ineligible for rewards
-			SetEntityVariable("hc-ineligible", "true");
-			LogDebug("HC-Ineligible [{}]", other->GetCleanName());
-		}
-	}
+	TagPlayModeEngagement(other);
 
 	// Dont add to pet's rampage list unless its currently attacking something or was issued to via a pet command
 	if(!IsPet() || was_engaged || pet_command) {

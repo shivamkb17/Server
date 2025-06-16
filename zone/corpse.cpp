@@ -2487,31 +2487,51 @@ Corpse *Corpse::LoadCharacterCorpse(
 }
 
 bool Corpse::IsPlayModeEligible(Client* client) {
-	if (!client) return false;
+    if (!client) return false;
 
-	// Self-Found loot check - must have specific player tag
-	if (client->IsSelfFound()) {
-		auto sf_key = fmt::format("sf-{}", client->GetCleanName());
-		if (!EntityVariableExists(sf_key) || EntityVariableExists("sf-ineligible")) {
-			return false;
-		}
-	}
+    if (client->IsSolo()) {
+        auto solo_key = fmt::format("solo-{}", client->GetCleanName());
+        if (!EntityVariableExists(solo_key) || EntityVariableExists("solo-ineligible")) {
+            return false;
+        }
+    }
 
-	// Solo loot check - must have specific player tag
-	if (client->IsSolo()) {
-		auto solo_key = fmt::format("solo-{}", client->GetCleanName());
-		if (!EntityVariableExists(solo_key) || EntityVariableExists("solo-ineligible")) {
-			return false;
-		}
-	}
+    if (client->IsSelfFound()) {
+        if (EntityVariableExists("sf-ineligible")) {
+            return false;
+        }
 
-	// Hardcore loot check - must have specific player tag
-	if (client->IsHardcore()) {
-		auto hc_key = fmt::format("hc-{}", client->GetCleanName());
-		if (!EntityVariableExists(hc_key) || EntityVariableExists("hc-ineligible")) {
-			return false;
-		}
-	}
+        // Check if any SF player tagged this mob
+        auto variables = GetEntityVariables();
+        bool sf_tagged = false;
+        for (const auto& variable : variables) {
+            if (variable.substr(0, 3) == "sf-") {
+                sf_tagged = true;
+                break;
+            }
+        }
+        if (!sf_tagged) {
+            return false;
+        }
+    }
 
-	return true;
+    if (client->IsHardcore()) {
+        if (EntityVariableExists("hc-ineligible")) {
+            return false;
+        }
+
+        auto variables = GetEntityVariables();
+        bool hc_tagged = false;
+        for (const auto& variable : variables) {
+            if (variable.substr(0, 3) == "hc-") {
+                hc_tagged = true;
+                break;
+            }
+        }
+        if (!hc_tagged) {
+            return false;
+        }
+    }
+
+    return true;
 }

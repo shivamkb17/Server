@@ -2039,6 +2039,7 @@ public:
 	bool IsSelfFoundEligible(Mob* attacker);
 	bool IsHardcoreEligible(Mob* attacker);
 	bool IsPlayModeEligible(Mob* attacker);
+	void TagPlayModeEngagement(Mob* attacker);
 };
 
 #endif

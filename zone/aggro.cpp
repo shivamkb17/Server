@@ -756,131 +756,77 @@ std::list<Mob*> EntityList::GetHatedList(Mob *attacker, Mob *exclude, bool inc_g
 }
 
 bool Mob::IsSelfFoundEligible(Mob* attacker) {
-	if (!attacker || !attacker->IsClient()) {
-		return true; // Non-clients always eligible
-	}
+    if (!attacker || !attacker->IsClient()) {
+        return true;
+    }
 
-	Client* client = attacker->CastToClient();
+    Client* client = attacker->CastToClient();
 
-	// Check if mob is claimed by Self-Found players
-	bool claimed_by_sf = false;
-	if (!EntityVariableExists("sf-ineligible")) {
-		auto variables = GetEntityVariables();
-		for (const auto& variable : variables) {
-			if (variable.substr(0, 3) == "sf-") {
-				claimed_by_sf = true;
-				break;
-			}
-		}
-	}
+    if (EntityVariableExists("sf-ineligible")) {
+        return !client->IsSelfFound();
+    }
 
-	// If claimed by SF, attacker must be SF
-	if (claimed_by_sf && !client->IsSelfFound()) {
-		return false;
-	}
+    auto variables = GetEntityVariables();
+    for (const auto& variable : variables) {
+        if (variable.substr(0, 3) == "sf-") {
+            return client->IsSelfFound();
+        }
+    }
 
-	// Check if non-moded players have engaged (all modes ineligible)
-	bool non_moded_engagement = EntityVariableExists("sf-ineligible") &&
-	                           EntityVariableExists("solo-ineligible") &&
-	                           EntityVariableExists("hc-ineligible");
-
-	// If non-moded engaged first, SF players can't join
-	if (non_moded_engagement && client->IsSelfFound()) {
-		return false;
-	}
-
-	return true;
+    return true;
 }
 
 bool Mob::IsSoloEligible(Mob* attacker) {
-	if (!attacker || !attacker->IsClient()) {
-		return true; // Non-clients always eligible
-	}
+    if (!attacker || !attacker->IsClient()) {
+        return true;
+    }
 
-	Client* client = attacker->CastToClient();
+    Client* client = attacker->CastToClient();
 
-	// Check if mob is claimed by Solo players
-	bool claimed_by_solo = false;
-	bool attacker_has_solo_claim = false;
+    if (EntityVariableExists("solo-ineligible")) {
+        return !client->IsSolo();
+    }
 
-	if (!EntityVariableExists("solo-ineligible")) {
-		auto variables = GetEntityVariables();
-		auto attacker_solo_key = fmt::format("solo-{}", client->GetCleanName());
+    auto attacker_solo_key = fmt::format("solo-{}", client->GetCleanName());
+    if (EntityVariableExists(attacker_solo_key)) {
+        return true;
+    }
 
-		for (const auto& variable : variables) {
-			if (variable.substr(0, 5) == "solo-") {
-				claimed_by_solo = true;
-				if (variable == attacker_solo_key) {
-					attacker_has_solo_claim = true;
-				}
-			}
-		}
-	}
+    auto variables = GetEntityVariables();
+    for (const auto& variable : variables) {
+        if (variable.substr(0, 5) == "solo-") {
+            return false;
+        }
+    }
 
-	// If claimed by Solo, ONLY the specific solo player who claimed it can attack
-	if (claimed_by_solo) {
-		if (client->IsSolo() && attacker_has_solo_claim) {
-			return true; // This specific solo player claimed it
-		} else {
-			return false; // Either not solo, or different solo player
-		}
-	}
-
-	// Check if non-moded players have engaged (all modes ineligible)
-	bool non_moded_engagement = EntityVariableExists("sf-ineligible") &&
-	                           EntityVariableExists("solo-ineligible") &&
-	                           EntityVariableExists("hc-ineligible");
-
-	// If non-moded engaged first, Solo players can't join
-	if (non_moded_engagement && client->IsSolo()) {
-		return false;
-	}
-
-	return true;
+    return true;
 }
 
 bool Mob::IsHardcoreEligible(Mob* attacker) {
-	if (!attacker || !attacker->IsClient()) {
-		return true; // Non-clients always eligible
-	}
+    if (!attacker || !attacker->IsClient()) {
+        return true;
+    }
 
-	Client* client = attacker->CastToClient();
+    Client* client = attacker->CastToClient();
 
-	// Check if mob is claimed by Hardcore players
-	bool claimed_by_hc = false;
-	if (!EntityVariableExists("hc-ineligible")) {
-		auto variables = GetEntityVariables();
-		for (const auto& variable : variables) {
-			if (variable.substr(0, 3) == "hc-") {
-				claimed_by_hc = true;
-				break;
-			}
-		}
-	}
+    if (EntityVariableExists("hc-ineligible")) {
+        return !client->IsHardcore();
+    }
 
-	// If claimed by HC, attacker must be HC
-	if (claimed_by_hc && !client->IsHardcore()) {
-		return false;
-	}
+    auto variables = GetEntityVariables();
+    for (const auto& variable : variables) {
+        if (variable.substr(0, 3) == "hc-") {
+            return client->IsHardcore();
+        }
+    }
 
-	// Check if non-moded players have engaged (all modes ineligible)
-	bool non_moded_engagement = EntityVariableExists("sf-ineligible") &&
-	                           EntityVariableExists("solo-ineligible") &&
-	                           EntityVariableExists("hc-ineligible");
-
-	// If non-moded engaged first, HC players can't join
-	if (non_moded_engagement && client->IsHardcore()) {
-		return false;
-	}
-
-	return true;
+    return true;
 }
 
 bool Mob::IsPlayModeEligible(Mob* attacker) {
-	// Attacker must be eligible for all applicable play modes
-	return IsSelfFoundEligible(attacker) &&
-	       IsSoloEligible(attacker) &&
-	       IsHardcoreEligible(attacker);
+    return IsSelfFoundEligible(attacker) &&
+           IsSoloEligible(attacker) &&
+           IsHardcoreEligible(attacker);
 }
 
 /**

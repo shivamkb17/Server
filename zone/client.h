@@ -1881,7 +1881,37 @@ public:
 	uint32 GetCorpseID(int corpse) { return database.GetCharacterCorpseID(CharacterID(), corpse); }
 	uint32 GetCorpseItemAt(int corpse_id, int slot_id) {
 		if (!corpse_id) {
-					// For blocked players, only show the quantity they just sold
+			return 0;
+		}
+		return database.GetCharacterCorpseItemAt(corpse_id, slot_id);
+	}
+
+	void SuspendMinion(int value);
+	void Doppelganger(uint16 spell_id, Mob *target, const char *name_override, int pet_count, int pet_duration);
+	void NotifyNewTitlesAvailable();
+	void Signal(int signal_id);
+	void SendPayload(int payload_id, std::string payload_value = std::string());
+	Mob *GetBindSightTarget() { return bind_sight_target; }
+	void SetBindSightTarget(Mob *n) { bind_sight_target = n; }
+	const uint16 GetBoatID() const { return controlling_boat_id; }
+	void SendRewards();
+	bool TryReward(uint32 claim_id);
+	QGlobalCache *GetQGlobals() { return qGlobals; }
+	QGlobalCache *CreateQGlobals() { qGlobals = new QGlobalCache(); return qGlobals; }
+	void GuildBankAck();
+	void GuildBankDepositAck(bool Fail, int8 action);
+	inline bool IsGuildBanker() { return GuildBanker; }
+	inline void SetGuildBanker(bool banker) { GuildBanker = banker; }
+	void ClearGuildBank();
+	void SendGroupCreatePacket();
+	void SendGroupLeaderChangePacket(const char *LeaderName);
+	void SendGroupJoinAcknowledge();
+	void DoTracking();
+	inline bool IsTracking() { return (TrackingID > 0); }
+	inline void SetPendingGuildInvitation(bool inPendingGuildInvitation) { PendingGuildInvitation = inPendingGuildInvitation; }
+	inline bool GetPendingGuildInvitation() { return PendingGuildInvitation; }
+	void LocateCorpse();
+	void SendTargetCommand(uint32 EntityID);
 	bool MoveItemToInventory(EQ::ItemInstance *BInst, bool UpdateClient = false);
 	void HandleRespawnFromHover(uint32 Option);
 	bool IsHoveringForRespawn() { return RespawnFromHoverTimer.Enabled(); }

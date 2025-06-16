@@ -14213,7 +14213,14 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 				inst2->SetPrice(price);
 				inst2->SetMerchantSlot(freeslot);
 
-				uint32 merchant_quantity = zone->GetTempMerchantQuantity(vendor->GetNPCTypeID(), freeslot);
+				bool can_see_temp_items = !(IsSelfFound() || IsHardcore() || IsSeasonal());
+
+				uint32 merchant_quantity;
+				if (can_see_temp_items) {
+					merchant_quantity = zone->GetTempMerchantQuantity(vendor->GetNPCTypeID(), freeslot);
+				} else {
+					merchant_quantity = charges;
+				}
 
 				if (inst2->IsStackable()) {
 					inst2->SetCharges(merchant_quantity);

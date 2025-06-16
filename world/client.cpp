@@ -2844,11 +2844,13 @@ void Client::SendCharacterSetInfo() {
 		for (const int id : cids) {
 			DataBucketKey k = {};
 			k.character_id = id;
-			k.key = 'GestaltClasses';
+			k.key = "GestaltClasses";
 
-			DataBucket::GetData(k);
+			auto b = DataBucket::GetData(k);
 
-			char_classes[id] = static_cast<uint32>(Strings::ToUnsignedInt(k.value));
+			LogDebug("Trying to get classes bitmask for character [{}] got [{}] from key [{}]", id, b.value, k.key);
+
+			char_classes[id] = static_cast<uint32>(Strings::ToUnsignedInt(b.value));
 		}
 	}
 

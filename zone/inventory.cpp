@@ -860,6 +860,11 @@ void Client::DropItem(int16 slot_id, bool recurse)
 		return;
 	}
 
+	if (IsHardcore()) {
+		Message(Chat::Red, "Hardcore Characters may not drop items.");
+		SendCursorBuffer();
+		return;
+	}
 
 	if (!m_inv.GetItem(slot_id)->GetCustomDataString().empty()) {
 		Message(Chat::Red, "You may not drop an item of this type.");

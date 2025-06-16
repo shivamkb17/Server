@@ -3327,12 +3327,10 @@ void Mob::TagPlayModeEngagement(Mob* attacker) {
 		auto key = fmt::format("sf-{}", client->GetCleanName());
 		if (!EntityVariableExists(key) && !EntityVariableExists("sf-ineligible")) {
 			SetEntityVariable(key, "true");
-			LogDebug("Set [{}]", key);
 		}
 	} else {
 		if (!EntityVariableExists("sf-ineligible")) {
 			SetEntityVariable("sf-ineligible", "true");
-			LogDebug("SF-Ineligible [{}]", client->GetCleanName());
 		}
 	}
 
@@ -3341,12 +3339,10 @@ void Mob::TagPlayModeEngagement(Mob* attacker) {
 		auto key = fmt::format("solo-{}", client->GetCleanName());
 		if (!EntityVariableExists(key) && !EntityVariableExists("solo-ineligible")) {
 			SetEntityVariable(key, "true");
-			LogDebug("Set [{}]", key);
 		}
 	} else {
 		if (!EntityVariableExists("solo-ineligible")) {
 			SetEntityVariable("solo-ineligible", "true");
-			LogDebug("Solo-Ineligible [{}]", client->GetCleanName());
 		}
 	}
 
@@ -3355,12 +3351,10 @@ void Mob::TagPlayModeEngagement(Mob* attacker) {
 		auto key = fmt::format("hc-{}", client->GetCleanName());
 		if (!EntityVariableExists(key) && !EntityVariableExists("hc-ineligible")) {
 			SetEntityVariable(key, "true");
-			LogDebug("Set [{}]", key);
 		}
 	} else {
 		if (!EntityVariableExists("hc-ineligible")) {
 			SetEntityVariable("hc-ineligible", "true");
-			LogDebug("HC-Ineligible [{}]", client->GetCleanName());
 		}
 	}
 }

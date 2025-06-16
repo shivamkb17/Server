@@ -3182,7 +3182,7 @@ void Zone::ApplyGlobalBuffs()
 {
 	database.LoadGlobalBuffs();
 	for (auto &e: entity_list.GetClientList()) {
-		if (e.second->IsHardcore() || e.second->IsSelfFound()) {
+		if (e.second->IsHardcore()) {
 			continue;
 		}
 

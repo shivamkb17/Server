@@ -1058,8 +1058,6 @@ void Client::CompleteConnect()
 	SetSelfFound(CharacterDataExtraRepository::GetPlayModeSelfFound(database, CharacterID()));
 	SetSolo(CharacterDataExtraRepository::GetPlayModeSolo(database, CharacterID()));
 
-	LogInfo("Hardcore: [{}], Self-Found: [{}], Solo: [{}]", IsHardcore(), IsSelfFound(), IsSolo());
-
 	if (RuleB(Custom, ServerAuthStats)) {
 		SendDisciplineUpdate();
 	}
@@ -3832,8 +3830,8 @@ void Client::Handle_OP_BankerChange(const EQApplicationPacket *app)
 	if (!banker || distance > USE_NPC_RANGE2)
 	{
 		auto message = fmt::format(
-		    "Player tried to make use of a banker(money) but {} is non-existant or too far away ({} units).",
-		    banker ? banker->GetName() : "UNKNOWN NPC", distance);
+			"Player tried to make use of a banker(money) but {} is non-existant or too far away ({} units).",
+			banker ? banker->GetName() : "UNKNOWN NPC", distance);
 		RecordPlayerEventLog(PlayerEvent::POSSIBLE_HACK, PlayerEvent::PossibleHackEvent{.message = message});
 		return;
 	}
@@ -4087,21 +4085,21 @@ void Client::Handle_OP_BazaarSearch(const EQApplicationPacket *app)
 			BazaarSearchCriteria_Struct search_details{};
 
 			search_details.action           = BazaarSearchResults;
-            search_details.augment          = bss->augment;
-            search_details._class           = bss->_class;
-            search_details.item_stat        = bss->item_stat;
-            search_details.min_cost         = bss->min_cost;
-            search_details.max_cost         = bss->max_cost;
-            search_details.min_level        = bss->min_level;
-            search_details.max_level        = bss->max_level;
-            search_details.max_results      = bss->max_results;
-            search_details.prestige         = bss->prestige;
-            search_details.race             = bss->race;
-            search_details.search_scope     = bss->search_scope;
-            search_details.slot             = bss->slot;
-            search_details.trader_entity_id = bss->trader_entity_id;
-            search_details.trader_id        = bss->trader_id;
-            search_details.type             = bss->type;
+			search_details.augment          = bss->augment;
+			search_details._class           = bss->_class;
+			search_details.item_stat        = bss->item_stat;
+			search_details.min_cost         = bss->min_cost;
+			search_details.max_cost         = bss->max_cost;
+			search_details.min_level        = bss->min_level;
+			search_details.max_level        = bss->max_level;
+			search_details.max_results      = bss->max_results;
+			search_details.prestige         = bss->prestige;
+			search_details.race             = bss->race;
+			search_details.search_scope     = bss->search_scope;
+			search_details.slot             = bss->slot;
+			search_details.trader_entity_id = bss->trader_entity_id;
+			search_details.trader_id        = bss->trader_id;
+			search_details.type             = bss->type;
 			strn0cpy(search_details.item_name, bss->item_name, sizeof(search_details.item_name));
 
 			DoBazaarSearch(search_details);
@@ -11330,7 +11328,7 @@ void Client::Handle_OP_MoveMultipleItems(const EQApplicationPacket *app)
 			};
 
 			std::vector<MoveInfo> items;
-    		items.reserve(multi_move->count);
+			items.reserve(multi_move->count);
 
 			for (int i = 0; i < multi_move->count; i++) {
 				// These are always bags, so we don't need to worry about raw items in slotCursor
@@ -15363,7 +15361,6 @@ void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app)
 			}
 
 			int seller_character_id =  database.GetCharacterID(in->seller_name);
-
 			if (RuleI(Custom, EnableSeasonalCharacters)) {
 				DataBucketKey db_key = {};
 				db_key.character_id = seller_character_id;
@@ -15388,6 +15385,18 @@ void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app)
 					Message(
 					Chat::Yellow,
 					"Self-Found characters may not purchase items from other characters."
+				);
+				in->method     = BazaarByParcel;
+				in->sub_action = Failed;
+				TradeRequestFailed(app);
+				return;
+			}
+
+			if (IsHardcore() != CharacterDataExtraRepository::GetPlayModeHardcore(database, seller_character_id)) {
+				SendParcelIconStatus();
+					Message(
+					Chat::Yellow,
+					"Hardcore characters may not purchase items from other characters who are not Hardcore."
 				);
 				in->method     = BazaarByParcel;
 				in->sub_action = Failed;
@@ -15420,6 +15429,8 @@ void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app)
 				return;
 			}
 
+			int seller_character_id =  database.GetCharacterID(in->seller_name);
+
 			if (RuleI(Custom, EnableSeasonalCharacters)) {
 				DataBucketKey db_key = {};
 				db_key.character_id = database.GetCharacterID(in->seller_name);
@@ -15444,6 +15455,18 @@ void Client::Handle_OP_TraderBuy(const EQApplicationPacket *app)
 					Message(
 					Chat::Yellow,
 					"Self-Found characters may not purchase items from other characters."
+				);
+				in->method     = BazaarByParcel;
+				in->sub_action = Failed;
+				TradeRequestFailed(app);
+				return;
+			}
+
+			if (IsHardcore() != CharacterDataExtraRepository::GetPlayModeHardcore(database, seller_character_id)) {
+				SendParcelIconStatus();
+					Message(
+					Chat::Yellow,
+					"Hardcore characters may not purchase items from other characters who are not Hardcore."
 				);
 				in->method     = BazaarByParcel;
 				in->sub_action = Failed;
@@ -15502,23 +15525,28 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 		}
 
 		if (IsSelfFound() || tradee->CastToClient()->IsSelfFound()) {
-			Message(Chat::Red, "Seasonal Characters may not trade with other players who are not Seasonal.");
+			Message(Chat::Red, "Self-Found Characters may not trade with other players.");
+			return;
+		}
+
+		if (IsHardcore() != tradee->CastToClient()->IsHardcore()) {
+			Message(Chat::Red, "Hardcore Characters may not trade with other players who are not Hardcore.");
 			return;
 		}
 
 		tradee->CastToClient()->QueuePacket(app);
 	}
 	else if (tradee && (tradee->IsNPC() || tradee->IsBot())) {
-        if (!tradee->IsEngaged()) {
-            trade->Start(msg->to_mob_id);
-            EQApplicationPacket *outapp = new EQApplicationPacket(OP_TradeRequestAck, sizeof(TradeRequest_Struct));
-            TradeRequest_Struct *acc = (TradeRequest_Struct *) outapp->pBuffer;
-            acc->from_mob_id = msg->to_mob_id;
-            acc->to_mob_id = msg->from_mob_id;
-            FastQueuePacket(&outapp);
-            safe_delete(outapp);
-        }
-    }
+		if (!tradee->IsEngaged()) {
+			trade->Start(msg->to_mob_id);
+			EQApplicationPacket *outapp = new EQApplicationPacket(OP_TradeRequestAck, sizeof(TradeRequest_Struct));
+			TradeRequest_Struct *acc = (TradeRequest_Struct *) outapp->pBuffer;
+			acc->from_mob_id = msg->to_mob_id;
+			acc->to_mob_id = msg->from_mob_id;
+			FastQueuePacket(&outapp);
+			safe_delete(outapp);
+		}
+	}
 	return;
 	}
 
@@ -15579,6 +15607,11 @@ void Client::Handle_OP_TraderShop(const EQApplicationPacket *app)
 					data->Approval = 0;
 				}
 
+				else if (IsHardcore() != trader_client->IsHardcore()) {
+					Message(Chat::Red, "Hardcore characters may not purchase items from other characters who are not also Hardcore.");
+					data->Approval = 0;
+				}
+
 				else {
 					data->Approval = trader_client->WithCustomer(GetID());
 					LogTrading("Client::Handle_OP_TraderShop: Shop Request ([{}]) to ([{}]) with Approval: [{}]",
@@ -15602,6 +15635,10 @@ void Client::Handle_OP_TraderShop(const EQApplicationPacket *app)
 			QueuePacket(outapp.get());
 
 			if (IsSelfFound()) {
+				break;
+			}
+
+			if (IsHardcore() != trader_client->IsHardcore()) {
 				break;
 			}
 
@@ -17110,26 +17147,26 @@ void Client::Handle_OP_GuildTributeDonatePlat(const EQApplicationPacket *app)
 
 void Client::Handle_OP_ShopSendParcel(const EQApplicationPacket *app)
 {
-    if (app->size != sizeof(Parcel_Struct)) {
-        LogError("Received Handle_OP_ShopSendParcel packet. Expected size {}, received size {}.", sizeof(Parcel_Struct),
-                 app->size);
-        return;
-    }
+	if (app->size != sizeof(Parcel_Struct)) {
+		LogError("Received Handle_OP_ShopSendParcel packet. Expected size {}, received size {}.", sizeof(Parcel_Struct),
+				 app->size);
+		return;
+	}
 
-    auto parcel_in = (Parcel_Struct *)app->pBuffer;
-    DoParcelSend(parcel_in);
+	auto parcel_in = (Parcel_Struct *)app->pBuffer;
+	DoParcelSend(parcel_in);
 }
 
 void Client::Handle_OP_ShopRetrieveParcel(const EQApplicationPacket *app)
 {
-    if (app->size != sizeof(ParcelRetrieve_Struct)) {
-        LogError("Received Handle_OP_ShopRetrieveParcel packet. Expected size {}, received size {}.",
-                 sizeof(ParcelRetrieve_Struct), app->size);
-        return;
-    }
+	if (app->size != sizeof(ParcelRetrieve_Struct)) {
+		LogError("Received Handle_OP_ShopRetrieveParcel packet. Expected size {}, received size {}.",
+				 sizeof(ParcelRetrieve_Struct), app->size);
+		return;
+	}
 
-    auto parcel_in = (ParcelRetrieve_Struct *)app->pBuffer;
-    DoParcelRetrieve(*parcel_in);
+	auto parcel_in = (ParcelRetrieve_Struct *)app->pBuffer;
+	DoParcelRetrieve(*parcel_in);
 }
 
 void Client::Handle_OP_EvolveItem(const EQApplicationPacket *app)

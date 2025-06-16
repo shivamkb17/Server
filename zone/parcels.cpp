@@ -324,6 +324,23 @@ void Client::DoParcelSend(const Parcel_Struct *parcel_in)
 		return;
 	}
 
+	bool dst_character_hardcore = CharacterDataExtraRepository::GetPlayModeHardcore(database, dst_character_id);
+
+	if (IsHardcore() != dst_character_hardcore) {
+		SendParcelIconStatus();
+		Message(
+			Chat::Yellow,
+			fmt::format(
+				"{} tells you, 'Unfortunately, I cannot send your parcel. Hardcore characters may only send or recieve parcels from other Hardcore characters.'",
+				merchant->GetCleanName(),
+				RuleI(Parcel, ParcelMaxItems)
+			).c_str()
+		);
+		DoParcelCancel();
+		SendParcelAck();
+		return;
+	}
+
 	if (parcel_in->money_flag && parcel_in->item_slot != INVALID_INDEX) {
 		Message(
 			Chat::Yellow,

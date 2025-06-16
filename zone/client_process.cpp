@@ -1082,7 +1082,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 	auto merchant_list = zone->merchanttable[merchant_id];
 	auto npc = entity_list.GetMobByNpcTypeID(npcid);
 
-	bool skipped_item = false; // work around a client bug, if the server truncates the list, we must not use temporary list for this merchant.
+	bool skipped_item = false; // Track if any items were filtered out
 
 	if (merchant_list.empty()) {
 		zone->LoadNewMerchantData(merchant_id);
@@ -1131,7 +1131,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 			continue;
 		}
 
-		if (!(ml.classes_required & GetClassesBits())) {
+		if (!(ml.classes_required & (1 << (GetClass() - 1)))) {
 			skipped_item = true;
 			continue;
 		}
@@ -1176,7 +1176,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 				}
 
 				if (RuleB(Merchant, UsePriceMod)) {
-					item_price *= EQ::ClampLower(Client::CalcPriceMod(npc), 1.0f);
+					item_price *= Client::CalcPriceMod(npc);
 				}
 
 				inst->SetCharges(item_charges);
@@ -1199,7 +1199,8 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		}
 	}
 
-	if (!(IsSeasonal() || skipped_item || IsSelfFound())) {
+	// Only process temporary merchant list if conditions are met
+	if (!(IsSelfFound() || IsHardcore() || IsSeasonal() || skipped_item)) {
 		auto temporary_merchant_list_two = zone->tmpmerchanttable[npcid];
 		temporary_merchant_list.clear();
 		for (auto ml : temporary_merchant_list_two) {
@@ -1216,16 +1217,16 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 					handy_chance--;
 				}
 
-			auto charges = item->MaxCharges;
-			auto inst = database.CreateItem(item, charges);
-			if (inst) {
-				auto item_price = static_cast<uint32>(item->Price * item->SellRate);
-				auto item_charges = charges ? charges : 1;
+				auto charges = item->MaxCharges;
+				auto inst = database.CreateItem(item, charges);
+				if (inst) {
+					auto item_price = static_cast<uint32>(item->Price * item->SellRate);
+					auto item_charges = charges ? charges : 1;
 
-				// Don't use SellCostMod if using UseClassicPriceMod
-				if (!RuleB(Merchant, UseClassicPriceMod)) {
-					item_price *= RuleR(Merchant, SellCostMod);
-				}
+					// Don't use SellCostMod if using UseClassicPriceMod
+					if (!RuleB(Merchant, UseClassicPriceMod)) {
+						item_price *= RuleR(Merchant, SellCostMod);
+					}
 
 					if (RuleB(Merchant, UsePriceMod)) {
 						item_price *= Client::CalcPriceMod(npc);
@@ -1243,10 +1244,11 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 			temporary_merchant_list.push_back(ml);
 			slot_id++;
 		}
+
+		// Only update the zone's temporary merchant table if we processed it
+		zone->tmpmerchanttable[npcid] = temporary_merchant_list;
 	}
 
-	//this resets the slot
-	zone->tmpmerchanttable[npcid] = temporary_merchant_list;
 	if (npc && handy_item) {
 		int greet_id = zone->random.Int(MERCHANT_GREETING, MERCHANT_HANDY_ITEM4);
 		auto handy_id = std::to_string(greet_id);

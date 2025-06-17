@@ -3980,6 +3980,11 @@ void Client::Handle_OP_Barter(const EQApplicationPacket *app)
 		}
 
 		case Barter_SellItem: {
+			if (IsSelfFound()) {
+				Message(Chat::Red, "Self-Found characters cannot use the Bazaar system.");
+				break;
+			}
+
 			SellToBuyer(app);
 			break;
 		}

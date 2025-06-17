@@ -604,6 +604,29 @@ bool SharedDatabase::SetSharedPlatinum(uint32 account_id, int32 amount_to_add) {
 	return true;
 }
 
+
+int32 SharedDatabase::GetHardcoreSharedPlatinum(uint32 account_id)
+{
+	const auto query   = fmt::format("SELECT hardcore_sharedplat FROM account WHERE id = {}", account_id);
+	auto       results = QueryDatabase(query);
+	if (!results.Success() || !results.RowCount()) {
+		return 0;
+	}
+
+	auto row = results.begin();
+	return Strings::ToInt(row[0]);
+}
+
+bool SharedDatabase::SetHardcoreSharedPlatinum(uint32 account_id, int32 amount_to_add) {
+	const std::string query = StringFormat("UPDATE account SET hardcore_sharedplat = hardcore_sharedplat + %i WHERE id = %i", amount_to_add, account_id);
+	const auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		return false;
+	}
+
+	return true;
+}
+
 bool SharedDatabase::SetStartingItems(
 	PlayerProfile_Struct *pp,
 	EQ::InventoryProfile *inv,

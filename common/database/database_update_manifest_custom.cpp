@@ -391,6 +391,18 @@ KEY `play_mode_hardcore` (`play_mode_hardcore`)
 		.content_schema_update = false,
 	},
 
+	ManifestEntry{
+		.version = 20,
+		.description = "2025_06_16_add_hardcore_sharedplat_to_account",
+		.check = "SHOW COLUMNS FROM `account` LIKE 'hardcore_sharedplat'",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+	ALTER TABLE `account` ADD COLUMN `hardcore_sharedplat` int(11) unsigned NOT NULL DEFAULT 0 AFTER `sharedplat`;
+	)",
+		.content_schema_update = false,
+	},
+
 	// Used for testing
 	//	ManifestEntry{
 	//		.version = 9229,

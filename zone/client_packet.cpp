@@ -1435,8 +1435,12 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		}
 	}
 
-	if (RuleB(Character, SharedBankPlat) && (!IsSeasonal() && !IsSelfFound())) {
+	if (RuleB(Character, SharedBankPlat) && (!IsSeasonal() && !IsSelfFound() && !IsHardcore())) {
 		m_pp.platinum_shared = database.GetSharedPlatinum(AccountID());
+	}
+
+	if (RuleB(Character, SharedBankPlat) && IsHardcore()) {
+		m_pp.platinum_shared = database.GetHardcoreSharedPlatinum(AccountID());
 	}
 
 	database.ClearOldRecastTimestamps(cid); /* Clear out our old recast timestamps to keep the DB clean */

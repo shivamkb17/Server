@@ -1844,7 +1844,12 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 					if (from_bucket == &m_pp.platinum_shared)
 						amount_to_add = 0 - amount_to_take;
 
-					database.SetSharedPlatinum(AccountID(),amount_to_add);
+					// Use hardcore shared platinum database function for hardcore characters
+					if (IsHardcore()) {
+						database.SetHardcoreSharedPlatinum(AccountID(), amount_to_add);
+					} else {
+						database.SetSharedPlatinum(AccountID(), amount_to_add);
+					}
 				}
 			}
 		}

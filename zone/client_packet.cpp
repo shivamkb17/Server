@@ -3919,22 +3919,34 @@ void Client::Handle_OP_Barter(const EQApplicationPacket *app)
 	// packet the client sent, sent back to it as an acknowledgement.
 	//
 	//uint32 Action = VARSTRUCT_DECODE_TYPE(uint32, Buf);
-
-
 	switch (in->action) {
-
 		case Barter_BuyerSearch: {
+			if (IsSelfFound()) {
+				Message(Chat::Red, "Self-Found characters cannot use the Bazaar system.");
+				break;
+			}
+
 			BuyerItemSearch(app);
 			break;
 		}
 
 		case Barter_SellerSearch: {
+			if (IsSelfFound()) {
+				Message(Chat::Red, "Self-Found characters cannot use the Bazaar system.");
+				break;
+			}
+
 			auto bsr = (BarterSearchRequest_Struct *) app->pBuffer;
 			SendBuyerResults(*bsr);
 			break;
 		}
 
 		case Barter_BuyerModeOn: {
+			if (IsSelfFound()) {
+				Message(Chat::Red, "Self-Found characters cannot use the Bazaar system.");
+				break;
+			}
+
 			if (!IsTrader()) {
 				ToggleBuyerMode(true);
 			}
@@ -3986,6 +3998,7 @@ void Client::Handle_OP_Barter(const EQApplicationPacket *app)
 
 			break;
 		}
+
 		case Barter_BarterItemInspect: {
 			auto               bislr = (BarterItemSearchLinkRequest_Struct *) app->pBuffer;
 			const EQ::ItemData *item = database.GetItem(bislr->item_id);
@@ -4000,54 +4013,61 @@ void Client::Handle_OP_Barter(const EQApplicationPacket *app)
 				SendItemPacket(0, inst, ItemPacketViewLink);
 				safe_delete(inst);
 			}
-		break;
-	}
-	case Barter_Welcome:
-	{
-		SendBarterWelcome();
-		break;
-	}
-
-	case Barter_WelcomeMessageUpdate: {
-		auto bwmu = (BuyerWelcomeMessageUpdate_Struct *) app->pBuffer;
-		SetBuyerWelcomeMessage(bwmu->welcome_message);
-		break;
-	}
-
-	case Barter_BuyerItemInspect:
-	{
-		BuyerItemSearchLinkRequest_Struct* bislr = (BuyerItemSearchLinkRequest_Struct*)app->pBuffer;
-
-		const EQ::ItemData* item = database.GetItem(bislr->ItemID);
-
-		if (!item)
-			Message(Chat::Red, "Error: This item does not exist!");
-		else
-		{
-			EQ::ItemInstance* inst = database.CreateItem(item);
-			if (inst)
-			{
-				SendItemPacket(0, inst, ItemPacketViewLink);
-				safe_delete(inst);
-			}
+			break;
 		}
-		break;
-	}
 
-	case Barter_Greeting:
-	{
-		auto data = (BuyerGreeting_Struct *)app->pBuffer;
-		SendBuyerGreeting(data->buyer_id);
-	}
-	case Barter_OpenBarterWindow:
-	{
-		SendBulkBazaarBuyers();
-		break;
-	}
+		case Barter_Welcome:
+		{
+			SendBarterWelcome();
+			break;
+		}
 
-	default:
-		Message(Chat::Red, "Unrecognised Barter action.");
-		LogTrading("Unrecognised Barter Action [{}]", in->action);
+		case Barter_WelcomeMessageUpdate: {
+			auto bwmu = (BuyerWelcomeMessageUpdate_Struct *) app->pBuffer;
+			SetBuyerWelcomeMessage(bwmu->welcome_message);
+			break;
+		}
+
+		case Barter_BuyerItemInspect:
+		{
+			BuyerItemSearchLinkRequest_Struct* bislr = (BuyerItemSearchLinkRequest_Struct*)app->pBuffer;
+
+			const EQ::ItemData* item = database.GetItem(bislr->ItemID);
+
+			if (!item)
+				Message(Chat::Red, "Error: This item does not exist!");
+			else
+			{
+				EQ::ItemInstance* inst = database.CreateItem(item);
+				if (inst)
+				{
+					SendItemPacket(0, inst, ItemPacketViewLink);
+					safe_delete(inst);
+				}
+			}
+			break;
+		}
+
+		case Barter_Greeting:
+		{
+			auto data = (BuyerGreeting_Struct *)app->pBuffer;
+			SendBuyerGreeting(data->buyer_id);
+		}
+
+		case Barter_OpenBarterWindow:
+		{
+			if (IsSelfFound()) {
+				Message(Chat::Red, "Self-Found characters cannot use the Bazaar system.");
+				break;
+			}
+
+			SendBulkBazaarBuyers();
+			break;
+		}
+
+		default:
+			Message(Chat::Red, "Unrecognised Barter action.");
+			LogTrading("Unrecognised Barter Action [{}]", in->action);
 
 	}
 }
@@ -4085,6 +4105,11 @@ void Client::Handle_OP_BazaarSearch(const EQApplicationPacket *app)
 
 	switch (action) {
 		case BazaarSearch: {
+			if (IsSelfFound()) {
+				Message(Chat::Red, "Self-Found characters cannot use the Bazaar system.");
+				break;
+			}
+
 			BazaarSearchCriteria_Struct *bss = (BazaarSearchCriteria_Struct *) app->pBuffer;
 			BazaarSearchCriteria_Struct search_details{};
 
@@ -4110,6 +4135,11 @@ void Client::Handle_OP_BazaarSearch(const EQApplicationPacket *app)
 			break;
 		}
 		case BazaarInspect: {
+			if (IsSelfFound()) {
+				Message(Chat::Red, "Self-Found characters cannot use the Bazaar system.");
+				break;
+			}
+
 			auto in = (BazaarInspect_Struct *) app->pBuffer;
 			DoBazaarInspect(*in);
 			break;
@@ -4119,6 +4149,11 @@ void Client::Handle_OP_BazaarSearch(const EQApplicationPacket *app)
 			break;
 		}
 		case FirstOpenSearch: {
+			if (IsSelfFound()) {
+				Message(Chat::Red, "Self-Found characters cannot use the Bazaar system.");
+				break;
+			}
+
 			SendBulkBazaarTraders();
 			break;
 		}
@@ -15252,6 +15287,11 @@ void Client::Handle_OP_Trader(const EQApplicationPacket *app)
 			break;
 		}
 		case TraderOn: {
+			if (IsSelfFound()) {
+				Message(Chat::Red, "Self-Found characters cannot use the Bazaar system.");
+				return;
+			}
+
 			if (IsBuyer()) {
 				TraderEndTrader();
 				Message(Chat::Red, "You cannot be a Trader and Buyer at the same time.");

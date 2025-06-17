@@ -1247,7 +1247,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 }
 
 uint32 Client::GetTempMerchantQuantityPersonal(uint32 npcid, uint32 slot) {
-    std::list<TempMerchantList> tmp_merlist = IsHardcore() ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid];
+    std::list<TempMerchantList> tmp_merlist = (!IsSelfFound() && IsHardcore())  ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid];
     std::list<TempMerchantList>::const_iterator iterator;
 
     for (iterator = tmp_merlist.begin(); iterator != tmp_merlist.end(); ++iterator) {
@@ -1283,7 +1283,7 @@ int Client::SaveTempItemPersonal(uint32 merchantid, uint32 npcid, uint32 item, i
     LogInventory("Searching Personal Temporary List. Main list ended at [{}]", temp_slot_index-1);
 
     // Now search the personal temporary list.
-    std::list<TempMerchantList> tmp_merlist = IsHardcore() ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid];
+    std::list<TempMerchantList> tmp_merlist = (!IsSelfFound() && IsHardcore()) ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid];
     std::list<TempMerchantList>::const_iterator tmp_itr;
     TempMerchantList ml;
     bool found = false;
@@ -1300,7 +1300,7 @@ int Client::SaveTempItemPersonal(uint32 merchantid, uint32 npcid, uint32 item, i
 
     if (found) {
         tmp_merlist.clear();
-        std::list<TempMerchantList> oldtmp_merlist = IsHardcore() ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid];
+        std::list<TempMerchantList> oldtmp_merlist = (!IsSelfFound() && IsHardcore())  ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid];
         for (tmp_itr = oldtmp_merlist.begin(); tmp_itr != oldtmp_merlist.end(); ++tmp_itr) {
             TempMerchantList ml2 = *tmp_itr;
             if(ml2.item != item) {
@@ -1326,7 +1326,7 @@ int Client::SaveTempItemPersonal(uint32 merchantid, uint32 npcid, uint32 item, i
             }
         }
 
-        (IsHardcore() ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid]) = tmp_merlist;
+        ((!IsSelfFound() && IsHardcore())  ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid]) = tmp_merlist;
         return ml.slot;
     } else {
         if (charges < 0) { //sanity check only, shouldnt happen
@@ -1376,7 +1376,7 @@ int Client::SaveTempItemPersonal(uint32 merchantid, uint32 npcid, uint32 item, i
         first_empty_mslot = idx;
 
         // NO database persistence for personal lists
-        tmp_merlist = IsHardcore() ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid];
+        tmp_merlist = (!IsSelfFound() && IsHardcore()) ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid];
         TempMerchantList ml2;
         ml2.charges = charges;
         LogInventory("Adding personal slot [{}] with [{}] charges.", first_empty_mslot, charges);
@@ -1387,7 +1387,7 @@ int Client::SaveTempItemPersonal(uint32 merchantid, uint32 npcid, uint32 item, i
 
 		LogInventory("Personal merchant: assigning slot [{}], client expects around [{}]", ml2.slot, temp_slot_index);
         tmp_merlist.push_back(ml2);
-        (IsHardcore() ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid]) = tmp_merlist;
+        ((!IsSelfFound() && IsHardcore())  ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid]) = tmp_merlist;
         return ml2.slot;
     }
 }

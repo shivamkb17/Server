@@ -1199,8 +1199,60 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		}
 	}
 
-	// Only process temporary merchant list if conditions are met
-	if (!(IsSelfFound() || IsHardcore() || IsSeasonal() || skipped_item)) {
+	// If any items were skipped, ensure this player has a partitioned list
+	if (skipped_item) {
+		// Initialize player-specific list if it doesn't exist
+		if (m_temp_merchantlist_table.find(npcid) == m_temp_merchantlist_table.end()) {
+			m_temp_merchantlist_table[npcid] = std::list<TempMerchantList>();
+		}
+	}
+
+	// Process player-specific temporary merchant list (for partitioned players OR players with skipped items)
+	if (IsSelfFound() || IsHardcore() || IsSeasonal() || skipped_item) {
+		auto player_temp_list = m_temp_merchantlist_table[npcid];
+		for (auto ml : player_temp_list) {
+			if (slot_id > merchant_slots) {
+				break;
+			}
+
+			item = database.GetItem(ml.item);
+			ml.slot = slot_id;
+			if (item) {
+				if (!handy_chance) {
+					handy_item = item;
+				} else {
+					handy_chance--;
+				}
+
+				auto charges = item->MaxCharges;
+				auto inst = database.CreateItem(item, charges);
+				if (inst) {
+					auto item_price = static_cast<uint32>(item->Price * item->SellRate);
+					auto item_charges = charges ? charges : 1;
+
+					// Don't use SellCostMod if using UseClassicPriceMod
+					if (!RuleB(Merchant, UseClassicPriceMod)) {
+						item_price *= RuleR(Merchant, SellCostMod);
+					}
+
+					if (RuleB(Merchant, UsePriceMod)) {
+						item_price *= Client::CalcPriceMod(npc);
+					}
+
+					inst->SetCharges(ml.charges);
+					inst->SetMerchantCount(ml.charges);
+					inst->SetMerchantSlot(ml.slot);
+					inst->SetPrice(item_price);
+
+					SendItemPacket(ml.slot - 1, inst, ItemPacketMerchant);
+					safe_delete(inst);
+				}
+			}
+			slot_id++;
+		}
+	}
+	// Only process zone-wide temporary merchant list if NOT partitioned AND no items skipped
+	else {
 		auto temporary_merchant_list_two = zone->tmpmerchanttable[npcid];
 		temporary_merchant_list.clear();
 		for (auto ml : temporary_merchant_list_two) {

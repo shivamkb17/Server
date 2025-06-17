@@ -2695,6 +2695,8 @@ public:
 	bool UnlockProgressionStage(const std::string& stage_name);
 	bool IsZoneUnlockedByProgression(const int zone_id) const;
 	bool AccountProgressionAllowed() const;
+
+	std::map<uint32, std::list<TempMerchantList>> m_temp_merchantlist_table;
 };
 
 #endif

@@ -48,7 +48,7 @@ static uint64 ScaleAAXPBasedOnCurrentAATotal(int earnedAA, uint64 add_aaxp, Clie
 	int aaMinimum = RuleI(AA, ModernAAScalingAAMinimum);
 	int aaLimit = RuleI(AA, ModernAAScalingAALimit);
 
-	if (RuleB(Custom, UseAAEXPVeterancy) && client) {
+	if (RuleB(Custom, UseAAEXPVeterancy) && client && !client->IsHardcore()) {
 		auto where_filter = fmt::format(
 							"`account_id` = '{}' AND `id` != '{}'",
 							client->AccountID(),
@@ -103,7 +103,9 @@ static uint64 ScaleAAXPBasedOnCurrentAATotal(int earnedAA, uint64 add_aaxp, Clie
 		"Total before the modifier %d :: NewTotal %d :: ScaleRange: %d, SpentAA: %d, RemainingAA: %d, normalizedScale: %0.3f",
 		add_aaxp, totalWithExpMod, scaleRange, earnedAA, remainingAA, normalizedScale);
 
-	client->Message(Chat::Experience, fmt::format("You gain bonus AA experience! ({}/{})", earnedAA, aaLimit).c_str());
+	if (RuleB(Custom, UseAAEXPVeterancy) && client && !client->IsHardcore()) {
+		client->Message(Chat::Experience, fmt::format("You gain bonus AA experience! ({}/{})", earnedAA, aaLimit).c_str());
+	}
 	return totalWithExpMod;
 }
 

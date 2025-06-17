@@ -1081,9 +1081,6 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 	const EQ::ItemData *item = nullptr;
 	auto merchant_list = zone->merchanttable[merchant_id];
 	auto npc = entity_list.GetMobByNpcTypeID(npcid);
-
-	bool skipped_item = false; // Track if any items were filtered out
-
 	if (merchant_list.empty()) {
 		zone->LoadNewMerchantData(merchant_id);
 		merchant_list = zone->merchanttable[merchant_id];
@@ -1111,33 +1108,27 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 
 			auto b = DataBucket::GetData(k);
 			if (b.value.empty()) {
-				skipped_item = true;
 				continue;
 			}
 
 			if (!zone->CompareDataBucket(ml.bucket_comparison, bucket_value, b.value)) {
-				skipped_item = true;
 				continue;
 			}
 		}
 
 		if (ml.probability != 100 && zone->random.Int(1, 100) > ml.probability) {
-			skipped_item = true;
 			continue;
 		}
 
 		if (GetLevel() < ml.level_required) {
-			skipped_item = true;
 			continue;
 		}
 
 		if (!(ml.classes_required & (1 << (GetClass() - 1)))) {
-			skipped_item = true;
 			continue;
 		}
 
 		if (!EQ::ValueWithin(Admin(), static_cast<int16>(ml.min_status), static_cast<int16>(ml.max_status))) {
-			skipped_item = true;
 			continue;
 		}
 
@@ -1149,7 +1140,6 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		);
 
 		if (faction_level < ml.faction_required) {
-			skipped_item = true;
 			continue;
 		}
 
@@ -1199,108 +1189,52 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		}
 	}
 
-	// If any items were skipped, ensure this player has a partitioned list
-	if (skipped_item) {
-		// Initialize player-specific list if it doesn't exist
-		if (m_temp_merchantlist_table.find(npcid) == m_temp_merchantlist_table.end()) {
-			m_temp_merchantlist_table[npcid] = std::list<TempMerchantList>();
-		}
-	}
-
-	// Process player-specific temporary merchant list (for partitioned players OR players with skipped items)
-	if (IsSelfFound() || IsHardcore() || IsSeasonal() || skipped_item) {
-		auto player_temp_list = m_temp_merchantlist_table[npcid];
-		for (auto ml : player_temp_list) {
-			if (slot_id > merchant_slots) {
-				break;
-			}
-
-			item = database.GetItem(ml.item);
-			ml.slot = slot_id;
-			if (item) {
-				if (!handy_chance) {
-					handy_item = item;
-				} else {
-					handy_chance--;
-				}
-
-				auto charges = item->MaxCharges;
-				auto inst = database.CreateItem(item, charges);
-				if (inst) {
-					auto item_price = static_cast<uint32>(item->Price * item->SellRate);
-					auto item_charges = charges ? charges : 1;
-
-					// Don't use SellCostMod if using UseClassicPriceMod
-					if (!RuleB(Merchant, UseClassicPriceMod)) {
-						item_price *= RuleR(Merchant, SellCostMod);
-					}
-
-					if (RuleB(Merchant, UsePriceMod)) {
-						item_price *= Client::CalcPriceMod(npc);
-					}
-
-					inst->SetCharges(ml.charges);
-					inst->SetMerchantCount(ml.charges);
-					inst->SetMerchantSlot(ml.slot);
-					inst->SetPrice(item_price);
-
-					SendItemPacket(ml.slot - 1, inst, ItemPacketMerchant);
-					safe_delete(inst);
-				}
-			}
-			slot_id++;
-		}
-	}
-	// Only process zone-wide temporary merchant list if NOT partitioned AND no items skipped
-	else {
-		auto temporary_merchant_list_two = zone->tmpmerchanttable[npcid];
-		temporary_merchant_list.clear();
-		for (auto ml : temporary_merchant_list_two) {
-			if (slot_id > merchant_slots) {
-				break;
-			}
-
-			item = database.GetItem(ml.item);
-			ml.slot = slot_id;
-			if (item) {
-				if (!handy_chance) {
-					handy_item = item;
-				} else {
-					handy_chance--;
-				}
-
-				auto charges = item->MaxCharges;
-				auto inst = database.CreateItem(item, charges);
-				if (inst) {
-					auto item_price = static_cast<uint32>(item->Price * item->SellRate);
-					auto item_charges = charges ? charges : 1;
-
-					// Don't use SellCostMod if using UseClassicPriceMod
-					if (!RuleB(Merchant, UseClassicPriceMod)) {
-						item_price *= RuleR(Merchant, SellCostMod);
-					}
-
-					if (RuleB(Merchant, UsePriceMod)) {
-						item_price *= Client::CalcPriceMod(npc);
-					}
-
-					inst->SetCharges(item_charges);
-					inst->SetMerchantCount(ml.charges);
-					inst->SetMerchantSlot(ml.slot);
-					inst->SetPrice(item_price);
-
-					SendItemPacket(ml.slot - 1, inst, ItemPacketMerchant);
-					safe_delete(inst);
-				}
-			}
-			temporary_merchant_list.push_back(ml);
-			slot_id++;
+	auto temporary_merchant_list_two = zone->tmpmerchanttable[npcid];
+	temporary_merchant_list.clear();
+	for (auto ml : temporary_merchant_list_two) {
+		if (slot_id > merchant_slots) {
+			break;
 		}
 
-		// Only update the zone's temporary merchant table if we processed it
-		zone->tmpmerchanttable[npcid] = temporary_merchant_list;
+		item = database.GetItem(ml.item);
+		ml.slot = slot_id;
+		if (item) {
+			if (!handy_chance) {
+				handy_item = item;
+			} else {
+				handy_chance--;
+			}
+
+			auto charges = item->MaxCharges;
+			auto inst = database.CreateItem(item, charges);
+			if (inst) {
+				auto item_price = static_cast<uint32>(item->Price * item->SellRate);
+				auto item_charges = charges ? charges : 1;
+
+				// Don't use SellCostMod if using UseClassicPriceMod
+				if (!RuleB(Merchant, UseClassicPriceMod)) {
+					item_price *= RuleR(Merchant, SellCostMod);
+				}
+
+				if (RuleB(Merchant, UsePriceMod)) {
+					item_price *= Client::CalcPriceMod(npc);
+				}
+
+				inst->SetCharges(item_charges);
+				inst->SetMerchantCount(ml.charges);
+				inst->SetMerchantSlot(ml.slot);
+				inst->SetPrice(item_price);
+
+				SendItemPacket(ml.slot - 1, inst, ItemPacketMerchant);
+				safe_delete(inst);
+			}
+		}
+		temporary_merchant_list.push_back(ml);
+		slot_id++;
 	}
 
+	//this resets the slot
+	zone->tmpmerchanttable[npcid] = temporary_merchant_list;
 	if (npc && handy_item) {
 		int greet_id = zone->random.Int(MERCHANT_GREETING, MERCHANT_HANDY_ITEM4);
 		auto handy_id = std::to_string(greet_id);

@@ -13846,11 +13846,6 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	DumpPacket(app);
 #endif
 
-	// Add debug logging for raw packet inspection
-	LogDebug("ShopPlayerBuy Packet: npcid={}, playerid={}, itemslot={}, unknown12={}, quantity={}, price={}",
-		mp->npcid, mp->playerid, mp->itemslot, mp->unknown12, mp->quantity, mp->price);
-
-
 	int merchantid;
 	bool tmpmer_used = false;
 	Mob* tmp = entity_list.GetMob(mp->npcid);
@@ -13884,44 +13879,24 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	}
 	const EQ::ItemData* item = nullptr;
 	uint32 prevcharges = 0;
-	if (item_id == 0) {
-		// Check if this player has a partitioned list (either due to player type or skipped items)
-		bool has_partitioned_list = (m_temp_merchantlist_table.find(tmp->GetNPCTypeID()) != m_temp_merchantlist_table.end());
-
-		if (has_partitioned_list) {
-			auto player_temp_list = m_temp_merchantlist_table[tmp->GetNPCTypeID()];
-			TempMerchantList ml;
-			for (auto& temp_ml : player_temp_list) {
-				if (mp->itemslot == temp_ml.slot) {
-					item_id = temp_ml.item;
-					tmpmer_used = true;
-					prevcharges = temp_ml.charges;
-					ml = temp_ml;
-					break;
-				}
-			}
-		}
-		// If not partitioned, check zone-wide temporary list
-		else {
-			std::list<TempMerchantList> tmp_merlist = zone->tmpmerchanttable[tmp->GetNPCTypeID()];
-			std::list<TempMerchantList>::const_iterator tmp_itr;
-			TempMerchantList ml;
-			for (tmp_itr = tmp_merlist.begin(); tmp_itr != tmp_merlist.end(); ++tmp_itr) {
-				ml = *tmp_itr;
-				if (mp->itemslot == ml.slot) {
-					item_id = ml.item;
-					tmpmer_used = true;
-					prevcharges = ml.charges;
-					break;
-				}
+	if (item_id == 0) { //check to see if its on the temporary table
+		std::list<TempMerchantList> tmp_merlist = zone->tmpmerchanttable[tmp->GetNPCTypeID()];
+		std::list<TempMerchantList>::const_iterator tmp_itr;
+		TempMerchantList ml;
+		for (tmp_itr = tmp_merlist.begin(); tmp_itr != tmp_merlist.end(); ++tmp_itr) {
+			ml = *tmp_itr;
+			if (mp->itemslot == ml.slot) {
+				item_id = ml.item;
+				tmpmer_used = true;
+				prevcharges = ml.charges;
+				break;
 			}
 		}
 	}
 
 	item = database.GetItem(item_id);
 
-	if (!item || (mp->playerid != GetID() && item->ID != mp->playerid)) {
-		LogDebug("Item ID mismatch in OP_ShopPlayerBuy: item_id [{}] unknown12 [{}]", item_id, mp->playerid);
+	if (!item) {
 		//error finding item, client didnt get the update packet for whatever reason, roleplay a tad
 		MessageString(Chat::White, ALREADY_SOLD);
 		entity_list.SendMerchantInventory(tmp, mp->itemslot, true);
@@ -13950,7 +13925,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	auto outapp = new EQApplicationPacket(OP_ShopPlayerBuy, sizeof(Merchant_Sell_Struct));
 	Merchant_Sell_Struct* mpo = (Merchant_Sell_Struct*)outapp->pBuffer;
 	mpo->quantity = mp->quantity;
-	mpo->playerid = GetID();
+	mpo->playerid = mp->playerid;
 	mpo->npcid = mp->npcid;
 	mpo->itemslot = mp->itemslot;
 
@@ -13974,8 +13949,6 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	if (RuleB(Merchant, UsePriceMod)) {
 		single_price *= Client::CalcPriceMod(tmp, false);
 	}
-
-	single_price = EQ::ClampLower(single_price, 1);
 
 	if (item->MaxCharges > 1) {
 		mpo->price = single_price;
@@ -14050,64 +14023,24 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 
 	if (inst && tmpmer_used) {
 		int32 new_charges = prevcharges - mp->quantity;
-
-		// Check if this player has a partitioned list
-		bool has_partitioned_list = (m_temp_merchantlist_table.find(tmp->GetNPCTypeID()) != m_temp_merchantlist_table.end());
-
-		if (has_partitioned_list) {
-			// Update player's personal temporary merchant list
-			auto& temp_list = m_temp_merchantlist_table[tmp->GetNPCTypeID()];
-			for (auto& ml : temp_list) {
-				if (ml.slot == mp->itemslot) {
-					ml.charges = new_charges;
-					break;
-				}
-			}
-
-			if (new_charges <= 0) {
-				// Remove item from player's list
-				temp_list.remove_if([&](const TempMerchantList& ml) {
-					return ml.slot == mp->itemslot;
-				});
-
-				auto delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
-				Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
-				delitem->itemslot = mp->itemslot;
-				delitem->npcid = mp->npcid;
-				delitem->playerid = mp->playerid;
-				delitempacket->priority = 6;
-				QueuePacket(delitempacket); // Only send to this player
-				safe_delete(delitempacket);
-			} else {
-				// Update the charges/quantity in the merchant window
-				inst->SetCharges(new_charges);
-				inst->SetPrice(single_price);
-				inst->SetMerchantSlot(mp->itemslot);
-				inst->SetMerchantCount(new_charges);
-
-				SendItemPacket(mp->itemslot, inst, ItemPacketMerchant);
-			}
+		zone->SaveTempItem(merchantid, tmp->GetNPCTypeID(), item_id, new_charges);
+		if (new_charges <= 0) {
+			auto delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
+			Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
+			delitem->itemslot = mp->itemslot;
+			delitem->npcid = mp->npcid;
+			delitem->playerid = mp->playerid;
+			delitempacket->priority = 6;
+			entity_list.QueueClients(tmp, delitempacket); //que for anyone that could be using the merchant so they see the update
+			safe_delete(delitempacket);
 		} else {
-			// Use zone-wide temporary merchant logic
-			zone->SaveTempItem(merchantid, tmp->GetNPCTypeID(), item_id, new_charges);
-			if (new_charges <= 0) {
-				auto delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
-				Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
-				delitem->itemslot = mp->itemslot;
-				delitem->npcid = mp->npcid;
-				delitem->playerid = mp->playerid;
-				delitempacket->priority = 6;
-				entity_list.QueueClients(tmp, delitempacket); //que for anyone that could be using the merchant so they see the update
-				safe_delete(delitempacket);
-			} else {
-				// Update the charges/quantity in the merchant window
-				inst->SetCharges(new_charges);
-				inst->SetPrice(single_price);
-				inst->SetMerchantSlot(mp->itemslot);
-				inst->SetMerchantCount(new_charges);
+			// Update the charges/quantity in the merchant window
+			inst->SetCharges(new_charges);
+			inst->SetPrice(single_price);
+			inst->SetMerchantSlot(mp->itemslot);
+			inst->SetMerchantCount(new_charges);
 
-				SendItemPacket(mp->itemslot, inst, ItemPacketMerchant);
-			}
+			SendItemPacket(mp->itemslot, inst, ItemPacketMerchant);
 		}
 	}
 
@@ -14142,10 +14075,6 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	}
 
 	CheckItemDiscoverability(item_id);
-
-	if (item_id == 17899) {
-		SendMarqueeMessage(Chat::Red, "Trader's Satchels may not leave the Bazaar.", 30000);
-	}
 
 	safe_delete(inst);
 	safe_delete(outapp);
@@ -14188,11 +14117,6 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 
 	if (!item->NoDrop) {
 		//Message(Chat::Red,"%s tells you, 'LOL NOPE'", vendor->GetName());
-		return;
-	}
-
-	if (item->SummonedFlag) {
-		Message(Chat::MerchantExchange, "%s tells you, 'It looks like that item has no value'", vendor->GetCleanName());
 		return;
 	}
 
@@ -14246,53 +14170,15 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 
 	if (vendor->GetKeepsSoldItems()) {
 		int freeslot = 0;
-
-		// Check if this player has a partitioned list
-		bool has_partitioned_list = (m_temp_merchantlist_table.find(vendor->GetNPCTypeID()) != m_temp_merchantlist_table.end());
-
-		if (has_partitioned_list) {
-			// Use player-specific temporary merchant list
-			auto& temp_list = m_temp_merchantlist_table[vendor->GetNPCTypeID()];
-
-			// Find existing item or create new slot
-			bool found = false;
-			for (auto& ml : temp_list) {
-				if (ml.item == itemid) {
-					ml.charges += charges;
-					freeslot = ml.slot;
-					found = true;
-					break;
-				}
-			}
-
-			if (!found) {
-				// Create new entry - need to find next available slot
-				int next_slot = 1;
-				for (const auto& ml : temp_list) {
-					if (ml.slot >= next_slot) {
-						next_slot = ml.slot + 1;
-					}
-				}
-
-				TempMerchantList new_entry;
-				new_entry.item = itemid;
-				new_entry.charges = charges;
-				new_entry.slot = next_slot;
-				temp_list.push_back(new_entry);
-				freeslot = new_entry.slot;
-			}
-		} else {
-			// Use zone-wide temporary list (existing logic)
-			freeslot = zone->SaveTempItem(
+		if (
+			(freeslot = zone->SaveTempItem(
 				vendor->CastToNPC()->MerchantType,
 				vendor->GetNPCTypeID(),
 				itemid,
 				charges,
 				true
-			);
-		}
-
-		if (freeslot > 0) {
+			)
+			) > 0) {
 			EQ::ItemInstance *inst2 = inst->Clone();
 
 			while (true) {
@@ -14314,19 +14200,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 				inst2->SetPrice(price);
 				inst2->SetMerchantSlot(freeslot);
 
-				uint32 merchant_quantity;
-				if (has_partitioned_list) {
-					// For partitioned players, get quantity from their personal list
-					merchant_quantity = charges;
-					for (auto& ml : m_temp_merchantlist_table[vendor->GetNPCTypeID()]) {
-						if (ml.slot == freeslot) {
-							merchant_quantity = ml.charges;
-							break;
-						}
-					}
-				} else {
-					merchant_quantity = zone->GetTempMerchantQuantity(vendor->GetNPCTypeID(), freeslot);
-				}
+				uint32 merchant_quantity = zone->GetTempMerchantQuantity(vendor->GetNPCTypeID(), freeslot);
 
 				if (inst2->IsStackable()) {
 					inst2->SetCharges(merchant_quantity);

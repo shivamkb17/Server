@@ -2697,6 +2697,10 @@ public:
 	bool AccountProgressionAllowed() const;
 
 	std::map<uint32, std::list<TempMerchantList>> m_temp_merchantlist_table;
+
+	bool UsesPersonalMerchantList() {
+        return IsHardcore() || IsSelfFound() || IsSeasonal();
+    }
 };
 
 #endif

@@ -237,6 +237,7 @@ public:
 	std::map<uint32, std::list<MercSpellEntry> >     merc_spells_list;
 	std::map<uint32, std::list<MercStanceInfo> >     merc_stance_list;
 	std::map<uint32, std::list<TempMerchantList> >   tmpmerchanttable;
+	std::map<uint32, std::list<TempMerchantList> >   hardcore_tmpmerchanttable;
 	std::map<uint32, std::string>                    adventure_entry_list_flavor;
 	std::map<uint32, ZoneEXPModInfo>                 level_exp_mod;
 

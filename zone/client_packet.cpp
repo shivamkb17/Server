@@ -13880,7 +13880,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	const EQ::ItemData* item = nullptr;
 	uint32 prevcharges = 0;
 	if (item_id == 0) { //check to see if its on the temporary table
-		std::list<TempMerchantList> tmp_merlist = zone->tmpmerchanttable[tmp->GetNPCTypeID()];
+		std::list<TempMerchantList> tmp_merlist = GetTempMerchantList(tmp->GetNPCTypeID());
 		std::list<TempMerchantList>::const_iterator tmp_itr;
 		TempMerchantList ml;
 		for (tmp_itr = tmp_merlist.begin(); tmp_itr != tmp_merlist.end(); ++tmp_itr) {
@@ -14023,7 +14023,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 
 	if (inst && tmpmer_used) {
 		int32 new_charges = prevcharges - mp->quantity;
-		zone->SaveTempItem(merchantid, tmp->GetNPCTypeID(), item_id, new_charges);
+		SaveTempItem(merchantid, tmp->GetNPCTypeID(), item_id, new_charges);
 		if (new_charges <= 0) {
 			auto delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
 			Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
@@ -14171,7 +14171,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	if (vendor->GetKeepsSoldItems()) {
 		int freeslot = 0;
 		if (
-			(freeslot = zone->SaveTempItem(
+			(freeslot = SaveTempItem(
 				vendor->CastToNPC()->MerchantType,
 				vendor->GetNPCTypeID(),
 				itemid,

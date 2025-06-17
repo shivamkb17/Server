@@ -1091,7 +1091,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 
 	const int16 merchant_slots = (m_ClientVersionBit & EQ::versions::maskRoFAndLater) ? EQ::invtype::MERCHANT_SIZE : 80;
 
-	auto temporary_merchant_list = zone->tmpmerchanttable[npcid];
+	auto temporary_merchant_list = GetTempMerchantList(npcid);
 	uint32 slot_id = 1;
 	uint8 handy_chance = 0;
 	for (const auto& ml : merchant_list) {
@@ -1189,7 +1189,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		}
 	}
 
-	auto temporary_merchant_list_two = zone->tmpmerchanttable[npcid];
+	auto temporary_merchant_list_two = temporary_merchant_list;
 	temporary_merchant_list.clear();
 	for (auto ml : temporary_merchant_list_two) {
 		if (slot_id > merchant_slots) {
@@ -1197,7 +1197,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 		}
 
 		item = database.GetItem(ml.item);
-		ml.slot = slot_id;
+		//ml.slot = slot_id;
 		if (item) {
 			if (!handy_chance) {
 				handy_item = item;
@@ -1234,7 +1234,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 	}
 
 	//this resets the slot
-	zone->tmpmerchanttable[npcid] = temporary_merchant_list;
+	SetTempMerchantList(npcid, temporary_merchant_list);
 	if (npc && handy_item) {
 		int greet_id = zone->random.Int(MERCHANT_GREETING, MERCHANT_HANDY_ITEM4);
 		auto handy_id = std::to_string(greet_id);
@@ -1244,6 +1244,152 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 			MessageString(Chat::NPCQuestSay, GENERIC_STRINGID_SAY, npc->GetCleanName(), handy_id.c_str(), GetName());
 		}
 	}
+}
+
+uint32 Client::GetTempMerchantQuantityPersonal(uint32 npcid, uint32 slot) {
+    std::list<TempMerchantList> tmp_merlist = IsHardcore() ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid];
+    std::list<TempMerchantList>::const_iterator iterator;
+
+    for (iterator = tmp_merlist.begin(); iterator != tmp_merlist.end(); ++iterator) {
+        if ((*iterator).slot == slot) {
+            LogInventory("Personal Slot [{}] has [{}] charges.", slot, (*iterator).charges);
+            return (*iterator).charges;
+        }
+    }
+
+    return 0;
+}
+
+int Client::SaveTempItemPersonal(uint32 merchantid, uint32 npcid, uint32 item, int32 charges, bool sold) {
+    LogInventory("[{}] [{}] charges of [{}] (Personal)", ((sold) ? "Sold" : "Bought"), charges, item);
+
+    // Iterate past main items.
+    // If the item being transacted is in this list, return 0;
+    std::list<MerchantList> merlist = zone->merchanttable[merchantid];
+    std::list<MerchantList>::const_iterator itr;
+    uint32 temp_slot_index = 1;
+    for (itr = merlist.begin(); itr != merlist.end(); ++itr) {
+        MerchantList ml = *itr;
+        if (ml.item == item) {
+            return 0;
+        }
+
+        // Account for merchant lists with gaps in them.
+        if (ml.slot >= temp_slot_index) {
+            temp_slot_index = ml.slot + 1;
+        }
+    }
+
+    LogInventory("Searching Personal Temporary List. Main list ended at [{}]", temp_slot_index-1);
+
+    // Now search the personal temporary list.
+    std::list<TempMerchantList> tmp_merlist = IsHardcore() ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid];
+    std::list<TempMerchantList>::const_iterator tmp_itr;
+    TempMerchantList ml;
+    bool found = false;
+
+    for (tmp_itr = tmp_merlist.begin(); tmp_itr != tmp_merlist.end(); ++tmp_itr) {
+        ml = *tmp_itr;
+
+        if (ml.item == item) {
+            found = true;
+            LogInventory("Item found in personal temp list at [{}] with [{}] charges", ml.origslot, ml.charges);
+            break;
+        }
+    }
+
+    if (found) {
+        tmp_merlist.clear();
+        std::list<TempMerchantList> oldtmp_merlist = IsHardcore() ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid];
+        for (tmp_itr = oldtmp_merlist.begin(); tmp_itr != oldtmp_merlist.end(); ++tmp_itr) {
+            TempMerchantList ml2 = *tmp_itr;
+            if(ml2.item != item) {
+                tmp_merlist.push_back(ml2);
+            } else {
+                if (sold) {
+                    LogInventory("Total charges is [{}] + [{}] charges", ml.charges, charges);
+                    ml.charges = ml.charges + charges;
+                } else {
+                    ml.charges = charges;
+                    LogInventory("new charges is [{}] charges", ml.charges);
+                }
+
+                if (!ml.origslot) {
+                    ml.origslot = ml.slot;
+                }
+                if (ml.charges > 0) {
+                    // NO database persistence for personal lists
+                    tmp_merlist.push_back(ml);
+                } else {
+                    // NO database deletion for personal lists - just remove from memory
+                }
+            }
+        }
+
+        (IsHardcore() ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid]) = tmp_merlist;
+        return ml.slot;
+    } else {
+        if (charges < 0) { //sanity check only, shouldnt happen
+            charges = 0x7FFF;
+        }
+
+        // Find an unused slot #
+        std::list<int> slots;
+        TempMerchantList ml3;
+        for (tmp_itr = tmp_merlist.begin(); tmp_itr != tmp_merlist.end(); ++tmp_itr) {
+            ml3 = *tmp_itr;
+            slots.push_back(ml3.origslot);
+        }
+        slots.sort();
+        std::list<int>::const_iterator slots_itr;
+        uint32 first_empty_slot = 0;
+        uint32 idx = temp_slot_index;
+        for (slots_itr = slots.begin(); slots_itr != slots.end(); ++slots_itr) {
+            if (!first_empty_slot && *slots_itr > idx) {
+                LogInventory("Popped [{}]", *slots_itr);
+                LogInventory("First Gap Found at [{}]", idx);
+                break;
+            }
+            ++idx;
+        }
+
+        first_empty_slot = idx;
+
+        // Find an unused mslot
+        slots.clear();
+        for (tmp_itr = tmp_merlist.begin(); tmp_itr != tmp_merlist.end(); ++tmp_itr) {
+            ml3 = *tmp_itr;
+            slots.push_back(ml3.slot);
+        }
+        slots.sort();
+        uint32 first_empty_mslot = 0;
+        idx = temp_slot_index;
+        for (slots_itr = slots.begin(); slots_itr != slots.end(); ++slots_itr) {
+            if (!first_empty_mslot && *slots_itr > idx) {
+                LogInventory("Popped [{}]", *slots_itr);
+                LogInventory("First Gap Found at [{}]", idx);
+                break;
+            }
+            ++idx;
+        }
+
+        first_empty_mslot = idx;
+
+        // NO database persistence for personal lists
+        tmp_merlist = IsHardcore() ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid];
+        TempMerchantList ml2;
+        ml2.charges = charges;
+        LogInventory("Adding personal slot [{}] with [{}] charges.", first_empty_mslot, charges);
+        ml2.item = item;
+        ml2.npcid = npcid;
+        ml2.slot = first_empty_mslot;
+        ml2.origslot = first_empty_slot;
+
+		LogInventory("Personal merchant: assigning slot [{}], client expects around [{}]", ml2.slot, temp_slot_index);
+        tmp_merlist.push_back(ml2);
+        (IsHardcore() ? zone->hardcore_tmpmerchanttable[npcid] : m_temp_merchantlist_table[npcid]) = tmp_merlist;
+        return ml2.slot;
+    }
 }
 
 uint8 Client::WithCustomer(uint16 NewCustomer){

@@ -2698,9 +2698,51 @@ public:
 
 	std::map<uint32, std::list<TempMerchantList>> m_temp_merchantlist_table;
 
+	int SaveTempItemPersonal(uint32 merchantid, uint32 npcid, uint32 item, int32 charges, bool sold = false);
+	uint32 GetTempMerchantQuantityPersonal(uint32 npcid, uint32 slot);
+
 	bool UsesPersonalMerchantList() {
-        return IsHardcore() || IsSelfFound() || IsSeasonal();
+        return IsSelfFound() || IsSeasonal();
     }
+
+	std::list<TempMerchantList> GetTempMerchantList(uint32 merchant_id) {
+		if (UsesPersonalMerchantList()) {
+			return m_temp_merchantlist_table[merchant_id];
+		}
+
+		if (IsHardcore()) {
+			return zone->hardcore_tmpmerchanttable[merchant_id];
+		}
+
+		return zone->tmpmerchanttable[merchant_id];
+	}
+
+	void SetTempMerchantList(uint32 merchant_id, const std::list<TempMerchantList>& merchant_list) {
+		if (UsesPersonalMerchantList()) {
+			m_temp_merchantlist_table[merchant_id] = merchant_list;
+		}  else if (IsHardcore()) {
+			zone->hardcore_tmpmerchanttable[merchant_id] = merchant_list;
+		} else {
+			zone->tmpmerchanttable[merchant_id] = merchant_list;
+		}
+	}
+
+	int SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 charges, bool sold = false) {
+		if (UsesPersonalMerchantList() || IsHardcore()) {
+			return SaveTempItemPersonal(merchantid, npcid, item, charges, sold);
+		}
+
+		return zone->SaveTempItem(merchantid, npcid, item, charges, sold);
+	}
+
+	uint32 GetTempMerchantQuantity(uint32 npcid, uint32 slot) {
+		if (UsesPersonalMerchantList() || IsHardcore()) {
+			return GetTempMerchantQuantityPersonal(npcid, slot);
+		}
+
+		return zone->GetTempMerchantQuantity(npcid, slot);
+	}
+
 };
 
 #endif

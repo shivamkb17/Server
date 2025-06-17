@@ -1328,7 +1328,7 @@ static void BazaarAuditTrail(const char *seller, const char *buyer, const char *
 
 	const std::string& query = fmt::format(
 		"INSERT INTO `trader_audit` "
-        	"(`time`, `seller`, `buyer`, `itemname`, `quantity`, `totalcost`, `trantype`) "
+			"(`time`, `seller`, `buyer`, `itemname`, `quantity`, `totalcost`, `trantype`) "
 		"VALUES (NOW(), '{}', '{}', '{}', {}, {}, {})",
 		seller,
 		buyer,
@@ -1400,24 +1400,24 @@ void Client::BuyTraderItem(TraderBuy_Struct *tbs, Client *Trader, const EQApplic
 	LogTrading("Actual quantity that will be traded is <green>[{}]", outtbs->quantity);
 
 	if ((tbs->price * outtbs->quantity) <= 0) {
-        Message(Chat::Red, "Internal error. Aborting trade. Please report this to the ServerOP. Error code is 1");
-        Trader->Message(
-            Chat::Red,
-            "Internal error. Aborting trade. Please report this to the ServerOP. Error code is 1"
-        );
-        LogError(
-            "Bazaar: Zero price transaction between <red>[{}] and <red>[{}] aborted. Item: <red>[{}] Charges: "
-            "<red>[{}] Qty <red>[{}] Price: <red>[{}]",
-            GetName(),
-            Trader->GetName(),
-            buy_item->GetItem()->Name,
-            buy_item->GetCharges(),
-            tbs->quantity,
-            tbs->price
-        );
-        TradeRequestFailed(app);
-        return;
-    }
+		Message(Chat::Red, "Internal error. Aborting trade. Please report this to the ServerOP. Error code is 1");
+		Trader->Message(
+			Chat::Red,
+			"Internal error. Aborting trade. Please report this to the ServerOP. Error code is 1"
+		);
+		LogError(
+			"Bazaar: Zero price transaction between <red>[{}] and <red>[{}] aborted. Item: <red>[{}] Charges: "
+			"<red>[{}] Qty <red>[{}] Price: <red>[{}]",
+			GetName(),
+			Trader->GetName(),
+			buy_item->GetItem()->Name,
+			buy_item->GetCharges(),
+			tbs->quantity,
+			tbs->price
+		);
+		TradeRequestFailed(app);
+		return;
+	}
 
 	uint64 total_transaction_value = static_cast<uint64>(tbs->price) * static_cast<uint64>(outtbs->quantity);
 
@@ -1443,15 +1443,15 @@ void Client::BuyTraderItem(TraderBuy_Struct *tbs, Client *Trader, const EQApplic
 	}
 
 	if (!TakeMoneyFromPP(total_cost)) {
-        RecordPlayerEventLog(
-            PlayerEvent::POSSIBLE_HACK,
-            PlayerEvent::PossibleHackEvent{
-                .message = "Attempted to buy something in bazaar but did not have enough money."
-            }
-        );
-        TradeRequestFailed(app);
-        return;
-    }
+		RecordPlayerEventLog(
+			PlayerEvent::POSSIBLE_HACK,
+			PlayerEvent::PossibleHackEvent{
+				.message = "Attempted to buy something in bazaar but did not have enough money."
+			}
+		);
+		TradeRequestFailed(app);
+		return;
+	}
 
 	LogTrading("Customer Paid: <green>[{}] in Copper", total_cost);
 
@@ -1510,10 +1510,10 @@ void Client::BuyTraderItem(TraderBuy_Struct *tbs, Client *Trader, const EQApplic
 	}
 
 	LogTrading("Trader Received: [{}] Platinum, [{}] Gold, [{}] Silver, [{}] Copper", platinum, gold, silver, copper);
-    ReturnTraderReq(app, outtbs->quantity, item_id);
+	ReturnTraderReq(app, outtbs->quantity, item_id);
 
-    outtbs->trader_id = GetID();
-    outtbs->action    = BazaarBuyItem;
+	outtbs->trader_id = GetID();
+	outtbs->action    = BazaarBuyItem;
 	strn0cpy(outtbs->seller_name, Trader->GetCleanName(), sizeof(outtbs->seller_name));
 	strn0cpy(outtbs->buyer_name, GetCleanName(), sizeof(outtbs->buyer_name));
 	strn0cpy(outtbs->item_name, buy_item->GetItem()->Name, sizeof(outtbs->item_name));
@@ -1570,7 +1570,36 @@ void Client::SendBazaarWelcome()
 
 void Client::SendBarterWelcome()
 {
-	const auto results = BuyerBuyLinesRepository::GetWelcomeData(database);
+	BuyerBuyLinesRepository::WelcomeData_Struct results;
+
+	auto buyers = BuyerBuyLinesRepository::All(database);
+
+	std::vector<uint32> char_ids;
+	for (const auto& buyer : buyers) {
+		char_ids.push_back(buyer.char_id);
+	}
+
+	auto h = CharacterDataExtraRepository::GetAllHardcoreInSet(database, char_ids);
+	std::unordered_set<uint32> s(h.begin(), h.end());
+
+	buyers.erase(
+	std::remove_if(buyers.begin(), buyers.end(),
+		[&](const auto& buyer) {
+			bool buyer_is_hardcore = s.count(buyer.char_id) > 0;
+			return IsHardcore() != buyer_is_hardcore;
+		}),
+	buyers.end()
+	);
+
+	results.count_of_buyers = buyers.size();
+
+	uint32 total_items = 0;
+	for (const auto& buyer : buyers) {
+		auto buy_lines = BuyerBuyLinesRepository::GetBuyLines(database, buyer.char_id);
+		total_items += buy_lines.size();
+	}
+	results.count_of_items = total_items;
+
 	MessageString(Chat::White, BUYER_WELCOME, std::to_string(results.count_of_buyers).c_str());
 }
 
@@ -1791,6 +1820,24 @@ void Client::SendBuyerResults(BarterSearchRequest_Struct& bsr)
 			search_string = "*";
 		}
 
+		std::vector<uint32> all_char_ids;
+		for (const auto& r : results.buy_line) {
+			all_char_ids.push_back(r.buyer_id);
+		}
+
+		auto h = CharacterDataExtraRepository::GetAllHardcoreInSet(database, all_char_ids);
+		std::unordered_set<uint32> s(h.begin(), h.end());
+
+		results.buy_line.erase(
+			std::remove_if(results.buy_line.begin(), results.buy_line.end(),
+				[&](const BuyerLineItemsSearch_Struct& r) {
+					bool buyer_is_hardcore = s.count(r.buyer_id) > 0;
+					return IsHardcore() != buyer_is_hardcore;
+				}),
+			results.buy_line.end()
+		);
+
+		results.no_items = results.buy_line.size();
 		results.search_string  = std::move(search_string);
 		results.transaction_id = bsr.transaction_id;
 		std::stringstream ss{};
@@ -1821,9 +1868,16 @@ void Client::ShowBuyLines(const EQApplicationPacket *app)
 	auto buyer = entity_list.GetClientByID(bir->buyer_id);
 
 	if (!buyer || buyer->GetCustomerID()) {
-		bir->approval = 0; // Tell the client that the Buyer is unavailable
+		bir->approval = 0;
 		QueuePacket(app);
 		MessageString(Chat::Yellow, TRADER_BUSY);
+		return;
+	}
+
+	if (IsHardcore() != CharacterDataExtraRepository::GetPlayModeHardcore(database, buyer->CharacterID())) {
+		bir->approval = 0;
+		QueuePacket(app);
+		Message(Chat::Red, "Your play modes prevent accessing this Buyer.");
 		return;
 	}
 

@@ -150,6 +150,34 @@ public:
 		}
 	}
 
+	static std::vector<uint32> GetAllHardcoreInSet(Database& db, const std::vector<uint32>& character_ids)
+	{
+		std::vector<uint32> hardcore_chars;
+
+		if (character_ids.empty()) {
+			return hardcore_chars;
+		}
+
+		std::string id_list;
+		for (size_t i = 0; i < character_ids.size(); ++i) {
+			if (i > 0) {
+				id_list += ",";
+			}
+			id_list += std::to_string(character_ids[i]);
+		}
+
+		std::string where_filter = fmt::format("character_id IN ({}) AND play_mode_hardcore != 0", id_list);
+		auto e = GetWhere(db, where_filter);
+
+		hardcore_chars.reserve(e.size());
+
+		for (const auto& entry : e) {
+			hardcore_chars.push_back(entry.character_id);
+		}
+
+		return hardcore_chars;
+	}
+
 };
 
 #endif //EQEMU_CHARACTER_DATA_EXTRA_REPOSITORY_H

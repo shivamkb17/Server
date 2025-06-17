@@ -781,6 +781,11 @@ void Client::SendTraderPacket(Client* Trader, uint32 Unknown72)
 	if(!Trader)
 		return;
 
+	if (IsHardcore() != CharacterDataExtraRepository::GetPlayModeHardcore(database, Trader->CharacterID())) {
+		Message(Chat::Red, "Your play modes prevent accessing this Trader.");
+		return;
+	}
+
 	auto outapp = new EQApplicationPacket(OP_BecomeTrader, sizeof(BecomeTrader_Struct));
 
 	BecomeTrader_Struct* bts = (BecomeTrader_Struct*)outapp->pBuffer;
@@ -1557,13 +1562,36 @@ void Client::BuyTraderItem(TraderBuy_Struct *tbs, Client *Trader, const EQApplic
 
 void Client::SendBazaarWelcome()
 {
-	const auto          results = TraderRepository::GetWelcomeData(database);
+	TraderRepository::WelcomeData_Struct results;
+
+	auto traders = TraderRepository::All(database);
+
+	std::vector<uint32> char_ids;
+	for (const auto& trader : traders) {
+		char_ids.push_back(trader.char_id);
+	}
+
+	auto h = CharacterDataExtraRepository::GetAllHardcoreInSet(database, char_ids);
+	std::unordered_set<uint32> s(h.begin(), h.end());
+
+	traders.erase(
+	std::remove_if(traders.begin(), traders.end(),
+		[&](const auto& trader) {
+			bool trader_is_hardcore = s.count(trader.char_id) > 0;
+			return IsHardcore() != trader_is_hardcore;
+		}),
+	traders.end()
+	);
+
+	results.count_of_traders = traders.size();
+	results.count_of_items = traders.size();
+
 	EQApplicationPacket outapp(OP_BazaarSearch, static_cast<uint32>(sizeof(BazaarWelcome_Struct)));
 	auto                data = (BazaarWelcome_Struct *) outapp.pBuffer;
 
-	data->action             = BazaarWelcome;
-	data->traders            = results.count_of_traders;
-	data->items              = results.count_of_items;
+	data->action    = BazaarWelcome;
+	data->traders   = results.count_of_traders;
+	data->items     = results.count_of_items;
 
 	QueuePacket(&outapp);
 }
@@ -1610,7 +1638,8 @@ void Client::DoBazaarSearch(BazaarSearchCriteria_Struct search_criteria)
 		content_db,
 		search_criteria,
 		GetZoneID(),
-		GetInstanceID()
+		GetInstanceID(),
+		IsHardcore()
 	);
 	if (results.empty()) {
 		SendBazaarDone(GetID());

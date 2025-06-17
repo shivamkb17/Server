@@ -2,6 +2,7 @@
 
 #include "../../common/item_instance.h"
 #include "repositories/trader_repository.h"
+#include "repositories/character_data_extra_repository.h"
 #include <memory>
 
 std::vector<BazaarSearchResultsFromDB_Struct>
@@ -10,7 +11,8 @@ Bazaar::GetSearchResults(
 	Database &content_db,
 	BazaarSearchCriteria_Struct search,
 	uint32 char_zone_id,
-	int32 char_zone_instance_id
+	int32 char_zone_instance_id,
+	bool is_hardcore_client
 )
 {
 	LogTrading(
@@ -298,8 +300,23 @@ Bazaar::GetSearchResults(
 
 	all_entries.reserve(trader_results.size());
 
+	// Extract char_ids for hardcore filtering
+	std::vector<uint32> char_ids;
+	for (auto const& t : trader_results) {
+		char_ids.push_back(t.trader.char_id);
+	}
+
+	auto h = CharacterDataExtraRepository::GetAllHardcoreInSet(db, char_ids);
+	std::unordered_set<uint32> s(h.begin(), h.end());
+
 	for (auto const& t:trader_results) {
 		if (!item_results.contains(t.trader.item_id)) {
+			continue;
+		}
+
+		// Hardcore filtering using original char_id
+		bool trader_is_hardcore = s.count(t.trader.char_id) > 0;
+		if (is_hardcore_client != trader_is_hardcore) {
 			continue;
 		}
 

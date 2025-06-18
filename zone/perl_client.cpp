@@ -3371,6 +3371,14 @@ void Perl_Client_SetHardcore(Client *self, bool value) {
 	self->SetHardcore(value);
 }
 
+void Perl_Client_SetSolo(Client* self, bool value) {
+	self->SetSolo(value);
+}
+
+void Perl_Client_SetSelfFound(Client*, bool value) {
+	self->SetSelfFound(value);
+}
+
 void Perl_Client_ResetLeadershipAA(Client* self)
 {
 	self->ResetLeadershipAA();
@@ -4217,6 +4225,8 @@ void perl_register_client()
 	package.add("IsSelfFound", (bool(*)(Client*))&Perl_Client_IsSelfFound);
 	package.add("IsSolo", (bool(*)(Client*))&Perl_Client_IsSolo);
 	package.add("SetHardcore", (void(*)(Client*, bool))&Perl_Client_SetHardcore);
+	package.add("SetSolo", (void(*)(Client*, bool))&Perl_Client_SetSolo);
+	package.add("SetSelfFound", (void(*)(Client*, bool))&Perl_Client_SetSelfFound);
 }
 
 #endif //EMBPERL_XS_CLASSES

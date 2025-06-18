@@ -80,6 +80,9 @@ namespace NameColorPalette {
 constexpr uint32 NPC_NAME_COLOR_LOCKED = 0x4a235a;
 constexpr uint32 NPC_NAME_COLOR_RESET  = 0xFFFFFFFF;
 
+constexpr uint32 ITEM_TIER1 = 1000000;
+constexpr uint32 ITEM_TIER2 = 2000000;
+
 enum PlayModeFlags : uint8_t
 {
     SOLO_MODE = 0x01,

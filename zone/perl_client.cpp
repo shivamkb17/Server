@@ -3367,7 +3367,7 @@ bool Perl_Client_IsSolo(Client* self) {
 	return self->IsSolo();
 }
 
-void Perl_Client_SetHardcore(Client *self, bool value) {
+void Perl_Client_SetHardcore(Client* self, bool value) {
 	self->SetHardcore(value);
 }
 
@@ -3375,7 +3375,7 @@ void Perl_Client_SetSolo(Client* self, bool value) {
 	self->SetSolo(value);
 }
 
-void Perl_Client_SetSelfFound(Client*, bool value) {
+void Perl_Client_SetSelfFound(Client* self, bool value) {
 	self->SetSelfFound(value);
 }
 

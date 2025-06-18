@@ -3086,6 +3086,66 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 			}
 		}
 
+		if (killer) {
+			auto uk = killer->GetUltimateOwner();
+			if (killer && killer->IsClient()) {
+				Client* ukc = uk->CastToClient();
+				if (ukc) {
+					int total_modifier = 34 * (ukc->IsSolo() + ukc->IsHardcore() + ukc->IsSelfFound());
+
+					for (LootItem* item : m_loot_items) {
+						if (!item || !total_modifier || item->item_id >= ITEM_TIER2) {
+							continue;
+						}
+
+						if (total_modifier < 100 && zone->random.Roll0(100) >= total_modifier) {
+							continue;
+						}
+
+						int old_item  = item->item_id;
+						item->item_id = DoUpgradeLoot(item->item_id);
+
+						if (old_item == item->item_id) {
+							continue;
+						}
+
+						EQ::SayLinkEngine linker;
+						linker.SetLinkType(EQ::saylink::SayLinkItemData);
+
+						linker.SetItemData(database.GetItem(old_item));
+						auto old_item_lnk = linker.GenerateLink();
+
+						linker.SetItemData(database.GetItem(item->item_id));
+						auto new_item_lnk = linker.GenerateLink();
+
+						std::string upgrade_msg = fmt::format("Your playmodes have upgraded a drop! [{}] has become [{}].", old_item_lnk.c_str(), new_item_lnk.c_str());
+
+						killer->Message(Chat::Yellow, upgrade_msg.c_str());
+
+						if (killer->IsGrouped()) {
+							Group* g = entity_list.GetGroupByClient(killer->CastToClient());
+							if (g) {
+								for (const auto &m : g->members) {
+									if (m && m->GetID() != killer->GetID()) {
+										m->Message(Chat::Yellow, upgrade_msg.c_str());
+									}
+								}
+							}
+						} else if (killer->IsRaidGrouped()) {
+							Raid* r = entity_list.GetRaidByClient(killer->CastToClient());
+							if (r) {
+								for (const auto &m : r->members) {
+									if (m.member && m.member->GetID() != killer->GetID()) {
+										m.member->Message(Chat::Yellow, upgrade_msg.c_str());
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
 		uint32 corpse_timer = static_cast<uint32>(level > 54 ? RuleI(NPC, MajorNPCCorpseDecayTime) : RuleI(NPC, MinorNPCCorpseDecayTime));
 
 		if (respawn2 && respawn2->RespawnTimer() > 0) {

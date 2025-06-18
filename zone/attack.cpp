@@ -3360,7 +3360,6 @@ void Mob::TagPlayModeEngagementDelegate(Client* client) {
 	if (!client)
 		return;
 
-	// Self-Found tagging
 	if (client->IsSelfFound()) {
 		auto key = fmt::format("sf-{}", client->GetCleanName());
 		if (!EntityVariableExists(key) && !EntityVariableExists("sf-ineligible")) {
@@ -3370,7 +3369,6 @@ void Mob::TagPlayModeEngagementDelegate(Client* client) {
 		SetEntityVariable("sf-ineligible", "true");
 	}
 
-	// Solo tagging
 	if (client->IsSolo()) {
 		auto key = fmt::format("solo-{}", client->GetCleanName());
 		if (!EntityVariableExists(key) && !EntityVariableExists("solo-ineligible")) {
@@ -3380,7 +3378,6 @@ void Mob::TagPlayModeEngagementDelegate(Client* client) {
 		SetEntityVariable("solo-ineligible", "true");
 	}
 
-	// Hardcore tagging
 	if (client->IsHardcore()) {
 		auto key = fmt::format("hc-{}", client->GetCleanName());
 		if (!EntityVariableExists(key) && !EntityVariableExists("hc-ineligible")) {
@@ -3388,6 +3385,11 @@ void Mob::TagPlayModeEngagementDelegate(Client* client) {
 		}
 	} else if (!EntityVariableExists("hc-ineligible")) {
 		SetEntityVariable("hc-ineligible", "true");
+	}
+
+	auto play_key = fmt::format("play-{}", client->GetCleanName());
+	if (!EntityVariableExists(play_key)) {
+		SetEntityVariable(play_key, "true");
 	}
 }
 

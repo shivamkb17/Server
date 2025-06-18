@@ -831,7 +831,7 @@ bool Mob::IsPlayModeEligible(Mob* attacker) {
 
 bool Mob::CheckAndResetAbandonedMob() {
 	auto ev = GetEntityVariables();
-	std::vector<std::string> n;
+	std::unordered_set<std::string> names;
 
 	for (const auto& v : ev) {
 		std::string p;
@@ -842,43 +842,47 @@ bool Mob::CheckAndResetAbandonedMob() {
 			p = v.substr(5);
 		} else if (v.substr(0, 3) == "hc-" && v.length() > 3) {
 			p = v.substr(3);
+		} else if (v.substr(0, 5) == "play-" && v.length() > 5) {
+			p = v.substr(5);
 		}
 
 		if (!p.empty()) {
-			n.push_back(p);
+			names.insert(p);
 		}
 	}
 
-	if (n.empty()) {
+	if (names.empty()) {
 		return false;
 	}
 
-
 	bool any_claimants_present = false;
-	for (const auto& name : n) {
-		Client* c = entity_list.GetClientByName(name.c_str());
-		if (c && c->GetZoneID() == GetZoneID()) {
+	auto haters = GetHateList();
+
+	for (auto entry : haters) {
+		if (!entry || !entry->entity_on_hatelist || !entry->entity_on_hatelist->IsClient())
+			continue;
+
+		std::string hater_name = entry->entity_on_hatelist->GetCleanName();
+		if (names.count(hater_name)) {
 			any_claimants_present = true;
 			break;
 		}
 	}
-
 
 	if (!any_claimants_present) {
 		for (const auto& v : ev) {
 			if (v.substr(0, 3) == "sf-" ||
 				v.substr(0, 5) == "solo-" ||
 				v.substr(0, 3) == "hc-" ||
+				v.substr(0, 5) == "play-" ||
 				v == "sf-ineligible" ||
 				v == "solo-ineligible" ||
 				v == "hc-ineligible") {
-
 				DeleteEntityVariable(v);
 			}
 		}
 
 		SetHP(GetMaxHP());
-
 		LogDebug("Reset abandoned mob [{}] - all claimants gone", GetCleanName());
 		return true;
 	}

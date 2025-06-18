@@ -1902,6 +1902,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	entity_list.SendZonePVPUpdates(this);	//hack until spawn struct is fixed.
 	entity_list.SendZoneSeasonalUpdates(this);
 	entity_list.SendZonePlaymodeUpdates(this);
+	entity_list.SendZoneLockedNPCUpdates(this);
 
 	/* Time of Day packet */
 	outapp = new EQApplicationPacket(OP_TimeOfDay, sizeof(TimeOfDay_Struct));
@@ -5574,6 +5575,10 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 		SendColoredText(color, std::string("This creature's will is unbreakable - mesmerizing magic would have no effect!"));
 	}
 
+	if (!t->IsPlayModeEligible(this)) {
+		Message(Chat::Yellow, "Your play modes would not allow you to affect this creature.");
+	}
+
 	// this could be done better, but this is only called when you con so w/e
 	// Shroud of Stealth has a special message
 	if (improved_hidden && (!t->see_improved_hide && (t->SeeInvisible() || t->see_hide))) {
@@ -5627,6 +5632,11 @@ void Client::Handle_OP_ConsiderCorpse(const EQApplicationPacket *app)
 		if (t->IsSeasonal()) {
 			Message(Chat::Red, "This is a Seasonal character's kill, and will not unlock to be looted by others.");
 		}
+
+		if (!t->IsPlayModeEligible(this)) {
+			Message(Chat::Red, "Your play modes will not allow you to loot this corpse.");
+		}
+
 	} else if (t && t->IsPlayerCorpse()) {
 		remaining_time = t->GetRemainingRezTime();
 		if (!t->IsRezzed()) {

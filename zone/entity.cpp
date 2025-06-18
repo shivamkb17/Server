@@ -1468,6 +1468,26 @@ void EntityList::SendZonePlaymodeUpdates(Client *to)
 	}
 }
 
+void EntityList::SendZoneLockedNPCUpdates(Client *to)
+{
+	if (!to) {
+		return;
+	}
+
+	for (auto entry : GetNPCList()) {
+		NPC* npc = entry.second;
+		if (!npc->IsPlayModeLocked()) {
+			continue;
+		}
+
+		if (npc->IsPlayModeEligible(to)) {
+			npc->SendAppearancePacket(AppearanceType::NameColorCustom, NPC_NAME_COLOR_RESET, false, true, to);
+		} else {
+			npc->SendAppearancePacket(AppearanceType::NameColorCustom, NPC_NAME_COLOR_LOCKED, false, true, to);
+		}
+	}
+}
+
 void EntityList::SendZoneCorpses(Client *client)
 {
 	EQApplicationPacket *app;

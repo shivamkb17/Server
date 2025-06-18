@@ -3360,36 +3360,58 @@ void Mob::TagPlayModeEngagementDelegate(Client* client) {
 	if (!client)
 		return;
 
+	bool set = false;
+
 	if (client->IsSelfFound()) {
 		auto key = fmt::format("sf-{}", client->GetCleanName());
 		if (!EntityVariableExists(key) && !EntityVariableExists("sf-ineligible")) {
 			SetEntityVariable(key, "true");
+			set = true;
 		}
 	} else if (!EntityVariableExists("sf-ineligible")) {
 		SetEntityVariable("sf-ineligible", "true");
+		set = true;
 	}
 
 	if (client->IsSolo()) {
 		auto key = fmt::format("solo-{}", client->GetCleanName());
 		if (!EntityVariableExists(key) && !EntityVariableExists("solo-ineligible")) {
 			SetEntityVariable(key, "true");
+			set = true;
 		}
 	} else if (!EntityVariableExists("solo-ineligible")) {
 		SetEntityVariable("solo-ineligible", "true");
+		set = true;
 	}
 
 	if (client->IsHardcore()) {
 		auto key = fmt::format("hc-{}", client->GetCleanName());
 		if (!EntityVariableExists(key) && !EntityVariableExists("hc-ineligible")) {
 			SetEntityVariable(key, "true");
+			set = true;
 		}
 	} else if (!EntityVariableExists("hc-ineligible")) {
 		SetEntityVariable("hc-ineligible", "true");
+		set = true;
 	}
 
 	auto play_key = fmt::format("play-{}", client->GetCleanName());
 	if (!EntityVariableExists(play_key)) {
 		SetEntityVariable(play_key, "true");
+		set = true;
+	}
+
+	if (!set || IsClient() || IsPetOwnerClient()) {
+		return;
+	}
+
+	auto lock_owners = GetPlayModeLockOwners();
+	for (auto c : entity_list.GetClientList()) {
+		if (!IsPlayModeEligible(c.second)) {
+			SendAppearancePacket(AppearanceType::NameColorCustom, NPC_NAME_COLOR_LOCKED, true, false, c.second);
+		} else {
+			SendAppearancePacket(AppearanceType::NameColorCustom, NPC_NAME_COLOR_RESET, true, false, c.second);
+		}
 	}
 }
 

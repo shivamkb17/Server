@@ -406,6 +406,7 @@ public:
 	void	SendZonePVPUpdates(Client *);
 	void	SendZoneSeasonalUpdates(Client *);
 	void	SendZonePlaymodeUpdates(Client *);
+	void    SendZoneLockedNPCUpdates(Client *to);
 	void	SendZoneSpawnsBulk(Client* client);
 	void	Save();
 	void	SendZoneCorpses(Client*);

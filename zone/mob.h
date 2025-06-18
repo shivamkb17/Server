@@ -2042,6 +2042,8 @@ public:
 	void TagPlayModeEngagement(Mob* attacker);
 	void TagPlayModeEngagementDelegate(Client* attacker);
 	bool CheckAndResetAbandonedMob();
+	bool IsPlayModeLocked();
+	std::unordered_set<std::string> GetPlayModeLockOwners();
 };
 
 #endif

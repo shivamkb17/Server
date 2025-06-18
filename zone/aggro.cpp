@@ -829,31 +829,49 @@ bool Mob::IsPlayModeEligible(Mob* attacker) {
 		   IsHardcoreEligible(attacker);
 }
 
-bool Mob::CheckAndResetAbandonedMob() {
+bool Mob::IsPlayModeLocked() {
 	auto ev = GetEntityVariables();
-	std::unordered_set<std::string> names;
-
 	for (const auto& v : ev) {
-		std::string p;
-
-		if (v.substr(0, 3) == "sf-" && v.length() > 3) {
-			p = v.substr(3);
-		} else if (v.substr(0, 5) == "solo-" && v.length() > 5) {
-			p = v.substr(5);
-		} else if (v.substr(0, 3) == "hc-" && v.length() > 3) {
-			p = v.substr(3);
-		} else if (v.substr(0, 5) == "play-" && v.length() > 5) {
-			p = v.substr(5);
+		if ((v.rfind("sf-", 0) == 0 && v.length() > 3) ||
+			(v.rfind("solo-", 0) == 0 && v.length() > 5) ||
+			(v.rfind("hc-", 0) == 0 && v.length() > 3) ||
+			(v.rfind("play-", 0) == 0 && v.length() > 5)) {
+			return true;
 		}
+	}
+	return false;
+}
 
-		if (!p.empty()) {
-			names.insert(p);
+std::unordered_set<std::string> Mob::GetPlayModeLockOwners() {
+	std::unordered_set<std::string> owners;
+
+	for (const auto& v : GetEntityVariables()) {
+		size_t prefix_len = 0;
+
+		if ((v.rfind("sf-", 0) == 0 && (prefix_len = 3)) ||
+			(v.rfind("solo-", 0) == 0 && (prefix_len = 5)) ||
+			(v.rfind("hc-", 0) == 0 && (prefix_len = 3)) ||
+			(v.rfind("play-", 0) == 0 && (prefix_len = 5))) {
+
+			if (v.length() > prefix_len)
+				owners.emplace(v.substr(prefix_len));
 		}
 	}
 
+	return owners;
+}
+
+bool Mob::CheckAndResetAbandonedMob() {
+	if (!IsPlayModeLocked() || IsClient() || IsPetOwnerClient()) {
+		return false;
+	}
+
+	auto names = GetPlayModeLockOwners();
 	if (names.empty()) {
 		return false;
 	}
+
+	std::unordered_set<std::string> name_set(names.begin(), names.end());
 
 	bool any_claimants_present = false;
 	auto haters = GetHateList();
@@ -863,13 +881,14 @@ bool Mob::CheckAndResetAbandonedMob() {
 			continue;
 
 		std::string hater_name = entry->entity_on_hatelist->GetCleanName();
-		if (names.count(hater_name)) {
+		if (name_set.count(hater_name)) {
 			any_claimants_present = true;
 			break;
 		}
 	}
 
 	if (!any_claimants_present) {
+		auto ev = GetEntityVariables();
 		for (const auto& v : ev) {
 			if (v.substr(0, 3) == "sf-" ||
 				v.substr(0, 5) == "solo-" ||
@@ -884,6 +903,10 @@ bool Mob::CheckAndResetAbandonedMob() {
 
 		SetHP(GetMaxHP());
 		LogDebug("Reset abandoned mob [{}] - all claimants gone", GetCleanName());
+
+		auto lock_owners = GetPlayModeLockOwners();
+		SendAppearancePacket(AppearanceType::NameColorCustom, NPC_NAME_COLOR_RESET, true, true);
+
 		return true;
 	}
 

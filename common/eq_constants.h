@@ -77,6 +77,9 @@ namespace NameColorPalette {
     constexpr uint32_t Hardcore  = 4; // Hardcore mode - Dark Grey
 }
 
+constexpr uint32 NPC_NAME_COLOR_LOCKED = 0x4a235a;
+constexpr uint32 NPC_NAME_COLOR_RESET  = 0xFFFFFFFF;
+
 enum PlayModeFlags : uint8_t
 {
     SOLO_MODE = 0x01,

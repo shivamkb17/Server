@@ -2316,3 +2316,67 @@ int16 EQ::InventoryProfile::FindFirstFreeSlotThatFitsItemWithStacking(ItemInstan
 
 	return INVALID_INDEX;
 }
+
+std::vector<EQ::ItemInstance*> EQ::InventoryProfile::GetUnattunedItems(uint8 where)
+{
+	std::vector<EQ::ItemInstance*> result;
+
+	// Worn
+	if (where & invWhereWorn) {
+		_GetUnattunedItems(m_worn, result);
+	}
+
+	// Personal inventory
+	if (where & invWherePersonal) {
+		_GetUnattunedItems(m_inv, result);
+	}
+
+	// Bank
+	if (where & invWhereBank) {
+		_GetUnattunedItems(m_bank, result);
+	}
+
+	// Shared bank
+	if (where & invWhereSharedBank) {
+		_GetUnattunedItems(m_shbank, result);
+	}
+
+	return result;
+}
+
+
+void EQ::InventoryProfile::_GetUnattunedItems(std::map<int16, EQ::ItemInstance*>& bucket, std::vector<EQ::ItemInstance*>& out_result)
+{
+	for (auto iter = bucket.begin(); iter != bucket.end(); ++iter) {
+		int16 slot = iter->first;
+		EQ::ItemInstance* inst = iter->second;
+
+		if (EQ::ValueWithin(slot, EQ::invslot::POSSESSIONS_BEGIN, EQ::invslot::POSSESSIONS_END)) {
+			if ((((uint64)1 << slot) & m_lookup->PossessionsBitmask) == 0) {
+				continue;
+			}
+		}
+		else if (EQ::ValueWithin(slot, EQ::invslot::BANK_BEGIN, EQ::invslot::BANK_END)) {
+			if (slot - EQ::invslot::BANK_BEGIN >= m_lookup->InventoryTypeSize.Bank) {
+				continue;
+			}
+		}
+
+		if (!inst) {
+			continue;
+		}
+
+		if (!inst->IsAttuned()) {
+			out_result.push_back(inst);
+		}
+
+		if (inst->IsClassBag()) {
+			for (auto bag_iter = inst->_cbegin(); bag_iter != inst->_cend(); ++bag_iter) {
+				EQ::ItemInstance* bag_inst = bag_iter->second;
+				if (bag_inst && !bag_inst->IsAttuned()) {
+					out_result.push_back(bag_inst);
+				}
+			}
+		}
+	}
+}

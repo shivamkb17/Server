@@ -210,6 +210,7 @@ namespace EQ
 		void SetCustomData(const std::string &identifier, float value);
 		void SetCustomData(const std::string &identifier, bool value);
 		void DeleteCustomData(const std::string& identifier);
+		void DeleteAllCustomData();
 
 		// Allows treatment of this object as though it were a pointer to m_item
 		operator bool() const { return (m_item != nullptr); }
@@ -356,6 +357,8 @@ namespace EQ
 		void             SetEvolveFinalItemID(const uint32 in) const { m_evolving_details.final_item_id = in; }
 		bool             TransferOwnership(Database& db, const uint32 to_char_id) const;
 		void             CalculateEvolveProgression() const { m_evolving_details.progression = evolving_items_manager.CalculateProgression(GetEvolveCurrentAmount(), GetID()); }
+
+		bool             HasCustomData(const std::string& identifier) const;
 
 	protected:
 		//////////////////////////

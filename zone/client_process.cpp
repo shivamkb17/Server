@@ -662,6 +662,10 @@ bool Client::Process() {
 			DoEnduranceRegen();
 			BuffProcess();
 
+			if (IsSelfFound()) {
+				CheckExpiredSelfFoundTags();
+			}
+
 			if (auto_attack) {
 				ResetAFKTimer();
 			}

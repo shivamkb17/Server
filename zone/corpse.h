@@ -253,6 +253,7 @@ public:
 	);
 
 	bool IsPlayModeEligible(Client* client);
+	std::unordered_set<std::string> CanBeLootedBySF(Client* c);
 
 protected:
 	void MoveItemToCorpse(Client *client, EQ::ItemInstance *inst, int16 equipSlot, std::list<uint32> &removedList);

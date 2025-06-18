@@ -1208,7 +1208,32 @@ void Corpse::MakeLootRequestPackets(Client *c, const EQApplicationPacket *app)
 	}
 
 	m_being_looted_by_entity_id = c->GetID();
-	c->CommonBreakInvisible(); // we should be "all good" so lets break invis now instead of earlier before all error checking is done
+	c->CommonBreakInvisible();
+
+	if (c->IsSelfFound()) {
+		auto tradable_players = CanBeLootedBySF(c);
+		const std::string& looter_name = c->GetCleanName();
+
+		auto others(tradable_players);
+		others.erase(looter_name);
+
+		if (!others.empty()) {
+			std::vector<std::string> player_list(tradable_players.begin(), tradable_players.end());
+			std::string player_names;
+
+			if (player_list.size() == 1) {
+				player_names = player_list[0];
+			} else if (player_list.size() == 2) {
+				player_names = fmt::format("{} and {}", player_list[0], player_list[1]);
+			} else {
+				std::vector<std::string> comma_players(player_list.begin(), player_list.end() - 1);
+				std::string comma_list = Strings::Join(comma_players, ", ");
+				player_names = fmt::format("{}, and {}", comma_list, player_list.back());
+			}
+
+			c->Message(Chat::Loot, fmt::format("Items on this corpse will be tradable with {} for the next two hours.", player_names).c_str());
+		}
+	}
 
 	// process coin
 	bool        loot_coin = false;
@@ -1657,6 +1682,48 @@ void Corpse::LootCorpseItem(Client *c, const EQApplicationPacket *app)
 			c->DiscoverItem(inst->GetItem()->ID);
 		}
 
+		if (c->IsSelfFound()) {
+			auto tradable_players = CanBeLootedBySF(c);
+			const std::string& looter_name = c->GetCleanName();
+
+			if (tradable_players.size() > 1) {
+				time_t current_time = time(nullptr);
+				inst->SetCustomData("sf_timestamp", std::to_string(current_time));
+
+				auto variables = GetEntityVariables();
+				for (const auto& key : variables) {
+					inst->SetCustomData(key, "1");
+				}
+			}
+
+			EQ::SayLinkEngine linker;
+			linker.SetLinkType(EQ::saylink::SayLinkItemInst);
+			linker.SetItemInst(inst);
+			auto item_link = linker.GenerateLink();
+
+			if (tradable_players.size() == 1 && tradable_players.count(looter_name)) {
+				inst->SetAttuned(true);
+				if (CanClassEquipItem(inst->GetID())) {
+					c->Message(Chat::Loot, fmt::format("Your [{}] has become attuned.", item_link).c_str());
+				}
+			} else {
+				std::vector<std::string> player_list(tradable_players.begin(), tradable_players.end());
+				std::string player_names;
+
+				if (player_list.size() == 2) {
+					player_names = fmt::format("{} and {}", player_list[0], player_list[1]);
+				} else if (!player_list.empty()) {
+					std::vector<std::string> comma_players(player_list.begin(), player_list.end() - 1);
+					std::string comma_list = Strings::Join(comma_players, ", ");
+					player_names = fmt::format("{}, and {}", comma_list, player_list.back());
+				}
+
+				if (!player_names.empty()) {
+					c->Message(Chat::Loot, fmt::format("Your [{}] will be tradable with {} for the next two hours.", item_link, player_names).c_str());
+				}
+			}
+		}
+
 		/* First add it to the looter - this will do the bag contents too */
 		if (lootitem->auto_loot > 0) {
 			if (!c->AutoPutLootInInventory(*inst, true, true, bag_item_data)) {
@@ -1664,6 +1731,7 @@ void Corpse::LootCorpseItem(Client *c, const EQApplicationPacket *app)
 			}
 		}
 		else {
+			LogDebug("Checking custom data: [{}]", inst->GetCustomDataString());
 			c->PutLootInInventory(EQ::invslot::slotCursor, *inst, bag_item_data);
 		}
 
@@ -2534,4 +2602,27 @@ bool Corpse::IsPlayModeEligible(Client* client) {
 	}
 
 	return true;
+}
+
+std::unordered_set<std::string> Corpse::CanBeLootedBySF(Client* c) {
+	std::unordered_set<std::string> tradable_players;
+
+	if (!c || !c->IsSelfFound()) {
+		return tradable_players;
+	}
+
+	if (EntityVariableExists("sf-ineligible")) {
+		return tradable_players;
+	}
+
+	auto corpse_variables = GetEntityVariables();
+
+	for (const auto& variable : corpse_variables) {
+		if (variable.substr(0, 3) == "sf-") {
+			std::string player_name = variable.substr(3);
+			tradable_players.insert(player_name);
+		}
+	}
+
+	return tradable_players;
 }

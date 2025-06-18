@@ -15552,17 +15552,17 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 		}
 
 		if (IsSeasonal() != tradee->CastToClient()->IsSeasonal()) {
-			Message(Chat::Red, "Seasonal Characters may not trade with other players who are not Seasonal.");
+			Message(Chat::Red, "Seasonal characters may not trade with other players who are not Seasonal.");
 			return;
 		}
 
-		if (IsSelfFound() || tradee->CastToClient()->IsSelfFound()) {
-			Message(Chat::Red, "Self-Found Characters may not trade with other players.");
+		if (IsSelfFound() != tradee->CastToClient()->IsSelfFound()) {
+			Message(Chat::Red, "Self-Found characters may not trade with other players.");
 			return;
 		}
 
 		if (IsHardcore() != tradee->CastToClient()->IsHardcore()) {
-			Message(Chat::Red, "Hardcore Characters may not trade with other players who are not Hardcore.");
+			Message(Chat::Red, "Hardcore characters may not trade with other players who are not Hardcore.");
 			return;
 		}
 
@@ -15580,7 +15580,7 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 		}
 	}
 	return;
-	}
+}
 
 void Client::Handle_OP_TradeRequestAck(const EQApplicationPacket *app)
 {

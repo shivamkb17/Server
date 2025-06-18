@@ -2696,6 +2696,9 @@ public:
 	bool IsZoneUnlockedByProgression(const int zone_id) const;
 	bool AccountProgressionAllowed() const;
 
+	bool IsAllowedToTradeItemWith(Client* target, const EQ::ItemInstance* item) const;
+	void CheckExpiredSelfFoundTags();
+
 	std::map<uint32, std::list<TempMerchantList>> m_temp_merchantlist_table;
 
 	int SaveTempItemPersonal(uint32 merchantid, uint32 npcid, uint32 item, int32 charges, bool sold = false);
@@ -2728,7 +2731,7 @@ public:
 	}
 
 	int SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 charges, bool sold = false) {
-		if (UsesPersonalMerchantList() || IsHardcore()) {
+		if (UsesPersonalMerchantList()) {
 			return SaveTempItemPersonal(merchantid, npcid, item, charges, sold);
 		}
 
@@ -2736,13 +2739,12 @@ public:
 	}
 
 	uint32 GetTempMerchantQuantity(uint32 npcid, uint32 slot) {
-		if (UsesPersonalMerchantList() || IsHardcore()) {
+		if (UsesPersonalMerchantList()) {
 			return GetTempMerchantQuantityPersonal(npcid, slot);
 		}
 
 		return zone->GetTempMerchantQuantity(npcid, slot);
 	}
-
 };
 
 #endif

@@ -1001,6 +1001,10 @@ void EQ::ItemInstance::DeleteCustomData(const std::string& identifier) {
 	}
 }
 
+void EQ::ItemInstance::DeleteAllCustomData() {
+	m_custom_data.clear();
+}
+
 // Clone a type of EQ::ItemInstance object
 // c++ doesn't allow a polymorphic copy constructor,
 // so we have to resort to a polymorphic Clone()
@@ -2143,4 +2147,8 @@ void EQ::ItemInstance::SetEvolveEquipped(const bool in) const
 	}
 
 	GetTimers().at("evolve").Disable();
+}
+
+bool EQ::ItemInstance::HasCustomData(const std::string& identifier) const {
+	return m_custom_data.find(identifier) != m_custom_data.end();
 }

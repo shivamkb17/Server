@@ -866,12 +866,6 @@ void Client::DropItem(int16 slot_id, bool recurse)
 		return;
 	}
 
-	if (!m_inv.GetItem(slot_id)->GetCustomDataString().empty()) {
-		Message(Chat::Red, "You may not drop an item of this type.");
-		SendCursorBuffer();
-		return;
-	}
-
 	if (GetInv().CheckNoDrop(slot_id, recurse) && !CanTradeFVNoDropItem()) {
 		auto invalid_drop = m_inv.GetItem(slot_id);
 		if (!invalid_drop) {
@@ -2320,6 +2314,14 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 			return false;
 		}
 		if (with) {
+			if (with && with->IsClient()) {
+				Client* trade_target = with->CastToClient();
+
+				if (!this->IsAllowedToTradeItemWith(trade_target, src_inst)) {
+					Message(Chat::Yellow, "You may not trade that item with %s.", trade_target->GetName());
+					return false;
+				}
+			}
 			LogInventory("Trade item move from slot [{}] to slot [{}] (trade with [{}])", src_slot_id, dst_slot_id, with->GetName());
 			// Fill Trade list with items from cursor
 			if (!m_inv[EQ::invslot::slotCursor]) {

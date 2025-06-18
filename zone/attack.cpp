@@ -3321,6 +3321,44 @@ void Mob::TagPlayModeEngagement(Mob* attacker) {
 	}
 
 	auto client = ultimate_owner->CastToClient();
+	std::unordered_set<uint32> processed_ids;
+
+	std::vector<Client*> to_process;
+	to_process.push_back(client);
+
+	if (client->IsGrouped()) {
+		if (Group* group = entity_list.GetGroupByClient(client)) {
+			for (const auto& member : group->members) {
+				if (member) {
+					to_process.push_back(member->CastToClient());
+				}
+			}
+		}
+	}
+
+	if (client->IsRaidGrouped()) {
+		if (Raid* raid = entity_list.GetRaidByClient(client)) {
+			for (const auto& member : raid->members) {
+				if (member.member) {
+					to_process.push_back(member.member);
+				}
+			}
+		}
+	}
+
+	for (auto* cl : to_process) {
+		uint32 id = cl->GetID();
+		if (processed_ids.count(id))
+			continue;
+		processed_ids.insert(id);
+
+		TagPlayModeEngagementDelegate(cl);
+	}
+}
+
+void Mob::TagPlayModeEngagementDelegate(Client* client) {
+	if (!client)
+		return;
 
 	// Self-Found tagging
 	if (client->IsSelfFound()) {
@@ -3328,10 +3366,8 @@ void Mob::TagPlayModeEngagement(Mob* attacker) {
 		if (!EntityVariableExists(key) && !EntityVariableExists("sf-ineligible")) {
 			SetEntityVariable(key, "true");
 		}
-	} else {
-		if (!EntityVariableExists("sf-ineligible")) {
-			SetEntityVariable("sf-ineligible", "true");
-		}
+	} else if (!EntityVariableExists("sf-ineligible")) {
+		SetEntityVariable("sf-ineligible", "true");
 	}
 
 	// Solo tagging
@@ -3340,10 +3376,8 @@ void Mob::TagPlayModeEngagement(Mob* attacker) {
 		if (!EntityVariableExists(key) && !EntityVariableExists("solo-ineligible")) {
 			SetEntityVariable(key, "true");
 		}
-	} else {
-		if (!EntityVariableExists("solo-ineligible")) {
-			SetEntityVariable("solo-ineligible", "true");
-		}
+	} else if (!EntityVariableExists("solo-ineligible")) {
+		SetEntityVariable("solo-ineligible", "true");
 	}
 
 	// Hardcore tagging
@@ -3352,10 +3386,8 @@ void Mob::TagPlayModeEngagement(Mob* attacker) {
 		if (!EntityVariableExists(key) && !EntityVariableExists("hc-ineligible")) {
 			SetEntityVariable(key, "true");
 		}
-	} else {
-		if (!EntityVariableExists("hc-ineligible")) {
-			SetEntityVariable("hc-ineligible", "true");
-		}
+	} else if (!EntityVariableExists("hc-ineligible")) {
+		SetEntityVariable("hc-ineligible", "true");
 	}
 }
 

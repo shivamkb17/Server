@@ -15176,3 +15176,67 @@ bool Client::AccountProgressionAllowed() const {
 
 	return true;
 }
+
+bool Client::IsAllowedToTradeItemWith(Client* target, const EQ::ItemInstance* item) const {
+	if (!target || !item) {
+		return false;
+	}
+
+	if (IsHardcore() || target->IsHardcore()) {
+		if (!(IsHardcore() && target->IsHardcore())) {
+			return false;
+		}
+	}
+
+	if (target->IsSelfFound()) {
+		std::string tag_key = fmt::format("sf-{}", target->GetCleanName());
+
+		if (!item->HasCustomData(tag_key)) {
+			return false;
+		}
+
+		if (item->GetCustomData("sf-ineligible") == "1") {
+			return false;
+		}
+
+		std::string ts = item->GetCustomData("sf_timestamp");
+		if (!ts.empty()) {
+			time_t tag_time = static_cast<time_t>(std::stol(ts));
+			time_t now = time(nullptr);
+			if (difftime(now, tag_time) > 2 * 60 * 60) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+void Client::CheckExpiredSelfFoundTags() {
+	const time_t now = time(nullptr);
+	constexpr time_t kExpirySeconds = 2 * 60 * 60;
+
+	auto items = m_inv.GetUnattunedItems(
+		invWhereWorn | invWherePersonal
+	);
+
+	for (EQ::ItemInstance* inst : items) {
+		auto ts = inst->GetCustomData("sf_timestamp");
+		if (!ts.empty()) {
+			time_t tag_time = static_cast<time_t>(std::stol(ts));
+			if (difftime(now, tag_time) > kExpirySeconds) {
+				inst->DeleteAllCustomData();
+				inst->SetAttuned(true);
+
+				EQ::SayLinkEngine linker;
+				linker.SetLinkType(EQ::saylink::SayLinkItemInst);
+				linker.SetItemInst(inst);
+				std::string item_link = linker.GenerateLink();
+
+				Message(Chat::Loot, fmt::format("Your [{}] has become attuned as it is no longer eligible to trade.", item_link).c_str());
+			}
+		} else {
+			inst->SetAttuned(true);
+		}
+	}
+}

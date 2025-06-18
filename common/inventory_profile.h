@@ -218,6 +218,9 @@ namespace EQ
 
 		inline int16 PushItem(int16 slot_id, ItemInstance* inst) { return _PutItem(slot_id, inst); }
 
+		std::vector<EQ::ItemInstance*> GetUnattunedItems(uint8 where);
+		void _GetUnattunedItems(std::map<int16, EQ::ItemInstance*>& bucket, std::vector<EQ::ItemInstance*>& out_result);
+
 	protected:
 		///////////////////////////////
 		// Protected Methods

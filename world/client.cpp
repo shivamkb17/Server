@@ -854,6 +854,18 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 		return true;
 	}
 
+	auto r = WorldContentService::Instance()->FindZone(zone_id, instance_id);
+	if (r.zone_id && r.instance.id != instance_id) {
+		LogInfo(
+			"Zone [{}] has been remapped to instance_id [{}] from instance_id [{}] for client [{}]",
+			r.zone.short_name,
+			r.instance.id,
+			instance_id,
+			char_name
+		);
+		instance_id = r.instance.id;
+	}
+
 	const auto& e = l.front();
 
 	// Make sure this account owns this character

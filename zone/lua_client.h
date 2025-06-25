@@ -317,6 +317,7 @@ public:
 	int GetClientVersion();
 	uint32 GetClientVersionBit();
 	void SetTitleSuffix(const char *text);
+	void EnableTitleSet(uint32 title_set);
 	void SetAAPoints(int points);
 	int GetAAPoints();
 	int GetSpentAA();

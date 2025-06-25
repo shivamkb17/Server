@@ -247,9 +247,7 @@ void Client::Handle_OP_ZoneChange(const EQApplicationPacket *app) {
 		}
 	}
 
-	LogDebug("target_zone_id = {}", target_zone_id);
-
-	if (player_event_logs.IsEventEnabled(PlayerEvent::ZONING)) {
+	if (PlayerEventLogs::Instance()->IsEventEnabled(PlayerEvent::ZONING)) {
 		auto e = PlayerEvent::ZoningEvent{};
 		e.from_zone_long_name   = zone->GetLongName();
 		e.from_zone_short_name  = zone->GetShortName();

@@ -105,7 +105,6 @@ QuestParserCollection *parse        = 0;
 ZoneEventScheduler    event_scheduler;
 WorldContentService   content_service;
 PlayerEventLogs       player_event_logs;
-EvolvingItemsManager  evolving_items_manager;
 
 const SPDat_Spell_Struct* spells;
 int32 SPDAT_RECORDS = -1;

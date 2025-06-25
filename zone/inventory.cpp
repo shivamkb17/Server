@@ -1220,7 +1220,7 @@ bool Client::PushItemOnCursor(const EQ::ItemInstance& inst, bool client_update)
 {
 	LogInventory("Putting item [{}] ([{}]) on the cursor", inst.GetItem()->Name, inst.GetItem()->ID);
 
-	evolving_items_manager.DoLootChecks(CharacterID(), EQ::invslot::slotCursor, inst);
+	EvolvingItemsManager::Instance()->DoLootChecks(CharacterID(), EQ::invslot::slotCursor, inst);
 	m_inv.PushCursor(inst);
 
 	if (client_update) {
@@ -1242,7 +1242,7 @@ bool Client::PutItemInInventory(int16 slot_id, const EQ::ItemInstance& inst, boo
 		return PushItemOnCursor(inst, client_update);
 	}
 
-	evolving_items_manager.DoLootChecks(CharacterID(), slot_id, inst);
+	EvolvingItemsManager::Instance()->DoLootChecks(CharacterID(), slot_id, inst);
 	m_inv.PutItem(slot_id, inst);
 
 	if (client_update)
@@ -1270,7 +1270,7 @@ void Client::PutLootInInventory(int16 slot_id, const EQ::ItemInstance &inst, Loo
 
 	bool cursor_empty = m_inv.CursorEmpty();
 
-	evolving_items_manager.DoLootChecks(CharacterID(), slot_id, inst);
+	EvolvingItemsManager::Instance()->DoLootChecks(CharacterID(), slot_id, inst);
 
 	if (slot_id == EQ::invslot::slotCursor) {
 		m_inv.PushCursor(inst);

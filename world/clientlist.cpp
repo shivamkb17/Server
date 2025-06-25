@@ -36,8 +36,6 @@
 #include "../common/zone_store.h"
 #include <set>
 
-extern WebInterfaceList web_interface;
-
 extern ZSList			zoneserver_list;
 uint32 numplayers = 0;	//this really wants to be a member variable of ClientList...
 
@@ -1639,7 +1637,7 @@ void ClientList::OnTick(EQ::Timer *t)
 		Iterator.Advance();
 	}
 
-	web_interface.SendEvent(out);
+	WebInterfaceList::Instance()->SendEvent(out);
 }
 
 /**

@@ -38,7 +38,6 @@
 #include "../../common/skill_caps.h"
 #include "../../common/evolving_items.h"
 
-EQEmuLogSys          LogSys;
 WorldContentService  content_service;
 PlayerEventLogs      player_event_logs;
 EvolvingItemsManager evolving_items_manager;
@@ -51,7 +50,7 @@ void ExportDBStrings(SharedDatabase *db, SharedDatabase *content_db);
 int main(int argc, char **argv)
 {
 	RegisterExecutablePlatform(ExePlatformClientExport);
-	LogSys.LoadLogSettingsDefaults();
+	EQEmuLogSys::Instance()->LoadLogSettingsDefaults();
 	set_exception_handler();
 
 	PathManager::Instance()->Init();
@@ -97,9 +96,7 @@ int main(int argc, char **argv)
 		content_db.SetMySQL(database);
 	}
 
-	RuleManager::Instance()->LoadRules(&database, "default", false);
-
-	LogSys.SetDatabase(&database)
+	EQEmuLogSys::Instance()->SetDatabase(&database)
 		->SetLogPath(PathManager::Instance()->GetLogPath())
 		->LoadLogDatabaseSettings()
 		->StartFileLogs();
@@ -129,7 +126,7 @@ int main(int argc, char **argv)
 	ExportBaseData(&content_db);
 	ExportDBStrings(&database, &content_db);
 
-	LogSys.CloseFileLogs();
+	EQEmuLogSys::Instance()->CloseFileLogs();
 
 	return 0;
 }

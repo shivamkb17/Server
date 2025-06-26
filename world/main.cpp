@@ -94,11 +94,7 @@
 ClientList          client_list;
 GroupLFPList        LFPGroupList;
 ZSList              zoneserver_list;
-<<<<<<< kinglykrab/ucsconnection-global-to-singleton
-LoginServerList     loginserverlist;
-=======
 UCSConnection       UCSLink;
->>>>>>> master
 QueryServConnection QSLink;
 LauncherList        launcher_list;
 AdventureManager    adventure_manager;

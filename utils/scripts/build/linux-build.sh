@@ -20,9 +20,12 @@ mkdir -p build && cd build && \
       -DEQEMU_BUILD_PERL=ON \
       -DCMAKE_CXX_FLAGS:STRING="-O1 -g -Wno-everything" \
       -DCMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING="-O1 -g -Wno-everything" \
+      -DLUA_INCLUDE_DIR=/usr/include/lua5.1 \
+      -DLUA_LIBRARY=/usr/lib/x86_64-linux-gnu/liblua5.1.so \
+	  -DCMAKE_CXX_FLAGS="-I/usr/lib/x86_64-linux-gnu/perl/5.38/CORE" \
       -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
       -G 'Unix Makefiles' \
-      .. && make -j$((`nproc`-12))
+      .. && make -j$((`nproc`-2))
 
 curl https://raw.githubusercontent.com/Akkadius/eqemu-install-v2/master/eqemu_config.json --output eqemu_config.json
 ./bin/tests
